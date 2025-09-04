@@ -36,3 +36,23 @@ CREATE TABLE instructor_profile (
     staff_no VARCHAR(50) UNIQUE NOT NULL
 );
 
+-- COURSE
+CREATE TABLE course (
+    course_id SERIAL PRIMARY KEY,
+    code VARCHAR(20) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    owner_instructor_id INT REFERENCES instructor_profile(instructor_profile_id)
+);
+
+-- COURSE DRAFT
+CREATE TABLE course_draft (
+    draft_id SERIAL PRIMARY KEY,
+    course_id INT REFERENCES course(course_id),
+    title VARCHAR(255) NOT NULL,
+    outline_json JSON,
+    created_by INT REFERENCES instructor_profile(instructor_profile_id),
+    is_selected BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
