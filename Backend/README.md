@@ -1,0 +1,1 @@
+This folder is for the backend devlopers including databse manager
