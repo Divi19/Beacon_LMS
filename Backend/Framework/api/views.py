@@ -3,7 +3,8 @@ from .forms import CoursesForm
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CourseSerializer
-from .models import Course
+from django.http import JsonResponse
+from .models import User, Course, Enrollment
 
 # Create your views here.
 def course_creation(request):
@@ -20,16 +21,28 @@ def course_creation(request):
 class FrontendView(APIView):
     def get(self, request):
         courses = Course.objects.all()
-        output = [{"course_title": course.course_title,
-                   "course_id": course.course_id,
-                   "course_credits": course.course_credits,
-                   "course_director": course.course_director,
-                   "course_description": course.course_description}
-                   for course in courses]
+        output = [{
+            "course_title":  c.title,        
+            "course_id":     c.code,        
+            "course_credits": c.credits,    
+            "course_director": c.director,   
+            "course_description": c.description,  
+        } for c in courses]
         return Response(output)
+
     
     def post(self, request):
         serializer = CourseSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
+
+
+
+def db_health(request):
+    return JsonResponse({
+        "users": User.objects.count(),
+        "courses": Course.objects.count(),
+        "enrollments": Enrollment.objects.count(),
+        "ok": True
+    })
