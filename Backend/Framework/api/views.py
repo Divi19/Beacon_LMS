@@ -4,6 +4,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CourseSerializer
 from .models import Course
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from rest_framework.permissions import AllowAny
 
 # Create your views here.
 def course_creation(request):
@@ -17,7 +20,9 @@ def course_creation(request):
 
     return render(request, 'course.html', {'form' : form})
 
+@method_decorator(csrf_exempt, name='dispatch')
 class FrontendView(APIView):
+    permission_classes = [AllowAny]
     def get(self, request):
         courses = Course.objects.all()
         output = [{"course_title": course.course_title,
