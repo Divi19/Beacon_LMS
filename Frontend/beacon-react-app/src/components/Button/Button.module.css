@@ -1,0 +1,36 @@
+.btn {
+  width: 100%;
+  padding: 16px 20px;
+  border: none;
+  border-radius: 9999px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: var(--shadow-1);
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.2s ease;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+.teal {
+  background: var(--brand-teal);
+}
+.teal:hover {
+  background: var(--brand-teal-600);
+}
+
+.orange {
+  background: var(--brand-orange);
+}
+.orange:hover {
+  background: var(--brand-orange-600);
+}
+
+.aqua {
+  background: var(--brand-aqua);
+  color: #08343a;
+}
+.aqua:hover {
+  background: var(--brand-aqua-600);
+}

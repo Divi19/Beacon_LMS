@@ -1,0 +1,20 @@
+:root {
+  --brand-teal: #176978;
+  --brand-teal-600: #145a67;
+  --brand-orange: #ef8f4a;
+  --brand-orange-600: #e47f33;
+
+  --ink-900: #0b0f19;
+  --ink-700: #1f2637;
+
+  --bg-left-top: #7ad1d8;
+  --bg-right-top: #71c9da;
+  --bg-right-mid: #b5c3a4;
+  --bg-right-bot: #f7a55e;
+
+  --radius-xl: 24px;
+  --shadow-1: 0 10px 30px rgba(0, 0, 0, 0.12);
+
+  --brand-aqua: #6dc7d3;
+  --brand-aqua-600: #5bb2be;
+}
