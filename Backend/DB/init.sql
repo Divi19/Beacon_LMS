@@ -1,5 +1,5 @@
 -- Switch default schema
-SET search_path TO lms_schema;
+SET search_path = lms_schema;
 
 -- Drop existing tables in correct dependency order
 DROP TABLE IF EXISTS enrollment CASCADE;
@@ -64,5 +64,4 @@ CREATE TABLE enrollment (
     enrolled_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(student_id, course_id)
 );
-
 
