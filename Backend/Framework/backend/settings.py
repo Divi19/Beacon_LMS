@@ -14,6 +14,42 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import os
+import environ
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# --- environ ---
+env = environ.Env(
+    DEBUG=(bool, False),
+)
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+DEBUG = env("DEBUG")
+SECRET_KEY = env("SECRET_KEY", default="insecure-dev-secret")
+ALLOWED_HOSTS = [h.strip() for h in env("ALLOWED_HOSTS", default="").split(",") if h.strip()]
+
+TIME_ZONE = env("TIME_ZONE", default="UTC")
+USE_TZ = True
+
+# --- DATABASES ---
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST"),
+        "PORT": env("DB_PORT"),
+        "OPTIONS": {
+            "options": f"-c search_path={env('DB_SEARCH_PATH', default='public')}"
+        },
+    }
+}
+
+# Match your existing SERIAL integer PKs
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 
 load_dotenv()
 
@@ -92,18 +128,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

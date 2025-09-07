@@ -65,3 +65,8 @@ CREATE TABLE enrollment (
     UNIQUE(student_id, course_id)
 );
 
+ALTER TABLE course ADD COLUMN credits INTEGER;
+ALTER TABLE course ADD COLUMN director VARCHAR(50);
+ALTER TABLE course ADD COLUMN description TEXT;
+
+
