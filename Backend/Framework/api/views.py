@@ -3,15 +3,11 @@ from .forms import CoursesForm
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CourseSerializer
-<<<<<<< HEAD
 from django.http import JsonResponse
 from .models import User, Course, Enrollment
-=======
-from .models import Course
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
->>>>>>> 97c0bb05ad1411819ba9020c39f385e5c21035cc
 
 #For getting list of courses
 @method_decorator(csrf_exempt, name='dispatch')
@@ -35,7 +31,6 @@ class FrontendView(APIView):
             serializer.save()
             return Response(serializer.data)
 
-<<<<<<< HEAD
 
 
 def db_health(request):
@@ -45,7 +40,6 @@ def db_health(request):
         "enrollments": Enrollment.objects.count(),
         "ok": True
     })
-=======
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
 class FrontendDetailView(APIView):
@@ -59,4 +53,3 @@ class FrontendDetailView(APIView):
                    "course_description": courses.course_description}
         return Response(output)
 
->>>>>>> 97c0bb05ad1411819ba9020c39f385e5c21035cc
