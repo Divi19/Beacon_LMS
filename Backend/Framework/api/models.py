@@ -1,25 +1,8 @@
 from django.db import models
 
-# Create your models here.
-class Course(models.Model):
-    course_title = models.CharField(max_length=250)
-    course_id = models.CharField(max_length=25, unique=True)
-    course_credits = models.IntegerField()
-    course_director = models.CharField(max_length=50)
-    course_description = models.TextField(max_length=1000)
-
-    def __str__(self):
-        return f"{self.course_id}: {self.course_title}"
-    
 class User(models.Model):
-    """
-    This class stores user (attributes exising in both instructors and students) information where:
-    - user_id (PK): auto increment 
-    - email (UK): ensure no similar emails
-    - created_at: auto timestamp during user creation
-    """
     user_id = models.AutoField(primary_key=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, max_length=255)
     password_hash = models.CharField(max_length=255)
     role = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,36 +10,64 @@ class User(models.Model):
     def __str__(self):
         return self.email 
 
-
 class StudentProfile(models.Model):
-    """
-    This class stores student information where:
-    - student_profile_id (PK): auto increment
-    - user (FK): connecting to the User model 
-    - student_no (UK): student number must be unique
-    - locked_at: unsure what this is for, but auto time stamp
-    """
     student_profile_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_column="user_id", on_delete=models.DO_NOTHING)
     full_name = models.CharField(max_length=255)
     student_no = models.CharField(max_length=50, unique=True)
-    locked_at = models.DateTimeField(auto_now_add=True)
+    locked_at = models.DateTimeField(null=True, blank=True)
 
-    def __str__(self):
-        return self.full_name
+    class Meta:
+        db_table = "student_profile"
+        managed = False
+
+class InstructorProfile(models.Model):
+    instructor_profile_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, db_column="user_id", on_delete=models.DO_NOTHING)
+    full_name = models.CharField(max_length=255)
+    staff_no = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        db_table = "instructor_profile"
+        managed = False
+
+class Course(models.Model):
+    course_id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=20, unique=True)
+    title = models.CharField(max_length=255)
+    status = models.CharField(max_length=50)
+    owner_instructor = models.ForeignKey(
+        InstructorProfile, db_column="owner_instructor_id", on_delete=models.DO_NOTHING
+    )
+    credits = models.IntegerField(null=True, blank=True)
+    director = models.CharField(max_length=50, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "course"
+        managed = False
+
+
+class CourseDraft(models.Model):
+    draft_id = models.AutoField(primary_key=True)
+    course = models.ForeignKey(Course, db_column="course_id", null=True, on_delete=models.SET_NULL)
+    title = models.CharField(max_length=255)
+    outline_json = models.JSONField(null=True, blank=True)
+    created_by = models.ForeignKey(InstructorProfile, db_column="created_by", on_delete=models.DO_NOTHING)
+    is_selected = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "course_draft"
+        managed = False
 
 class Enrollment(models.Model):
-    """
-    This class stores the enrollment information where:
-    - enrollment_id (UK): auto-increment 
-    - student (FK): linking to student model
-    - course (FK): linking to course model
-    - enrolled_at: auto time stamp
-    """
     enrollment_id = models.AutoField(primary_key=True)
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE) 
+    student = models.ForeignKey(StudentProfile, db_column="student_id", on_delete=models.DO_NOTHING)
+    course = models.ForeignKey(Course, db_column="course_id", on_delete=models.DO_NOTHING)
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-         return f"student: {self.student} ; enrolled in: {self.course}"
+    class Meta:
+        db_table = "enrollment"
+        managed = False
+        unique_together = (("student", "course"),)

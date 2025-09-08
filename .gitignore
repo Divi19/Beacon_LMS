@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Python
 *.pyc
 __pycache__/
@@ -10,11 +11,16 @@ db.sqlite3
 # Node
 node_modules/
 =======
+=======
+>>>>>>> origin
 # Virtual environments
 env/
 venv/
 ENV/
 .venv/
+# env
+.env
+
 
 # Python cache
 __pycache__/
@@ -46,4 +52,10 @@ dist/
 Thumbs.db
 .DS_Store
 
+<<<<<<< HEAD
 >>>>>>> backend_instructor
+=======
+=======
+venv/ 
+>>>>>>> 000f4ceeca75de2d71a79a70c021ef9d821792e2
+>>>>>>> origin

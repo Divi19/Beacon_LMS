@@ -24,4 +24,5 @@ urlpatterns = [
     path('courses/frontend', FrontendView.as_view(), name="frontend"),
     path('students/<int:student_id>/my_courses/', StudentEnrolledCourses.as_view(), name='enrolled'),
     path('students/<int:student_id>/enrollment/', StudentUnenrolledCourses.as_view(), name='unenrolled'),
+    path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
 ]

@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
 import Button from "../../components/Button/Button";
 import courses from "../../data/courses";
 import { useEnrollment } from "../../state/EnrollmentContext";
 import s from "./CourseDetail.module.css";
+<<<<<<< HEAD
 import React, {useEffect, useState} from "react";
 
 export default function CourseDetail() {
@@ -13,6 +14,26 @@ export default function CourseDetail() {
     () => courses.find((c) => c.id === courseId),
     [courseId]
   );
+=======
+import axios from "axios";
+
+export default function CourseDetail() {
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  const { enroll, isEnrolled } = useEnrollment();
+
+  // const course = useMemo(
+  //   () => courses.find((c) => c.id === courseId),
+  //   [courseId]
+  // );
+  const [course, setCourse] = useState(null);
+
+  useEffect(() => {
+    axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
+    .then((res) => setCourse(res.data))
+    .catch(() => setCourse(null));
+  }, [courseId]);
+>>>>>>> origin
 
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -32,7 +53,7 @@ export default function CourseDetail() {
   }
 
   const handleEnroll = () => {
-    if (!isEnrolled(course.id)) enroll(course.id);
+    if (!isEnrolled(course.course_id)) enroll(course.course_id);
     navigate("/student/my-courses");
   };
 
@@ -41,24 +62,24 @@ export default function CourseDetail() {
       <StudentTopBar />
       <div className={s.wrap}>
         <div className={s.panel}>
-          <h2 className={s.title}>{course.title}</h2>
+          <h2 className={s.title}>{course.course_title}</h2>
 
           <div className={s.meta}>
             <span>
-              Code: <strong>{course.code}</strong>
+              Code: <strong>{course.course_id}</strong>
             </span>
-            <span>{course.credits} Credits</span>
+            <span>{course.course_credits} Credits</span>
             <span>
-              Course Director: <strong>{course.director}</strong>
+              Course Director: <strong>{course.course_director}</strong>
             </span>
           </div>
 
           <h3 className={s.subhead}>Course Description:</h3>
-          <p className={s.desc}>{course.description}</p>
+          <p className={s.desc}>{course.course_description}</p>
 
           <h3 className={s.subhead}>Core lessons:</h3>
           <div className={s.chips}>
-            {course.lessons.length ? (
+            {course.lessons && course.lessons.length > 0 ? (
               course.lessons.map((id) => (
                 <span key={id} className={s.chip}>
                   {id}

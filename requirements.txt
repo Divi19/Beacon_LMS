@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 asgiref==3.9.1
 Django==5.2.6
 djangorestframework==3.16.1
 sqlparse==0.5.3
+=======
+<<<<<<< HEAD
+>>>>>>> origin
 asgiref
 Django
 django-cors-headers
@@ -12,3 +16,13 @@ pytz
 sqlparse
 psycopg2-binary
 python-dotenv
+<<<<<<< HEAD
+=======
+django-environ
+=======
+asgiref==3.9.1
+Django==5.2.6
+djangorestframework==3.16.1
+sqlparse==0.5.3
+>>>>>>> 000f4ceeca75de2d71a79a70c021ef9d821792e2
+>>>>>>> origin

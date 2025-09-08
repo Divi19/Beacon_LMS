@@ -2,24 +2,18 @@ from django.shortcuts import render, redirect
 from .forms import CoursesForm
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import CourseSerializer
-from .models import Course, StudentProfile
+from .serializers import CourseSerializer, EnrollmentSerializer
+from .models import Course, StudentProfile, User, Course, Enrollment
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
 
-# Create your views here.
-def course_creation(request):
-    if request.method == 'POST':
-        form = CoursesForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('create_courses')
-    else:
-        form = CoursesForm()
+"""
+Instructor Part
+"""
 
-    return render(request, 'course.html', {'form' : form})
-
+#For getting list of courses
 @method_decorator(csrf_exempt, name='dispatch')
 class FrontendView(APIView):
     permission_classes = [AllowAny]
@@ -38,7 +32,23 @@ class FrontendView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
-        
+
+#For getting a single course, no list and no post method
+@method_decorator(csrf_exempt, name='dispatch')
+class FrontendDetailView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, pk):
+        courses = Course.objects.get(course_id=pk)
+        output = {"course_title": courses.course_title,
+                   "course_id": courses.course_id,
+                   "course_credits": courses.course_credits,
+                   "course_director": courses.course_director,
+                   "course_description": courses.course_description}
+        return Response(output)
+    
+"""
+Student Part
+"""
 
 class StudentEnrolledCourses(APIView):
     def get(self, request, student_id):
@@ -80,4 +90,3 @@ class StudentUnenrolledCourses(APIView):
 
         serializer = EnrollmentSerializer(enrollment)
         return Response(serializer.data, status=201)
-
