@@ -1,5 +1,6 @@
 from django.db import models
 
+#CASCADING: Delete this object’s dependent records automatically if the referenced object is deleted.
 # Create your models here.
 class ReactRegister(models.Model): 
     #Accessing the database though
@@ -73,4 +74,4 @@ class Enrollment(models.Model):
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "student:" + self.student + "; enrolled in:" + self.course 
+         return f"student: {self.student} ; enrolled in: {self.course}"

@@ -63,13 +63,15 @@ class CourseEnrollment(APIView):
     """
     Couse enrollment
     """
-    queryset = Enrollment.objects.all()
-    serializer_class = EnrollmentSerializer()
+    queryset = Enrollment.objects.all() #Set of all enrolment objects 
+    serializer_class = EnrollmentSerializer() #converting to json
 
+    #Client sends self information and chosen course information
     def create(self, request, *args, **kwargs):
-        student_id = request.data.get('student')
-        course_id = request.data.get('course')
-
+        student_id = request.data.get('student') #getting payload
+        course_id = request.data.get('course') #getting payload 
+    
+        #Check if student or course exist
         try:
             student = StudentProfile.objects.get(pk=student_id)
             course = Course.objects.get(pk=course_id)
@@ -82,6 +84,7 @@ class CourseEnrollment(APIView):
         if Enrollment.objects.filter(student=student, course=course).exists():
             return Response({'error': 'Already enrolled'}, status=400)
 
+        #create new enrollment project 
         enrollment = Enrollment.objects.create(student=student, course=course)
         serializer = EnrollmentSerializer(enrollment)
         return Response(serializer.data, status=201)
