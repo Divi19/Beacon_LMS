@@ -1,11 +1,23 @@
-import React, { useState } from "react";
 import s from "./InstructorCourseList.module.css";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
 import Button from "../../components/Button/Button";
 import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function InstructorCourseList() {
     const navigate = useNavigate();
+    const [courses, setCourses] = useState([]);
+
+  useEffect( () => {
+    axios.get('http://localhost:8000/courses/frontend')
+      .then(res => {
+        console.log("API response", res.data);
+        setCourses(res.data);
+    })
+      .catch(err => 
+        console.error('Error fetching data', err));
+      }, []);
 
   return (
     <div className={s.wrap}>
@@ -35,66 +47,72 @@ export default function InstructorCourseList() {
         </div>
       </header>
     <div className={s.container}>
-  <div className={s.card}>
-    <h2 className={s.cardTitle}>Bachelor of Computer Science Advanced</h2>
+      {courses.map((course, idx) => (
+        <div key={idx} className={s.card} onClick={() => navigate(`/instructor/course/${course.course_id}`)} style={{ cursor: "pointer" }}>
+    <h2 className={s.cardTitle}>{course.course_title}</h2>
     <div className={s.cardDesc1}>
   <div className={s.leftGroup}>
     <span>Code:</span>
-    <span className={s.spacing}>C2100</span>
+    <span className={s.spacing}>{course.course_id}</span>
   </div>
-  <span>20 Credits</span>
+  <span>{course.course_credits} Credits</span>
 </div>
   <div className={s.cardDesc2}>
   <span>Course Director:</span>
-  <span>Dr Charles Xavier</span>
+  <span>{course.course_director}</span>
 </div>
   </div>
-
-  <div className={s.card}>
-    <h2 className={s.cardTitle}>Bachelor  of Computer Science Data Science</h2>
-    <div className={s.cardDesc1}>
-  <div className={s.leftGroup}>
-    <span>Code:</span>
-    <span className={s.spacing}>C2102</span>
+      ))}
   </div>
-  <span>20 Credits</span>
-</div>
-  <div className={s.cardDesc2}>
-  <span>Course Director:</span>
-  <span>Dr Charles Xavier</span>
-</div>
   </div>
-
-  <div className={s.card}>
-    <h2 className={s.cardTitle}>Diploma in Discrete Mathematics</h2>
-    <div className={s.cardDesc1}>
-  <div className={s.leftGroup}>
-    <span>Code:</span>
-    <span className={s.spacing}>C1003</span>
-  </div>
-  <span>20 Credits</span>
-</div>
-  <div className={s.cardDesc2}>
-  <span>Course Director:</span>
-  <span>Dr Allison Swift</span>
-</div>
-  </div>
-
-  <div className={s.card}>
-    <h2 className={s.cardTitle}>Diploma in Digital Marketing</h2>
-    <div className={s.cardDesc1}>
-  <div className={s.leftGroup}>
-    <span>Code:</span>
-    <span className={s.spacing}>C3109</span>
-  </div>
-  <span>20 Credits</span>
-</div>
-  <div className={s.cardDesc2}>
-  <span>Course Director:</span>
-  <span>Dr Benjamin Button</span>
-</div>
-  </div>
-</div>
-    </div>
   );
 }
+  
+//   <div className={s.card}>
+//     <h2 className={s.cardTitle}>Bachelor  of Computer Science Data Science</h2>
+//     <div className={s.cardDesc1}>
+//   <div className={s.leftGroup}>
+//     <span>Code:</span>
+//     <span className={s.spacing}>C2102</span>
+//   </div>
+//   <span>20 Credits</span>
+// </div>
+//   <div className={s.cardDesc2}>
+//   <span>Course Director:</span>
+//   <span>Dr Charles Xavier</span>
+// </div>
+//   </div>
+
+//   <div className={s.card}>
+//     <h2 className={s.cardTitle}>Diploma in Discrete Mathematics</h2>
+//     <div className={s.cardDesc1}>
+//   <div className={s.leftGroup}>
+//     <span>Code:</span>
+//     <span className={s.spacing}>C1003</span>
+//   </div>
+//   <span>20 Credits</span>
+// </div>
+//   <div className={s.cardDesc2}>
+//   <span>Course Director:</span>
+//   <span>Dr Allison Swift</span>
+// </div>
+//   </div>
+
+//   <div className={s.card}>
+//     <h2 className={s.cardTitle}>Diploma in Digital Marketing</h2>
+//     <div className={s.cardDesc1}>
+//   <div className={s.leftGroup}>
+//     <span>Code:</span>
+//     <span className={s.spacing}>C3109</span>
+//   </div>
+//   <span>20 Credits</span>
+// </div>
+//   <div className={s.cardDesc2}>
+//   <span>Course Director:</span>
+//   <span>Dr Benjamin Button</span>
+// </div>
+//   </div>
+// </div>
+//     </div>
+//   );
+// }
