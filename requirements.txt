@@ -1,4 +1,17 @@
+<<<<<<< HEAD
 asgiref==3.9.1
 Django==5.2.6
 djangorestframework==3.16.1
 sqlparse==0.5.3
+=======
+asgiref
+Django
+django-cors-headers
+djangorestframework
+djangorestframework-simplejwt
+PyJWT
+pytz
+sqlparse
+psycopg2-binary
+python-dotenv
+>>>>>>> backend_instructor

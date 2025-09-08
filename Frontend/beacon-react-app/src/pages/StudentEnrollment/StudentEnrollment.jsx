@@ -20,8 +20,10 @@ export default function StudentEnrollment() {
       setLoading(true);
       const [resEnrolled, resUnenrolled] = await Promise.all([
         axios.get(`${url}/students/${studentId}/enrolled/`),
-        axios.get(`${url}/students/${studentId}/unenrolled/`)
+        axios.get(`${url}/students/${studentId}/enrolled/`)
       ]);
+
+      // Ensure course_id and course_title are used
       setEnrolled(resEnrolled.data || []);
       setUnenrolled(resUnenrolled.data || []);
     } catch (err) {
@@ -34,13 +36,10 @@ export default function StudentEnrollment() {
   // Enroll in a course
   const handleEnroll = async (courseId) => {
     try {
-      await axios.post(`${url}/students/${studentId}/enroll/`, { course_id: courseId });
-      // Move the course from unenrolled to enrolled locally
-      const course = unenrolled.find(c => c.id === courseId);
-      if (course) {
-        setEnrolled([...enrolled, course]);
-        setUnenrolled(unenrolled.filter(c => c.id !== courseId));
-      }
+      await axios.post(`${url}/students/${studentId}/enrolled/`, { course_id: courseId });
+
+      // Refresh courses from backend instead of local array manipulation
+      fetchCourses();
     } catch (err) {
       console.error("Enrollment failed", err);
       alert("Failed to enroll in course.");
@@ -52,6 +51,7 @@ export default function StudentEnrollment() {
   }, []);
 
   if (loading) return <p>Loading courses...</p>;
+
 
   return (
     <>
@@ -69,7 +69,7 @@ export default function StudentEnrollment() {
           ) : (
             <div className={s.grid}>
               {enrolled.map(c => (
-                <CourseCard key={c.id} course={c} ctaText="View" onClick={() => console.log("Viewing", c.id)} />
+                <CourseCard key={c.course_id} course={c} ctaText="View" onClick={() => console.log("Viewing", c.course_id)} />
               ))}
             </div>
           )}
@@ -84,11 +84,11 @@ export default function StudentEnrollment() {
             <div className={s.grid}>
               {unenrolled.map(c => (
                 <CourseCard
-                  key={c.id}
+                  key={c.course_id}
                   course={c}
                   ctaText="Enroll"
-                  onClick={() => console.log("Viewing", c.id)}
-                  onCta={() => handleEnroll(c.id)}
+                  onClick={() => console.log("Viewing", c.course_id)}
+                  onCta={() => handleEnroll(c.course_id)}
                 />
               ))}
             </div>
