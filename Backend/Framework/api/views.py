@@ -3,7 +3,7 @@ from .forms import CoursesForm
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CourseSerializer
-from .models import Course
+from .models import Course, StudentProfile
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
@@ -38,3 +38,46 @@ class FrontendView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
+        
+
+class StudentEnrolledCourses(APIView):
+    def get(self, request, student_id):
+        try:
+            student = StudentProfile.objects.get(pk=student_id)
+        except StudentProfile.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+
+        enrolled_courses = Course.objects.filter(enrollments__student=student)
+        serializer = CourseSerializer(enrolled_courses, many=True)
+        return Response(serializer.data, status=200)
+
+
+class StudentUnenrolledCourses(APIView):
+    def get(self, request, student_id):
+        try:
+            student = StudentProfile.objects.get(pk=student_id)
+        except StudentProfile.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+
+        unenrolled_courses = Course.objects.exclude(enrollments__student=student)
+        serializer = CourseSerializer(unenrolled_courses, many=True)
+        return Response(serializer.data, status=200)
+
+    def post(self, request, student_id):
+        course_id = request.data.get("course_id")
+
+        try:
+            student = StudentProfile.objects.get(pk=student_id)
+            course = Course.objects.get(course_id=course_id)
+        except StudentProfile.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+        except Course.DoesNotExist:
+            return Response({'error': 'Course not found'}, status=404)
+
+        enrollment, created = Enrollment.objects.get_or_create(student=student, course=course)
+        if not created:
+            return Response({'error': 'Already enrolled'}, status=400)
+
+        serializer = EnrollmentSerializer(enrollment)
+        return Response(serializer.data, status=201)
+

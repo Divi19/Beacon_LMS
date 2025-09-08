@@ -28,7 +28,7 @@ export default function StudentEnrollmentPage() {
         axios.get(`${url}/students/${studentId}/enrolled/`),
         axios.get(`${url}/students/${studentId}/unenrolled/`),
       ]);
-
+o
       setEnrolled(resEnrolled.data || []);
       setUnenrolled(resUnenrolled.data || []);
     } catch (err) {
