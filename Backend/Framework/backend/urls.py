@@ -22,4 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('courses/frontend', FrontendView.as_view(), name="frontend"),
+    path('students/<int:student_id>/my_courses/', StudentEnrolledCourses.as_view(), name='enrolled'),
+    path('students/<int:student_id>/enrollment/', StudentUnenrolledCourses.as_view(), name='unenrolled'),
 ]
