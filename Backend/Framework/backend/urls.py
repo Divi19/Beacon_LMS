@@ -21,11 +21,6 @@ from api.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-<<<<<<< HEAD
-    path('', FrontendView.as_view(), name="frontend")
-]
-=======
     path('courses/frontend', FrontendView.as_view(), name="frontend"),
     path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
 ]
->>>>>>> 97c0bb05ad1411819ba9020c39f385e5c21035cc
