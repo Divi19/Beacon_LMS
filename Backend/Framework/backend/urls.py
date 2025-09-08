@@ -22,4 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('courses/frontend', FrontendView.as_view(), name="frontend"),
+    path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
 ]

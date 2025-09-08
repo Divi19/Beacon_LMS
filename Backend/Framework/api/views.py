@@ -20,6 +20,7 @@ def course_creation(request):
 
     return render(request, 'course.html', {'form' : form})
 
+#For getting list of courses
 @method_decorator(csrf_exempt, name='dispatch')
 class FrontendView(APIView):
     permission_classes = [AllowAny]
@@ -38,3 +39,17 @@ class FrontendView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
+
+#For getting a single course, no list and no post method
+@method_decorator(csrf_exempt, name='dispatch')
+class FrontendDetailView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, pk):
+        courses = Course.objects.get(course_id=pk)
+        output = {"course_title": courses.course_title,
+                   "course_id": courses.course_id,
+                   "course_credits": courses.course_credits,
+                   "course_director": courses.course_director,
+                   "course_description": courses.course_description}
+        return Response(output)
+
