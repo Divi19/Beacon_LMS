@@ -35,7 +35,7 @@ class RegisterView(APIView):
 @api_view(['POST']) #decorator takes a list of HTTP methods that view should respond to
 class StudentRegistration(APIView):
     """
-    Student registration
+    Student registration (deferred)
     """
     def register(self, request):
         #serialize request data from user and store in serializer
@@ -53,7 +53,7 @@ def is_authenticated(request):
 @permission_classes([IsAuthenticated])
 class StudentLogin(APIView):
     """
-    Student registration
+    Student registration (deferred)
     """
     def get(self, request):
         return None
