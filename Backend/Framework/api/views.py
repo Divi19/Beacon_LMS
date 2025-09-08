@@ -8,18 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
 
-# Create your views here.
-def course_creation(request):
-    if request.method == 'POST':
-        form = CoursesForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('create_courses')
-    else:
-        form = CoursesForm()
-
-    return render(request, 'course.html', {'form' : form})
-
 #For getting list of courses
 @method_decorator(csrf_exempt, name='dispatch')
 class FrontendView(APIView):
