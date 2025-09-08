@@ -3,22 +3,20 @@ from .forms import CoursesForm
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CourseSerializer
+<<<<<<< HEAD
 from django.http import JsonResponse
 from .models import User, Course, Enrollment
+=======
+from .models import Course
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from rest_framework.permissions import AllowAny
+>>>>>>> 97c0bb05ad1411819ba9020c39f385e5c21035cc
 
-# Create your views here.
-def course_creation(request):
-    if request.method == 'POST':
-        form = CoursesForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('create_courses')
-    else:
-        form = CoursesForm()
-
-    return render(request, 'course.html', {'form' : form})
-
+#For getting list of courses
+@method_decorator(csrf_exempt, name='dispatch')
 class FrontendView(APIView):
+    permission_classes = [AllowAny]
     def get(self, request):
         courses = Course.objects.all()
         output = [{
@@ -37,6 +35,7 @@ class FrontendView(APIView):
             serializer.save()
             return Response(serializer.data)
 
+<<<<<<< HEAD
 
 
 def db_health(request):
@@ -46,3 +45,18 @@ def db_health(request):
         "enrollments": Enrollment.objects.count(),
         "ok": True
     })
+=======
+#For getting a single course, no list and no post method
+@method_decorator(csrf_exempt, name='dispatch')
+class FrontendDetailView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, pk):
+        courses = Course.objects.get(course_id=pk)
+        output = {"course_title": courses.course_title,
+                   "course_id": courses.course_id,
+                   "course_credits": courses.course_credits,
+                   "course_director": courses.course_director,
+                   "course_description": courses.course_description}
+        return Response(output)
+
+>>>>>>> 97c0bb05ad1411819ba9020c39f385e5c21035cc
