@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Virtual environments
 env/
 venv/
@@ -37,3 +38,6 @@ dist/
 Thumbs.db
 .DS_Store
 
+=======
+venv/ 
+>>>>>>> 000f4ceeca75de2d71a79a70c021ef9d821792e2
