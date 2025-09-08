@@ -1,0 +1,84 @@
+.topBar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  padding: clamp(12px, 2vw, 24px) 4rem;
+  background: linear-gradient(
+    to bottom,
+    #f1cea8 0%,  
+    #f1cea8 70%, 
+    #71bfcd 100% 
+  );
+  border-bottom: 2px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.leftSide {
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.2em;
+}
+
+.rightSide {
+  display: flex;
+  align-items: center;
+}
+
+.navList {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2vw, 32px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: clamp(14px, 1.8vw, 18px);
+  color: #000000;
+}
+
+.profileLogoTop {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 4px; 
+}
+
+.accountText {
+  font-size: clamp(12px, 1.5vw, 14px);
+}
+
+.leftSide {
+  display: flex;
+  align-items: center;
+  gap: 12px; 
+}
+
+.logo {
+  width: 40px;       
+  height: 40px;      
+  object-fit: contain;
+}
+
+.navLink {
+  text-decoration: none;
+  color: inherit;    
+  cursor: pointer;
+}
+.navLink:hover {
+  text-decoration: underline;
+}
