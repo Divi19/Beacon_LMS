@@ -12,98 +12,86 @@ import { useEnrollment } from "../../state/EnrollmentContext";
 
 export default function StudentEnrollmentPage() {
   const navigate = useNavigate();
-  const studentId = 1; // replace with context/auth later
-  const url = "http://127.0.0.1:8000/api";
+  const [enrolled, setEnrolled] = useState([])
+  //Dummy value
+  const student_id = 1 
+  
+  useEffect( () => {
+  axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/my_courses/`)
+    .then(res => {
+      // normalize each item to what CourseCard expects
+      const normalized = (res.data || []).map(d => ({
+        // make sure these keys exist for the card:
+        id: d.id ?? d.course_id,
+        title: d.name ?? d.title ?? d.course_title,
+        code: d.code ?? d.course_code,
+        description: d.description ?? d.desc ?? "",
+        // keep original fields too, if the card uses others
+        ...d,
+      }));
+      setEnrolled(normalized);
+    })
+    .catch(err => 
+      console.error('Error fetching data', err));
+    }, []);
 
-  const [enrolled, setEnrolled] = useState([]);
-  const [unenrolled, setUnenrolled] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch both enrolled and unenrolled courses
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-
-      const [resEnrolled, resUnenrolled] = await Promise.all([
-        axios.get(`${url}/students/${studentId}/enrolled/`),
-        axios.get(`${url}/students/${studentId}/unenrolled/`),
-      ]);
-o
-      setEnrolled(resEnrolled.data || []);
-      setUnenrolled(resUnenrolled.data || []);
-    } catch (err) {
-      console.error("Failed to fetch courses", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Enroll in a course
-  const handleEnroll = async (courseId) => {
-    try {
-      await axios.post(`${url}/students/${studentId}/enroll/`, { course_id: courseId });
-
-      // Move course from unenrolled to enrolled
-      const course = unenrolled.find((c) => c.id === courseId);
-      if (course) {
-        setEnrolled([...enrolled, course]);
-        setUnenrolled(unenrolled.filter((c) => c.id !== courseId));
-      }
-    } catch (err) {
-      console.error("Enrollment failed", err);
-      alert("Failed to enroll in course.");
-    }
-  };
-
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  if (loading) return <p>Loading courses...</p>;
-
-  return (
-    <>
-      <StudentTopBar />
-
-      <div className={s.wrap}>
-        <header className={s.header}>
-          <h1 className={s.title}>COURSE ENROLLMENT</h1>
-        </header>
-
-        {/* Enrolled Courses */}
-        <section className={s.section}>
-          <h2>My Courses</h2>
+    return (
+      <>
+        <StudentTopBar />
+        <div className={s.wrap}>
+          <header className={s.header}>
+            <h1 className={s.title}>MY COURSES</h1>
+          </header>
+  
           {enrolled.length === 0 ? (
-            <p>You have not enrolled in any courses yet.</p>
+            <section className={s.card}>
+              <p className={s.emptyText}>
+                No enrolled courses yet.
+                <br />
+                Go to enrollment to see all available courses to enrol.
+              </p>
+              <div className={s.ctaRow}>
+                <Button
+                  variant="aqua"
+                  className={s.enrollBtn}
+                  onClick={() => navigate("/student/enrollment")}
+                >
+                  <span>Enrollment</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 8 16 12 12 16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                  </svg>
+                </Button>
+              </div>
+            </section>
           ) : (
-            <div className={s.grid}>
+            <section className={s.grid}>
               {enrolled.map((c) => (
-                <CourseCard key={c.id} course={c} ctaText="View" onClick={() => console.log("Viewing", c.id)} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Unenrolled Courses */}
-        <section className={s.section}>
-          <h2>Available Courses</h2>
-          {unenrolled.length === 0 ? (
-            <p>All courses are already enrolled!</p>
-          ) : (
-            <div className={s.grid}>
-              {unenrolled.map((c) => (
                 <CourseCard
                   key={c.id}
                   course={c}
-                  ctaText="Enroll"
-                  onClick={() => console.log("Viewing", c.id)}
-                  onCta={() => handleEnroll(c.id)}
+                  ctaText="View"
+                  onClick={() => {
+                    // To implement in the future
+                    console.log("Viewing course:", c.id);
+                  }}
                 />
               ))}
-            </div>
+            </section>
           )}
-        </section>
-      </div>
-    </>
-  );
-}
+        </div>
+      </>
+    );
+  }
+  

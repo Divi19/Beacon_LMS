@@ -5,16 +5,6 @@ import Button from "../../components/Button/Button";
 import courses from "../../data/courses";
 import { useEnrollment } from "../../state/EnrollmentContext";
 import s from "./CourseDetail.module.css";
-<<<<<<< HEAD
-import React, {useEffect, useState} from "react";
-
-export default function CourseDetail() {
-  
-  const course = useMemo(
-    () => courses.find((c) => c.id === courseId),
-    [courseId]
-  );
-=======
 import axios from "axios";
 
 export default function CourseDetail() {
@@ -33,12 +23,6 @@ export default function CourseDetail() {
     .then((res) => setCourse(res.data))
     .catch(() => setCourse(null));
   }, [courseId]);
->>>>>>> origin
-
-  const { courseId } = useParams();
-  const navigate = useNavigate();
-  const { enroll, isEnrolled } = useEnrollment();
-
 
   if (!course) {
     return (

@@ -76,7 +76,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
       };
 
       // Send to Django backend
-      await axios.post('http://localhost:8000/courses/frontend', courseData);
+      await axios.post('http://localhost:8000/courses/frontend/', courseData);
       
       console.log("Course created successfully:", courseData);
       
