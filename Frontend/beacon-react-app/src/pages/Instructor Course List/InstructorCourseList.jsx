@@ -10,7 +10,7 @@ export default function InstructorCourseList() {
     const [courses, setCourses] = useState([]);
 
   useEffect( () => {
-    axios.get('http://localhost:8000/courses/frontend')
+    axios.get('http://localhost:8000/courses/frontend/')
       .then(res => {
         console.log("API response", res.data);
         setCourses(res.data);

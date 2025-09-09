@@ -1,56 +1,73 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, {useEffect, useState} from 'react';
+
 import { useNavigate } from "react-router-dom";
+import axios from 'axios'
 import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
+import { useEnrollment } from "../../state/EnrollmentContext";
+import allCourses from "../../data/courses";
 import CourseCard from "../../components/CourseCard/CourseCard";
 import s from "./StudentEnrollment.module.css";
 
-export default function StudentEnrollment() {
-  const navigate = useNavigate();
-  const studentId = 1; // replace with context/auth later
-  const url = "http://127.0.0.1:8000/api";
 
-  const [enrolled, setEnrolled] = useState([]);
-  const [unenrolled, setUnenrolled] = useState([]);
+export default function StudentEnrollment() {
+  //const { isEnrolled } = useEnrollment();
+  const navigate = useNavigate();
+  //Dummy value
+  const student_id = 1 
+  //const available = allCourses.filter((c) => !isEnrolled(c.id));
+  const [unenrolled, setUnenrolled] = useState([])
+  const [submittingId, setSubmittingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch enrolled and unenrolled courses
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const [resEnrolled, resUnenrolled] = await Promise.all([
-        axios.get(`${url}/students/${studentId}/enrolled/`),
-        axios.get(`${url}/students/${studentId}/enrolled/`)
-      ]);
-
-      // Ensure course_id and course_title are used
-      setEnrolled(resEnrolled.data || []);
-      setUnenrolled(resUnenrolled.data || []);
+      await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/enrollment/`).then(
+        res => {
+          // normalize each item to what CourseCard expects
+          const normalized = (res.data || []).map(d => ({
+            // make sure these keys exist for the card:
+            id: d.id ?? d.course_id,
+            title: d.name ?? d.title ?? d.course_title,
+            code: d.code ?? d.course_code,
+            description: d.description ?? d.desc ?? "",
+            // keep original fields too, if the card uses others
+            ...d,
+          }));
+          setUnenrolled(normalized);
+        }
+      )
     } catch (err) {
-      console.error("Unable to fetch courses", err);
+      console.error("Error fetching unenrolled courses", err);
+      alert("Failed to load available courses.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Enroll in a course
   const handleEnroll = async (courseId) => {
     try {
-      await axios.post(`${url}/students/${studentId}/enrolled/`, { course_id: courseId });
-
-      // Refresh courses from backend instead of local array manipulation
-      fetchCourses();
+      setSubmittingId(courseId);
+      await axios.post( `http://localhost:8000/courses/${student_id}/student/enrollment/`, {
+        course_id: courseId,
+      });
+      await fetchCourses(); // refresh after write so UI stays correct
     } catch (err) {
-      console.error("Enrollment failed", err);
-      alert("Failed to enroll in course.");
+      const detail = err?.response?.data?.detail;
+      if (detail === "Student already enrolled") {
+        await fetchCourses();
+      } else {
+        console.error("Enrollment failed", err);
+        alert(detail || "Failed to enroll in course.");
+      }
+    } finally {
+      setSubmittingId(null);
     }
   };
 
   useEffect(() => {
     fetchCourses();
   }, []);
-
-  if (loading) return <p>Loading courses...</p>;
 
 
   return (
@@ -61,36 +78,19 @@ export default function StudentEnrollment() {
           <h1 className={s.title}>COURSE ENROLLMENT</h1>
         </header>
 
-        {/* Enrolled Courses */}
-        <section className={s.section}>
-          <h2>My Courses</h2>
-          {enrolled.length === 0 ? (
-            <p>You have not enrolled in any courses yet.</p>
-          ) : (
-            <div className={s.grid}>
-              {enrolled.map(c => (
-                <CourseCard key={c.course_id} course={c} ctaText="View" onClick={() => console.log("Viewing", c.course_id)} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Unenrolled Courses */}
-        <section className={s.section}>
-          <h2>Available Courses</h2>
-          {unenrolled.length === 0 ? (
-            <p>All courses are already enrolled!</p>
-          ) : (
-            <div className={s.grid}>
-              {unenrolled.map(c => (
-                <CourseCard
-                  key={c.course_id}
-                  course={c}
-                  ctaText="Enroll"
-                  onClick={() => console.log("Viewing", c.course_id)}
-                  onCta={() => handleEnroll(c.course_id)}
-                />
-              ))}
+        <section className={s.grid}>
+          {unenrolled.map((c) => (
+            <CourseCard
+              key={c.id}
+              course={c}
+              onClick={() => navigate(`/student/enrollment/${c.id}`)}
+              onCta={() => handleEnroll(c.id)}
+              ctaText={submittingId === c.id ? "Enrolling…" : "Enroll"}
+            />
+          ))}
+          {unenrolled.length === 0 && (
+            <div className={s.empty}>
+              You're enrolled in all available courses{" "}
             </div>
           )}
         </section>

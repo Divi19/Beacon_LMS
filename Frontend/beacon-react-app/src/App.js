@@ -13,7 +13,7 @@ export default function App(){
   const [details, setDetails] = useState([]);
 
   useEffect( () => {
-    axios.get('http://localhost:8000/courses/frontend/')
+    axios.get('http://localhost:8000/courses/frontend')
     .then(res => {
       setDetails(res.data);
     })
