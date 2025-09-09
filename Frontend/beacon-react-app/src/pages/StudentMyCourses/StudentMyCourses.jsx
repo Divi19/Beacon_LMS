@@ -18,19 +18,7 @@ export default function StudentEnrollmentPage() {
   
   useEffect( () => {
   axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/my_courses/`)
-    .then(res => {
-      // normalize each item to what CourseCard expects
-      const normalized = (res.data || []).map(d => ({
-        // make sure these keys exist for the card:
-        id: d.id ?? d.course_id,
-        title: d.name ?? d.title ?? d.course_title,
-        code: d.code ?? d.course_code,
-        description: d.description ?? d.desc ?? "",
-        // keep original fields too, if the card uses others
-        ...d,
-      }));
-      setEnrolled(normalized);
-    })
+    .then(res => setEnrolled(res.data))
     .catch(err => 
       console.error('Error fetching data', err));
     }, []);
