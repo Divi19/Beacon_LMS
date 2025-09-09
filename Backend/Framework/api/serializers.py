@@ -18,19 +18,6 @@ class StudentSerializer(serializers.ModelSerializer):
         fields = ["student_profile_id", "full_name", "student_no", "courses", "course_ids"]
         read_only_fields = ["student_profile_id"]
 
-    def update(self, instance, validated_data):
-        courses = validated_data.pop("courses", None)
-        instance = super().update(instance, validated_data)
-        if courses is not None:
-            instance.courses.set(courses) #replace all 
-        return instance
-
-    def create(self, validated_data):
-        courses = validated_data.pop("courses", []) #grab courses
-        student = Student.objects.create(**validated_data) #unwrap
-        if courses:
-            student.courses.set(courses)
-        return student
     
 
 

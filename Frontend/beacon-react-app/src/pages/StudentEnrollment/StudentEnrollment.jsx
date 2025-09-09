@@ -68,7 +68,13 @@ export default function StudentEnrollment() {
           {unenrolled.map((c) => {
             return <CourseCard
               key={c.course_id}
-              course={c}
+              course={{
+                id: c.course_id,
+                title: c.course_title,
+                credits: c.course_credits,
+                director: c.course_director,
+                description: c.course_description,
+              }}
               onClick={() => navigate(`/student/enrollment/${c.course_id}`)}
               onCta={() => handleEnroll(c.course_id)}
               ctaText={submittingId === c.course_id ? "Enrolling…" : "Enroll"}
