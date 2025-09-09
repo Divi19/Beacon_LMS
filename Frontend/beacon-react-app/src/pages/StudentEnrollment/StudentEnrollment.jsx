@@ -17,23 +17,18 @@ export default function StudentEnrollment() {
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [unenrolled, setUnenrolled] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
-  const [isLoading, setLoading] = useState(true);
 
   const fetchCourses = async () => {
     try {
-      setLoading(true);
       await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/enrollment/`).then(
         res => {
-          // normalize each item to what CourseCard expects
           setUnenrolled(res.data);
         }
       )
     } catch (err) {
       console.error("Error fetching unenrolled courses", err);
       alert("Failed to load available courses.");
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const handleEnroll = async (courseId) => {
@@ -70,21 +65,13 @@ export default function StudentEnrollment() {
         </header>
 
         <section className={s.grid}>
-          {unenrolled.map((raw) => {
-            const id    = raw.course_id;
-            const title = raw.course_title ?? "Untitled";
-            const code  = raw.course_id ?? "";
-            const desc  = raw.course_description ?? "";
-            
+          {unenrolled.map((c) => {
             return <CourseCard
-              key={id}
-              id={id}
-              title={title}
-              code={code}
-              description={desc}
-              onClick={() => navigate(`/student/enrollment/${id}`)}
-              onCta={() => !isLoading && handleEnroll(id)}
-              ctaText={isLoading ? "Enrolling…" : "Enroll"}
+              key={c.course_id}
+              course={c}
+              onClick={() => navigate(`/student/enrollment/${c.course_id}`)}
+              onCta={() => handleEnroll(c.course_id)}
+              ctaText={submittingId === c.course_id ? "Enrolling…" : "Enroll"}
             />
           })}
           {unenrolled.length === 0 && (
