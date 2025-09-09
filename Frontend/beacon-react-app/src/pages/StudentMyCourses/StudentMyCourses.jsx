@@ -68,7 +68,13 @@ export default function StudentEnrollmentPage() {
               {enrolled.map((c) => (
                 <CourseCard
                   key={c.id}
-                  course={c}
+                  course={{
+                    id: c.course_id,
+                    title: c.course_title,
+                    credits: c.course_credits,
+                    director: c.course_director,
+                    description: c.course_description,
+                  }}
                   ctaText="View"
                   onClick={() => {
                     // To implement in the future
