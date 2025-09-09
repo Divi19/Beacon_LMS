@@ -28,5 +28,7 @@ urlpatterns = [
     #path('students/<str:student_id>/enrollment/', StudentUnenrolledCourses.as_view(), name='enrollment'),
     path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
     path("courses/frontend/<int:student_profile_id>/student/enrollment/", StudentUnenrolledCourses.as_view(), name="my-courses"),
+    path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentEnroll.as_view(), name="my-courses"),
+    
    
 ]

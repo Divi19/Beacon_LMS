@@ -17,7 +17,7 @@ export default function StudentEnrollment() {
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [unenrolled, setUnenrolled] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
 
   const fetchCourses = async () => {
     try {
@@ -25,16 +25,7 @@ export default function StudentEnrollment() {
       await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/enrollment/`).then(
         res => {
           // normalize each item to what CourseCard expects
-          const normalized = (res.data || []).map(d => ({
-            // make sure these keys exist for the card:
-            id: d.id ?? d.course_id,
-            title: d.name ?? d.title ?? d.course_title,
-            code: d.code ?? d.course_code,
-            description: d.description ?? d.desc ?? "",
-            // keep original fields too, if the card uses others
-            ...d,
-          }));
-          setUnenrolled(normalized);
+          setUnenrolled(res.data);
         }
       )
     } catch (err) {
@@ -48,7 +39,7 @@ export default function StudentEnrollment() {
   const handleEnroll = async (courseId) => {
     try {
       setSubmittingId(courseId);
-      await axios.post( `http://localhost:8000/courses/${student_id}/student/enrollment/`, {
+      await axios.post( `http://localhost:8000/courses/frontend/${student_id}/student/enroll/`, {
         course_id: courseId,
       });
       await fetchCourses(); // refresh after write so UI stays correct
@@ -79,15 +70,23 @@ export default function StudentEnrollment() {
         </header>
 
         <section className={s.grid}>
-          {unenrolled.map((c) => (
-            <CourseCard
-              key={c.id}
-              course={c}
-              onClick={() => navigate(`/student/enrollment/${c.id}`)}
-              onCta={() => handleEnroll(c.id)}
-              ctaText={submittingId === c.id ? "Enrolling…" : "Enroll"}
+          {unenrolled.map((raw) => {
+            const id    = raw.course_id;
+            const title = raw.course_title ?? "Untitled";
+            const code  = raw.course_id ?? "";
+            const desc  = raw.course_description ?? "";
+            
+            return <CourseCard
+              key={id}
+              id={id}
+              title={title}
+              code={code}
+              description={desc}
+              onClick={() => navigate(`/student/enrollment/${id}`)}
+              onCta={() => !isLoading && handleEnroll(id)}
+              ctaText={isLoading ? "Enrolling…" : "Enroll"}
             />
-          ))}
+          })}
           {unenrolled.length === 0 && (
             <div className={s.empty}>
               You're enrolled in all available courses{" "}
