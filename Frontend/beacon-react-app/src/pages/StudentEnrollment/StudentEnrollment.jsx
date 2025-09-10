@@ -69,7 +69,7 @@ export default function StudentEnrollment() {
             return <CourseCard
               key={c.course_id}
               course={{
-                id: c.course_id,
+                code: c.course_id,
                 title: c.course_title,
                 credits: c.course_credits,
                 director: c.course_director,

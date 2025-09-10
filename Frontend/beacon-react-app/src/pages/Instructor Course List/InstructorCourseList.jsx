@@ -53,13 +53,13 @@ export default function InstructorCourseList() {
     <div className={s.cardDesc1}>
   <div className={s.leftGroup}>
     <span>Code:</span>
-    <span className={s.spacing}>{course.course_id}</span>
+    <span className={s.spacing}><strong>{course.course_id}</strong></span>
   </div>
-  <span>{course.course_credits} Credits</span>
+  <span><strong>{course.course_credits}</strong> Credits</span>
 </div>
   <div className={s.cardDesc2}>
   <span>Course Director:</span>
-  <span>{course.course_director}</span>
+  <span><strong>{course.course_director}</strong></span>
 </div>
   </div>
       ))}

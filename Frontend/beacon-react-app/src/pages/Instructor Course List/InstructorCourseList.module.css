@@ -57,7 +57,7 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  overflow-y: auto;
 }
 
 .card {
@@ -75,35 +75,38 @@
 }
 
 .card:hover {
-  transform: scale(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
 }
+
 
 .cardTitle {
   font-size: 22px;
   font-weight: bold;
-  margin-bottom: 50px;
 }
 
 .cardDesc1 {
   display: flex;
-  justify-content: space-between;
+  justify-content: left;
   width: 100%;
   font-size: 16px;
 }
 
 .cardDesc1 span:last-child {
-  margin-right: 200px;
+  margin-right: 10px;
 }
 
 .cardDesc2 {
   display: flex;
-  justify-content: space-between; 
+  justify-content: left; 
   width: 100%;
   font-size: 16px;
+  margin-bottom: 24px;
 }
 
 .cardDesc2 span:last-child {
-  margin-right: 200px;
+  margin-right: 10px;
 }
 
 .leftGroup {
