@@ -35,11 +35,6 @@ export default function InstructorCourseDescription() {
     );
   }
 
-  const handleEnroll = () => {
-    if (!isEnrolled(course.course_id)) enroll(course.course_id);
-    navigate("/instructor/course-description");
-  };
-
   return (
     <>
       <InstructorTopBar />

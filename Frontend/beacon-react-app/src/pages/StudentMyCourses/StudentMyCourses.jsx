@@ -76,10 +76,8 @@ export default function StudentEnrollmentPage() {
                     description: c.course_description,
                   }}
                   ctaText="View"
-                  onClick={() => {
-                    // To implement in the future
-                    console.log("Viewing course:", c.id);
-                  }}
+                  onClick={() => navigate(`/student/course/${c.course_id}`)}
+                  
                 />
               ))}
             </section>
