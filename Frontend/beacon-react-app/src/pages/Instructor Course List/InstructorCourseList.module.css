@@ -44,14 +44,15 @@
 .container {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(2, 1fr); 
-  grid-template-rows: repeat(2, 1fr);   
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 50px;
-  height: 100vh;  
-  width: 100vw;  
-  overflow: hidden;
-  padding: 20px 50px;  
+  width: 100%;
+  padding: 20px 50px;
   box-sizing: border-box;
+
+  grid-auto-rows: auto;
+  align-content: start;
+  min-height: 0;       
 }
 
 .wrap {
@@ -66,6 +67,7 @@
   justify-content: flex-start;
   align-items: flex-start;
   padding: 20px;
+  padding-bottom: 80px; 
   border-radius: 20px;
   background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
   color: brown;
