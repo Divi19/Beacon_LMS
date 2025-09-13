@@ -1,22 +1,49 @@
 from rest_framework import serializers
-from .models import Course, Student
+from .models import Course, Student, Instructor
 
 class CourseSerializer(serializers.ModelSerializer):
+    """
+    Json parsing for courses 
+    """
     class Meta:
         model = Course
         fields = ["course_title", "course_id", "course_credits", "course_director", "course_description"]
 
 class StudentSerializer(serializers.ModelSerializer):
+    """
+    Json parsing for students  
+    """
+    #receives primary id and translates into real course
     course_ids = serializers.PrimaryKeyRelatedField(
         many=True, source="courses", queryset=Course.objects.all(),
         write_only=True, required=False
     )
+    #Nested models 
     courses = CourseSerializer(many=True, read_only=True)
 
     class Meta:
         model = Student
         fields = ["student_profile_id", "full_name", "student_no", "courses", "course_ids"]
         read_only_fields = ["student_profile_id"]
+
+class InstructorSerializer(serializers.ModelSerializer):
+    """
+    Json parsing for instructors  
+    """
+    #receives primary id and translates into real course
+    course_ids = serializers.PrimaryKeyRelatedField(
+        many=True, source="courses", queryset=Course.objects.all(),
+        write_only=True, required=False
+    )
+    #Nested models 
+    courses = CourseSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Instructor
+        fields = ["instructor_profile_id", "full_name", "instructor_email", "password_hash", "course_ids"]
+        read_only_fields = ["instructor_prodile_id"] #automated key
+
+
 
     
 

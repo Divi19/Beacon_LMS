@@ -1,5 +1,6 @@
+from contextvars import Token
 from django.shortcuts import render, redirect
-from .forms import CoursesForm
+from .forms import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CourseSerializer, StudentSerializer
@@ -8,7 +9,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
+from django.contrib.auth import authenticate, login, logout 
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view
+from rest_framework_simplejwt.tokens import RefreshToken
 
 """
 Instructor Part
@@ -46,6 +50,27 @@ class FrontendDetailView(APIView):
                    "course_director": courses.course_director,
                    "course_description": courses.course_description}
         return Response(output)
+    
+"""
+Authentication for Instructors 
+"""
+
+class InstructorLogin(APIView): 
+    """
+    Instructor login function using simple Jwt
+    https://medium.com/@preciousimoniakemu/create-a-react-login-page-that-authenticates-with-django-auth-token-8de489d2f751 
+    """
+    def instructor_login(self, request):
+        email = request.data.get("instructor_email")
+        password = request.data.get("password_hash")
+        user = authenticate(request, email=email, password=password)
+        if user is not None: 
+            #if it's correct, generate new tokens
+            token = RefreshToken.for_user(user)
+            return Response({"access": str(token.access_token), "refresh": str(token)})
+        else:
+            return Response({"error": "Invalid login credentials"})
+        
     
 """
 Student Part
