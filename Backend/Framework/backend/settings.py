@@ -102,8 +102,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'lms_dev',
+        'USER': 'myuser',
+        'PASSWORD': 'LmsPass123!',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 
@@ -157,5 +161,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:3000"]
 CORS_ALLOW_CREDENTIALS = False
 #CORS_ALLOW_ORIGINS = True
-
-
