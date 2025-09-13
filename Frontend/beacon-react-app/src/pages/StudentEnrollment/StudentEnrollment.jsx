@@ -37,7 +37,7 @@ export default function StudentEnrollment() {
       await axios.post( `http://localhost:8000/courses/frontend/${student_id}/student/enroll/`, {
         course_id: courseId,
       });
-      await fetchCourses(); // refresh after write so UI stays correct
+      await fetchCourses(); // refresh after write so UI stays correct (the number of unenrolled)
     } catch (err) {
       const detail = err?.response?.data?.detail;
       if (detail === "Student already enrolled") {
