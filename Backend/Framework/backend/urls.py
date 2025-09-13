@@ -22,17 +22,15 @@ from rest_framework_simplejwt.views import TokenRefreshView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path("api/instructor/login/", InstructorLogin.as_view(), name="instructor_login"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-
     path('accounts/', include('accounts.urls')),
+    #Instructors
     path('courses/frontend/', FrontendView.as_view(), name="frontend"),
     path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
+    path("api/instructor/login/", InstructorLogin.as_view(), name="instructor_login"),
     #students
-    #path('students/<str:student_id>/my_courses/', StudentEnrolledCourses.as_view(), name='my_courses'),
-    #path('students/<str:student_id>/enrollment/', StudentUnenrolledCourses.as_view(), name='enrollment'),
     path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
-    path("courses/frontend/<int:student_profile_id>/student/enrollment/", StudentUnenrolledCourses.as_view(), name="my-courses"),
-    path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentEnroll.as_view(), name="my-courses"),
+    path("courses/frontend/<int:student_profile_id>/student/enrollment/", StudentUnenrolledCourses.as_view(), name="enrollment"),
+    path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentEnroll.as_view(), name="enroll"),
    
 ]
