@@ -10,12 +10,3 @@ class CoursesForm(forms.ModelForm):
         fields = '__all__'
     
 
-class InstructorsLoginForm(forms.ModelForm):
-    """
-    Form for Instructors Login 
-    """
-    #Masking password inputs 
-    password_hash = forms.CharField(widget=forms.PasswordInput)
-    class Meta:
-        model = Instructor 
-        fields = ("email", "password_hash")

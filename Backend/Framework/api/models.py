@@ -1,11 +1,8 @@
 from django.db import models
 
-
+"""
 
 class Course(models.Model):
-    """
-    Course model using dummy fields 
-    """
     course_title = models.CharField(max_length=250)
     course_id = models.CharField(primary_key=True, max_length=500, unique=True)
     course_credits = models.IntegerField()
@@ -19,9 +16,6 @@ class Course(models.Model):
         return f"{self.course_id}: {self.course_title}"
     
 class Student(models.Model):
-    """
-    Student model using dummy fields 
-    """
     student_profile_id = models.AutoField(primary_key=True)
     full_name = models.CharField(max_length=255)
     student_no = models.CharField(max_length=50, unique=True)
@@ -34,9 +28,6 @@ class Student(models.Model):
         return f"{self.student_profile_id}: {self.full_name}"
     
 class Instructor(models.Model): 
-    """
-    Instructors using dummy fields: 
-    """
     instructor_profile_id =  models.AutoField(primary_key=True)
     full_name = models.CharField(max_length=255)
     instructor_email = models.EmailField(max_length=254, unique=True)
@@ -49,7 +40,7 @@ class Instructor(models.Model):
         return f"{self.instructor_profile_id}: {self.full_name}"
     
 
-
+"""
 
 #After postgresql integration uses 
 

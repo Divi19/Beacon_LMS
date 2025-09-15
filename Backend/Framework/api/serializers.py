@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth.hashers import make_password
 
+
 """
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -35,24 +36,41 @@ class InstructorSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Receiving json about user and parsing it in GET
+    """
     class Meta:
         model = User 
-        fields = ['email', 'password_hash', 'role', 'created_at']
+        fields = ['user_id', 'email', 'password_hash', 'role', 'created_at']
         extra_kwargs = { #Extra sttings for certain fiels 
+            'email': {'write_only': True}, # Never send email hash back to clients
             'password_hash': {'write_only': True}, # Never send password hash back to clients
             'created_at': {'read_only': True}, # created_at is read-only
         }
 
 class InstructorSerializer(serializers.ModelSerializer):
+    """
+    Receiving json about instructors and parsing it (including nested user json) in GET
+    """
     user = UserSerializer() 
     class Meta:
         model = InstructorProfile
         fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
-        
+
+class LoginSerializer(serializers.ModelSerializer):
+    """
+    Json parsing for login purposes in POST
+    """
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
     
 class CourseSerializer(serializers.ModelSerializer):
+    """
+    Json parsing for courses showing and creation in POST and GET
+    """
     owner_instructor_id = serializers.PrimaryKeyRelatedField(
-        source='instructor', queryset=InstructorProfile.objects.all(), write_only=True
+        source='owner_instructor', queryset=InstructorProfile.objects.all(), write_only=True
         )
     Instructor = InstructorSerializer()
 
@@ -61,31 +79,53 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = ["course_id", "code", "title", "status", "owner_instructor", "credits", "director", "description"]
         read_only_fields = ["owner_instructor"]  
 
+    #Creating a course from a form, fields in validated_data.
     def create(self, validated_data): 
-        request = self.context.get("request") #read the current request 
-        instructor =  InstructorProfile.objects.get(user = request.user) #match user info in instructors 
-        validated_data["owner_instructor"] = instructor
-        return  Course.objects.create(**validated_data) #Unpacking again
-
+        """
+        POST function for course creation. Due to no nested fields, no need for external serializers
+        """
+        request = self.context.get("request") #read the current request (who is requesting?)
+        if "owner_instructor" not in validated_data and request and hasattr(request, "user"):
+            #In case validated data isn't storing owner_instructor, but user instead
+            try:
+                #Grab instructor based on user field
+                owner = InstructorProfile.objects.get(user=request.user)
+                validated_data["owner_instructor"] = owner
+            except InstructorProfile.DoesNotExist:
+                pass
+        return Course.objects.create(**validated_data)
 
 
 class StudentSerializer(serializers.ModelSerializer):
+    """
+    Json parsing for student creation (registration) and reading in POST and GET
+    """
+    #password for student creation
+    email = serializers.EmailField(write_only = True)
     password = serializers.CharField(write_only = True) 
     user = UserSerializer() 
+
     class Meta:
         model = StudentProfile
-        fields = ['student_profile_id', 'user', 'full_name', 'student_no', 'locked_at']
+        fields = ['student_profile_id', 'user', 'full_name', 'student_no', 'locked_at', 'password']
         read_only_fields = ['student_profile_id', 'student_no']
 
     #during post 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
+        """
+        POST student creation (registration), invoked implicitly using .save() in views
+        """
+        #validated data contains email and password 
+        email = validated_data.pop('email', None) 
+        role = validated_data.pop('role', 'student')
         raw_pwd = validated_data.pop('password')
+        
         user = User.objects.create(
-            email = user_data['email'],
+            email = email,
             password_hash=make_password(raw_pwd), #Hash the plain password 
-            role=user_data.get('role', 'student'), #Set the role or default to student 
+            role=role #Set the role or default to student 
         )
+        
         student = StudentProfile.objects.create(
             user=user,
              **validated_data #unpack the rest of the validated data

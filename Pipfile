@@ -11,6 +11,9 @@ djangorestframework = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
 django-environ = "*"
+dotenv = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
