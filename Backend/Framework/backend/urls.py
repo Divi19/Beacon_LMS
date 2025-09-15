@@ -25,8 +25,8 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path('accounts/', include('accounts.urls')),
     #Instructors
-    path('courses/frontend/', FrontendView.as_view(), name="frontend"),
-    path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
+    path('courses/frontend/', InstructorCoursesView.as_view(), name="frontend"),
+    path('courses/frontend/<str:pk>/', CourseDetailView.as_view(), name="frontend-detail"),
     path("api/instructor/login/", InstructorLogin.as_view(), name="instructor_login"),
     #students
     path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
