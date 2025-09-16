@@ -1,5 +1,6 @@
 .wrap {
   padding: clamp(16px, 4vw, 40px);
+   padding-top: 22vh;
 }
 
 .header {

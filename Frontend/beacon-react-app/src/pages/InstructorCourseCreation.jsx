@@ -33,9 +33,8 @@ export default function InstructorCourseCreation() {
 
   return (
     <div className={i.wrap}>
-      <div className={i.topBar}>
-        <InstructorTopBar />
-      </div>
+      <InstructorTopBar />
+
       <header className={i.header}>
         <h1 className={i.title}>COURSES</h1>
       </header>

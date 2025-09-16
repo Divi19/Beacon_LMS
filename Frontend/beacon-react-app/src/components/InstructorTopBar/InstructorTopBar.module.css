@@ -7,6 +7,11 @@
   background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
   border-bottom: 2px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 .leftSide {
@@ -42,7 +47,7 @@
   cursor: pointer;
   font-weight: 500;
   font-size: clamp(14px, 1.8vw, 18px);
-  color: #07464f;
+  color:#431a01;
 }
 
 .profileLogoTop {

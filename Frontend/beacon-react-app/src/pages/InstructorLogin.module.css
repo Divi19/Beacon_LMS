@@ -1,0 +1,148 @@
+.wrap {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: #eee;
+  padding: clamp(16px, 3vw, 32px);
+}
+
+.card {
+  width: min(650px, 92vw);
+  border-radius: 20px;
+  padding: clamp(20px, 4vw, 44px);
+  padding-top: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(
+    180deg,
+    var(--bg-right-bot) 0%,
+    var(--bg-right-mid) 60%,
+    var(--bg-right-top) 100%
+  );
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.logo {
+  width: 250px;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+  margin: 4px auto 18px;
+
+}
+
+.title {
+  margin: 6px 0 24px;
+  text-align: center;
+  font-size: clamp(28px, 3.4vw, 33px);
+  line-height: 1.2;
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  font-weight: 500;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+  margin-top: clamp(6px, 1.2vw, 10px);
+}
+
+.label {
+  font-size: clamp(16px, 1.6vw, 18px);
+  font-weight: 600;
+  color: #9c440c;
+  margin-top: 6px;
+}
+
+.input {
+  width: 100%;
+  border: none;
+  outline: none;
+  height: clamp(46px, 6.2vw, 56px);
+  border-radius: 16px;
+  padding: 0 16px;
+  background: #ededed;
+  color: #1f2937;
+  font-size: clamp(16px, 1.6vw, 18px);
+  box-shadow: inset 0 0 0 2px transparent;
+  transition: box-shadow 160ms ease;
+}
+
+.input:focus {
+  box-shadow: inset 0 0 0 2px #66c9d7;
+}
+
+.pwRow {
+  position: relative;
+  display: grid;
+}
+
+.pwToggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #0f6b76;
+  border-radius: 10px;
+}
+
+.pwToggle:hover {
+  background: rgba(15, 107, 118, 0.08);
+}
+
+.error {
+  margin-top: 6px;
+  color: #b00020;
+  font-size: 14px;
+}
+
+.cta {
+  margin-top: clamp(10px, 1.2vw, 16px);
+  width: clamp(180px, 36vw, 220px);
+  justify-self: end;
+  height: clamp(46px, 6.2vw, 58px);
+  border-radius: 1000px;
+  border: none;
+  background:#f29907;
+  color:#9c440c;
+  font-weight: 700;
+  font-size: clamp(16px, 1.6vw, 18px);
+  cursor: pointer;
+  transition: filter 140ms ease, transform 80ms ease;
+}
+
+.cta:hover {
+  filter: brightness(1.05);
+  background-color:#f2efe9 ;
+}
+.cta:active {
+  transform: translateY(1px);
+}
+.cta:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ctaTextUnderline {
+  text-decoration: underline;
+}
+
+.footerLinks {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.backLink {
+  color: #0f6b76;
+  text-underline-offset: 2px;
+}
+
+.backLink:hover{
+    color: white;
+}
