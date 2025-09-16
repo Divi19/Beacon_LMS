@@ -26,7 +26,9 @@ export default function InstructorCourseCreation() {
     }
 
     checkCourses();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   return (
@@ -40,7 +42,8 @@ export default function InstructorCourseCreation() {
 
       <section className={i.card}>
         <p className={i.emptyText}>
-          No courses yet. Create one<br />
+          No courses yet. Create one
+          <br />
         </p>
 
         <div className={i.ctaRow}>
@@ -52,12 +55,25 @@ export default function InstructorCourseCreation() {
             <span>Create Course</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="22" height="22" viewBox="0 0 24 24" fill="#6ac3d1ff"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="#6ac3d1ff"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               className={i.buttonCreate}
             >
               <circle cx="12" cy="12" r="10" fill="#278d9cff" />
-              <line x1="12" y1="6" x2="12" y2="18" stroke="white" strokeLinecap="round"></line>
+              <line
+                x1="12"
+                y1="6"
+                x2="12"
+                y2="18"
+                stroke="white"
+                strokeLinecap="round"
+              ></line>
               <line x1="6" y1="12" x2="18" y2="12"></line>
             </svg>
           </Button>
