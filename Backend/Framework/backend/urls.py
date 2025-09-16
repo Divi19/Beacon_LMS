@@ -23,7 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path('accounts/', include('accounts.urls')),
     #Instructors
     path('courses/frontend/', InstructorCoursesView.as_view(), name="frontend"),
     path('courses/frontend/<str:pk>/', CourseDetailView.as_view(), name="frontend-detail"),
