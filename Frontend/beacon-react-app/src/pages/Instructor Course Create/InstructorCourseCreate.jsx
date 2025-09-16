@@ -13,7 +13,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
 
   const [formData, setFormData] = useState({
     courseName: "",
-    ID: "",
+    code: "",
     credits: "",
     director: "",
     description: "",
@@ -53,7 +53,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   const resetForm = () => {
     setFormData({
       courseName: "",
-      ID: "",
+      code: "",
       credits: "",
       director: "",
       description: "",
@@ -68,7 +68,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     try {
       // Prepare data for Django backend
       const courseData = {
-        course_id: formData.ID,
+        code: formData.code,
         course_title: formData.courseName,
         course_credits: formData.credits,
         course_director: formData.director,
@@ -118,12 +118,12 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course ID:</label>
+              <label className={i.label}>Course Code:</label>
               <input
                 className={i.input}
                 type="text"
-                name="ID"
-                value={formData.ID}
+                name="code"
+                value={formData.code}
                 onChange={handleChange}
                 required
               />

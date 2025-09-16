@@ -3,37 +3,6 @@ from .models import *
 from django.contrib.auth.hashers import make_password
 
 
-"""
-
-class StudentSerializer(serializers.ModelSerializer):
-    #receives primary id and translates into real course
-    course_ids = serializers.PrimaryKeyRelatedField(
-        many=True, source="courses", queryset=Course.objects.all(),
-        write_only=True, required=False
-    )
-    #Nested models 
-    courses = CourseSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Student
-        fields = ["student_profile_id", "full_name", "student_no", "courses", "course_ids"]
-        read_only_fields = ["student_profile_id"]
-
-class InstructorSerializer(serializers.ModelSerializer):
-    #receives primary id and translates into real course
-    course_ids = serializers.PrimaryKeyRelatedField(
-        many=True, source="courses", queryset=Course.objects.all(),
-        write_only=True, required=False
-    )
-    #Nested models 
-    courses = CourseSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Instructor
-        fields = ["instructor_profile_id", "full_name", "instructor_email", "password_hash", "course_ids"]
-        read_only_fields = ["instructor_prodile_id"] #automated key
-"""
-
 
 class UserSerializer(serializers.ModelSerializer):
     """
@@ -72,11 +41,10 @@ class CourseSerializer(serializers.ModelSerializer):
     owner_instructor_id = serializers.PrimaryKeyRelatedField(
         source='owner_instructor', queryset=InstructorProfile.objects.all(), write_only=True
         )
-    Instructor = InstructorSerializer()
 
     class Meta:
         model = Course
-        fields = ["course_id", "code", "title", "status", "owner_instructor", "credits", "director", "description"]
+        fields = ["code", "title", "status", "owner_instructor", "owner_instructor_id", "credits", "description"]
         read_only_fields = ["owner_instructor"]  
 
     #Creating a course from a form, fields in validated_data.
@@ -133,24 +101,22 @@ class StudentSerializer(serializers.ModelSerializer):
         return student 
 
 class EnrollmentSerializer(serializers.ModelSerializer):
-    student_profile_id = serializers.PrimaryKeyRelatedField(
-        source='student', queryset=StudentProfile.objects.all(), write_only=True
-    ) #Receive a list of ids which get translated to real student object
     course_id = serializers.PrimaryKeyRelatedField(
         source='course', queryset=Course.objects.all(), write_only=True
-    ) #Receive a list of ids which get translated to real course object
-
-    student = StudentSerializer(read_only = True)
-    course = CourseSerializer(read_only = True)
+    ) #Receive an id which get translated to real course object
 
     class Meta:
         model = Enrollment
-        fields = ['enrollment_id', 'student', 'course', 'enrolled_at']
+        fields = ['enrollment_id', 'course_id', 'enrolled_at']
 
     #post during creation
     def create(self, validated_data):
-        student = validated_data.pop('student')
+        student = self.context.get('student')
+        if student is None:
+            raise serializers.ValidationError("Serializer context must include 'student'.")
+
         course = validated_data.pop('course')
+
         #see if object already exists 
         if Enrollment.objects.filter(student=student, course=course).exists():
             raise serializers.ValidationError(
@@ -160,8 +126,10 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "This course is current inactive."
             )
-
+        
         enrollment = Enrollment.objects.create(
-             **validated_data #unpack the rest of the validated data
+            student = student,
+            course = course,
+            **validated_data #unpack the rest of the validated data
         )
         return enrollment 
