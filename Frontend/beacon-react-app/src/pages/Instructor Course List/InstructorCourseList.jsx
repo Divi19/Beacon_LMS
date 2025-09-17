@@ -4,57 +4,48 @@ import Button from "../../components/Button/Button";
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {api} from "../../api" 
 
 export default function InstructorCourseList() {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
-  const [isLogin, setLogin] = useState(true);
-  const [instructor_profile_id, setInstructor] = useState(null)
+  const [ready, setReady] = useState(false);
 
-  /**
-   * Checking logged in user
-   */
-  const checkLoggedInUser = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (token){
-        const config = {
-          headers: {
-            "Authorization" :`Bearer ${token}`
-          }
-        }; 
-        const response = await axios.get("http://localhost:8000/user/", config)
-        setLogin(true)
-        setInstructor(response.data.instructor_profile_id)
-      }
-      else {
-        setLogin(false);
-        setInstructor(null)
-      }
-    } catch(error) {
-      setLogin(false);
-      setInstructor(null)
-    }
-  }
   /**
    * Fetching courses
-   * 
+   * --Warning: ignore first 401, possibly due to rogue axios call on student's side
    */
-  const fetchCourses = async () => {
-    axios
-    .get("http://localhost:8000/courses/frontend/")
-    .then((res) => {
-      console.log("API response", res.data);
-      setCourses(res.data);
-    })
-    .catch((err) => console.error("Error fetching data", err));
-
-  }
-  
   useEffect(() => {
-    checkLoggedInUser();
-    fetchCourses();
-  }, []);
+    //grab item first 
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      //If no token, go back to login 
+      navigate("/instructor/login", { replace: true });
+      return;
+    }
+
+    (async () => {
+      try {
+        // hydrate user first; ensures backend sees a valid token
+        await api.get("/user/");
+        setReady(true);      
+        // then fetch courses
+        const { data } = await api.get("/courses/frontend/");
+        setCourses(data);
+      } catch (e) {
+        if (e?.response?.status === 401) {
+          // token missing/invalid/expired — clear and send to login
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          navigate("/instructor/login", { replace: true });
+        } else {
+          console.error("Dashboard fetch failed:", s, e?.response?.data);
+        }
+      }
+    })();
+  }, [navigate]);
+
+  if (!ready) return null
 
   return (
     <div>
@@ -111,7 +102,7 @@ export default function InstructorCourseList() {
                 <div className={s.leftGroup}>
                   <span>Code:</span>
                   <span className={s.spacing}>
-                    <strong>{course.course_id}</strong>
+                    <strong>{course.course_code}</strong>
                   </span>
                 </div>
                 <span>

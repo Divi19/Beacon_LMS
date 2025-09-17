@@ -34,5 +34,5 @@ urlpatterns = [
     path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
     path("courses/frontend/<int:student_profile_id>/student/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
     path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
-    path("user/logout", UserLogout.as_view(), name="logout")
+    path("user/logout/", UserLogout.as_view(), name="logout")
 ]

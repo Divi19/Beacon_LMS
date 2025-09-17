@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/Button/Button";
 import i from "./InstructorCourseCreation.module.css";
 import InstructorTopBar from "../components/InstructorTopBar/InstructorTopBar";
-
+import {api} from "../api" 
 export default function InstructorCourseCreation() {
   const navigate = useNavigate();
 
@@ -13,7 +13,7 @@ export default function InstructorCourseCreation() {
 
     async function checkCourses() {
       try {
-        const res = await axios.get("http://localhost:8000/courses/frontend/");
+        const res = await api.get("/courses/frontend/");
         if (!cancelled && Array.isArray(res.data) && res.data.length > 0) {
           // Instructor has at least one course — go to the list view
           navigate("/instructor/course-list", { replace: true });

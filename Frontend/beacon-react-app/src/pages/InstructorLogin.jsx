@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "./InstructorLogin.module.css";
+import {api} from "../api" 
 
 // Optional: pass a logo URL via props if you prefer
 // Usage: <InstructorLogin logoSrc="/assets/beacon-logo.png" />
@@ -32,8 +33,8 @@ export default function InstructorLogin({ logoSrc }) {
     setSuccessMessage(null);
   
     try {
-      const { data } = await axios.post(
-        "http://localhost:8000/instructor/login/",
+      const { data } = await api.post(
+        "/instructor/login/",
         formData
       );
   

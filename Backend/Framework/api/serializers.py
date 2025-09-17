@@ -1,33 +1,22 @@
+#rest
 from rest_framework import serializers
-from .models import *
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework.exceptions import AuthenticationFailed
+
+#djando
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import authenticate
 from django.db.models.functions import Lower
 
+#local 
+from .models import *
 
 
-class UserSerializer(serializers.ModelSerializer):
-    """
-    Receiving json about user and parsing it in GET
-    """
-    class Meta:
-        model = User 
-        fields = ['user_id', 'email', 'password_hash', 'role', 'created_at']
-        extra_kwargs = { #Extra sttings for certain fiels 
-            'email': {'write_only': True}, # Never send email hash back to clients
-            'password_hash': {'write_only': True}, # Never send password hash back to clients
-            'created_at': {'read_only': True}, # created_at is read-only
-        }
 
-class InstructorSerializer(serializers.ModelSerializer):
-    """
-    Receiving json about instructors and parsing it (including nested user json) in GET
-    """
-    user = UserSerializer() 
-    class Meta:
-        model = InstructorProfile
-        fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
-
+"""
+Auth purposes
+"""
 class LoginSerializer(serializers.Serializer):
     """
     Json parsing for login purposes in POST
@@ -50,7 +39,50 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+    
+class CurrentUserSerializer(serializers.ModelSerializer):
+    instructor_profile_id = serializers.SerializerMethodField() #An added field
+    instructor_full_name = serializers.SerializerMethodField()
 
+    class Meta:
+        model = User
+        fields = ["user_id", "email", "role", "is_active", "instructor_profile_id", "instructor_full_name"]
+
+    def get_instructor_profile_id(self, obj):
+        isInstructor = InstructorProfile.objects.filter(user=obj).only("instructor_profile_id").first()
+        return isInstructor.instructor_profile_id if isInstructor else None
+
+    def get_instructor_full_name(self, obj):
+        prof = InstructorProfile.objects.filter(user=obj).only("full_name").first()
+        return prof.full_name if prof else None
+
+
+
+"""
+Model serializers
+"""
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Receiving json about user and parsing it in GET
+    """
+    class Meta:
+        model = User 
+        fields = ['user_id', 'email', 'password_hash', 'role', 'created_at']
+        extra_kwargs = { #Extra sttings for certain fiels 
+            'email': {'write_only': True}, # Never send email hash back to clients
+            'password_hash': {'write_only': True}, # Never send password hash back to clients
+            'created_at': {'read_only': True}, # created_at is read-only
+        }
+
+class InstructorSerializer(serializers.ModelSerializer):
+    """
+    Receiving json about instructors and parsing it (including nested user json) in GET
+    """
+    user = UserSerializer() 
+    class Meta:
+        model = InstructorProfile
+        fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
 
 class CourseSerializer(serializers.ModelSerializer):
     """

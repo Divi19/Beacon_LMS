@@ -19,6 +19,13 @@ class User(models.Model):
 
     def __str__(self):
         return self.email 
+    @property
+    def is_authenticated(self) -> bool:
+        # DRF will treat any authenticated principal as truthy here
+        return True
+    @property
+    def is_anonymous(self) -> bool:
+        return False
 
 class StudentProfile(models.Model):
     student_profile_id = models.AutoField(primary_key=True)

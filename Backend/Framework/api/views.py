@@ -23,6 +23,7 @@ from rest_framework.generics import RetrieveAPIView
 #Inner
 from .serializers import *
 from .models import *
+from .auth import CustomJWTAuthentication
 
 
 
@@ -41,7 +42,9 @@ class UserLogout(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
 class CurrentUser(RetrieveAPIView):#Receiving a single object, read-only
+    authentication_classes = [CustomJWTAuthentication] 
     permission_classes = [IsAuthenticated]
+    serializer_class = CurrentUserSerializer
     def get_object(self):
         return self.request.user #According to the json upon logged in, the user nested content
 
@@ -61,11 +64,13 @@ class InstructorLogin(APIView):
     Posting login request. 
     """
     permission_classes = [AllowAny]
+    authentication_classes = [] #Bypassing authentication
+
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user'] #in the post json
-        token = RefreshToken.for_user(user)
+        token = RefreshToken.for_user(user) #Creates a token
 
         instructor = (
             InstructorProfile.objects
@@ -98,11 +103,17 @@ class InstructorCoursesView(APIView):
     Instructor viewing own created courses
     """
     permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+
     def get(self, request):
         """
         Fetching course and returning a customised json response
         """
-        courses = Course.objects.all()
+        user = self.request.user
+        instr = InstructorProfile.objects.filter(user=user).first()
+        if not instr:
+            return Response({"detail": "Not an instructor."}, status=403)
+        courses = Course.objects.filter(owner_instructor=instr).select_related("owner_instructor") if instr else Course.objects.none()
         output = [{
                 "course_id": course.course_id,
                 "course_title": course.title,
@@ -128,7 +139,7 @@ class CourseDetailView(APIView):
     """
     Fetching course and returning a customised json response
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     def get(self, request, pk):
         course = Course.objects.get(course_id=pk)
         output = {
@@ -143,7 +154,6 @@ class CourseDetailView(APIView):
 """
 Student Part
 """
-
 class StudentEnrolledCourses(APIView):
     permission_classes = [AllowAny]
     def get(self, request, student_profile_id):

@@ -37,9 +37,6 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
     "DEFAULT_PERMISSION_CLASSES":[
         "rest_framework.permissions.AllowAny"
     ],
@@ -52,8 +49,8 @@ REST_FRAMEWORK = {
 APPEND_SLASH = False
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=700),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=700),
     "ROTATE_REFRESH_TOKENS": True, 
     "BLACKLIST_AFTER_ROTATION": True, 
     "UPDATE_LAST_LOGIN": False,
@@ -92,6 +89,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
 ]
+
+APPEND_SLASH = True
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -175,7 +174,8 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:3000"]
-CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ["authorization", "content-type", "x-csrftoken"]
 #CORS_ALLOW_ORIGINS = True
 
 
