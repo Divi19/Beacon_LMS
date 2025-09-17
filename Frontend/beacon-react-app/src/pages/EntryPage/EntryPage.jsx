@@ -10,7 +10,7 @@ export default function EntryPage() {
 
   const go = (r) => {
     const next =
-      r === "student" ? "/student/my-courses" : "/instructor/courses/new";
+      r === "student" ? "/student/my-courses" : "/instructor/login";
     navigate(next);
   };
 

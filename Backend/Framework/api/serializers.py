@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import *
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth import authenticate
+from django.db.models.functions import Lower
 
 
 
@@ -26,14 +28,30 @@ class InstructorSerializer(serializers.ModelSerializer):
         model = InstructorProfile
         fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
 
-class LoginSerializer(serializers.ModelSerializer):
+class LoginSerializer(serializers.Serializer):
     """
     Json parsing for login purposes in POST
     """
     email = serializers.EmailField()
     password = serializers.CharField()
 
-    
+    def validate(self, attrs):
+        email = attrs['email']
+        password = attrs['password']
+        user = User.objects.filter(email__iexact=email).first()
+        generic_error = serializers.ValidationError("Invalid email or password.")
+        if user is None:
+            raise generic_error
+        if not user.is_active: 
+            #check is user is deactivated 
+            raise generic_error
+        if not (password == user.password_hash):
+            raise generic_error
+
+        attrs['user'] = user
+        return attrs
+
+
 class CourseSerializer(serializers.ModelSerializer):
     """
     Json parsing for courses showing and creation in POST and GET

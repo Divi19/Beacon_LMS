@@ -1,18 +1,50 @@
 from contextvars import Token
-from django.shortcuts import render, redirect
+
 from .forms import *
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .serializers import *
-from .models import *
+
+#django 
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate, login, logout 
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.hashers import check_password
+
+#Res
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.generics import RetrieveAPIView 
+
+#Inner
+from .serializers import *
+from .models import *
+
+
+
+"""
+Shared Part
+"""
+class UserLogout(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+class CurrentUser(RetrieveAPIView):#Receiving a single object, read-only
+    permission_classes = [IsAuthenticated]
+    def get_object(self):
+        return self.request.user #According to the json upon logged in, the user nested content
+
 
 """
 Instructor Part
@@ -21,31 +53,51 @@ Instructor Part
 Authentication for Instructors 
 Instructor login function using simple Jwt
 https://medium.com/@preciousimoniakemu/create-a-react-login-page-that-authenticates-with-django-auth-token-8de489d2f751 
-
+https://www.youtube.com/watch?v=1pIrRTxGnJ4
 """
 
 class InstructorLogin(APIView): 
     """
     Posting login request. 
     """
+    permission_classes = [AllowAny]
     def post(self, request):
-        serializer = LoginSerializer(data=request.data) #Parse request to fetch valid email and password
-        serializer.is_valid(raise_exception=True) 
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
-        user = authenticate(request, email=email, password=password)
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user'] #in the post json
+        token = RefreshToken.for_user(user)
 
-        if user is not None or  not InstructorProfile.objects.filter(user__email__iexact=email).exists(): 
-            #Check if the email exists within existing instructors
-            #if it's correct, generate new tokens
-            token = RefreshToken.for_user(user)
-            return Response({"access": str(token.access_token), "refresh": str(token)})
-        else:
-            return Response({"error": "Invalid login credentials"})
+        instructor = (
+            InstructorProfile.objects
+            .select_related("user")
+            .filter(user=user)
+            .first()
+        )
+        if not instructor:
+            # Auth succeeded, but user lacks instructor privileges
+            return Response({"error": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
         
+        payload = {
+            "access": str(token.access_token),
+            "refresh": str(token),
+            "user": {
+                "instructor_profile_id": instructor.instructor_profile_id,
+                "full_name": instructor.full_name,
+                "role": "instructor",
+                "email": user.email,
+                "user_id": user.user_id,
+            },
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class InstructorCoursesView(APIView):
+    """
+    Instructor viewing own created courses
+    """
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         """
         Fetching course and returning a customised json response
@@ -59,7 +111,7 @@ class InstructorCoursesView(APIView):
                 "course_director": course.owner_instructor.full_name,
                 "course_description": course.description}
                    for course in courses]
-        return Response(output)
+        return Response(output, status=status.HTTP_200_OK)
     
     def post(self, request):
         """
@@ -68,7 +120,7 @@ class InstructorCoursesView(APIView):
         serializer = CourseSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save() 
-            return Response(serializer.data)
+            return Response(serializer.data,  status=status.HTTP_201_OK)
 
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
@@ -76,6 +128,7 @@ class CourseDetailView(APIView):
     """
     Fetching course and returning a customised json response
     """
+    permission_classes = [IsAuthenticated]
     def get(self, request, pk):
         course = Course.objects.get(course_id=pk)
         output = {
@@ -85,13 +138,14 @@ class CourseDetailView(APIView):
             "course_credits": course.credits,
             "course_director": course.owner_instructor.full_name,
             "course_description": course.description}
-        return Response(output)
+        return Response(output,  status=status.HTTP_200_OK)
 
 """
 Student Part
 """
 
 class StudentEnrolledCourses(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, student_profile_id):
         """
         Fetching all enrolled course 
@@ -109,9 +163,10 @@ class StudentEnrolledCourses(APIView):
                 "course_director": course.owner_instructor.full_name,
                 "course_description": course.description}
                 for course in courses]
-        return Response(output)
+        return Response(output, status=status.HTTP_200_OK)
 
 class StudentUnenrolledCourses(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, student_profile_id):
         """
         Fetching all unenrolled course 
@@ -130,7 +185,7 @@ class StudentUnenrolledCourses(APIView):
             "course_director": course.owner_instructor.full_name,
             "course_description": course.description}
             for course in courses]
-        return Response(output)
+        return Response(output, status=status.HTTP_200_OK)
     def post(self, request, student_profile_id):
         """
         Enroll a student

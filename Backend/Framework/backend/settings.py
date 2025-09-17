@@ -62,7 +62,9 @@ SIMPLE_JWT = {
     "AUDIENCE": None, 
     "ISSUER": None,
     "JWK_URL": None, 
-    "LEEWAY": 0
+    "LEEWAY": 0,
+    "USER_ID_FIELD": "user_id",   # <— match your model PK
+    "USER_ID_CLAIM": "user_id",   # optional but keeps the token claim name consistent
 }
 
 # Application definition
@@ -113,7 +115,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -126,7 +127,6 @@ DATABASES = {
         "DISABLE_SERVER_SIDE_CURSORS": True
 }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

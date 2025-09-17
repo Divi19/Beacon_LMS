@@ -22,14 +22,17 @@ from rest_framework_simplejwt.views import TokenRefreshView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    #Fetch current logged in user
+    path("user/", CurrentUser.as_view(), name="current-user"),
+    
     #Instructors
     path('courses/frontend/', InstructorCoursesView.as_view(), name="frontend"),
     path('courses/frontend/<str:pk>/', CourseDetailView.as_view(), name="frontend-detail"),
-    path("api/instructor/login/", InstructorLogin.as_view(), name="instructor_login"),
+    path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #students
     path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
     path("courses/frontend/<int:student_profile_id>/student/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
     path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
-   
+    path("user/logout", UserLogout.as_view(), name="logout")
 ]
