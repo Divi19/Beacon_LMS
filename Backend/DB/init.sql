@@ -69,4 +69,14 @@ ALTER TABLE course ADD COLUMN credits INTEGER;
 ALTER TABLE course ADD COLUMN director VARCHAR(50);
 ALTER TABLE course ADD COLUMN description TEXT;
 
+-- === Sprint 2 US1: Enforce instructor ownership on courses + index
+ALTER TABLE course
+  ALTER COLUMN owner_instructor_id SET NOT NULL;
 
+ALTER TABLE course DROP CONSTRAINT IF EXISTS course_owner_instructor_id_fkey;
+ALTER TABLE course
+  ADD CONSTRAINT fk_course_owner_instructor
+  FOREIGN KEY (owner_instructor_id) REFERENCES instructor_profile(instructor_profile_id)
+  ON DELETE RESTRICT;
+
+CREATE INDEX IF NOT EXISTS idx_course_owner ON course(owner_instructor_id);
