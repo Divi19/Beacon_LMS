@@ -51,11 +51,13 @@ class InstructorCoursesView(APIView):
         Fetching course and returning a customised json response
         """
         courses = Course.objects.all()
-        output = [{"course_title": course.title,
-                   "course_code": course.code,
-                   "course_credits": course.credits,
-                   "course_director": course.owner_instructor.full_name,
-                   "course_description": course.description}
+        output = [{
+                "course_id": course.course_id,
+                "course_title": course.title,
+                "course_code": course.code,
+                "course_credits": course.credits,
+                "course_director": course.owner_instructor.full_name,
+                "course_description": course.description}
                    for course in courses]
         return Response(output)
     
@@ -76,11 +78,13 @@ class CourseDetailView(APIView):
     """
     def get(self, request, pk):
         course = Course.objects.get(course_id=pk)
-        output = {"course_title": course.title,
-                    "course_code": course.code,
-                   "course_credits": course.credits,
-                   "course_director": course.owner_instructor.full_name,
-                   "course_description": course.description}
+        output = {
+            "course_id": course.course_id,
+            "course_title": course.title,
+            "course_code": course.code,
+            "course_credits": course.credits,
+            "course_director": course.owner_instructor.full_name,
+            "course_description": course.description}
         return Response(output)
 
 """
@@ -97,12 +101,14 @@ class StudentEnrolledCourses(APIView):
         """
         student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
         courses = Course.objects.filter(enrollment__student=student, status="Active").distinct() 
-        output = [{"course_title": course.title,
-                   "course_code": course.code,
-                   "course_credits": course.credits,
-                   "course_director": course.owner_instructor.full_name,
-                   "course_description": course.description}
-                   for course in courses]
+        output = [{
+                "course_id": course.course_id,
+                "course_title": course.title,
+                "course_code": course.code,
+                "course_credits": course.credits,
+                "course_director": course.owner_instructor.full_name,
+                "course_description": course.description}
+                for course in courses]
         return Response(output)
 
 class StudentUnenrolledCourses(APIView):
@@ -116,12 +122,14 @@ class StudentUnenrolledCourses(APIView):
         student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
         #Grab all courses that are not enrolled using backward relationship
         courses = Course.objects.filter(status="Active").exclude(enrollment__student=student).distinct() #Preventing duplicate courses
-        output = [{"course_title": course.title,
-                   "course_code": course.code,
-                   "course_credits": course.credits,
-                   "course_director": course.owner_instructor.full_name,
-                   "course_description": course.description}
-                   for course in courses]
+        output = [{
+            "course_id": course.course_id,
+            "course_title": course.title,
+            "course_code": course.code,
+            "course_credits": course.credits,
+            "course_director": course.owner_instructor.full_name,
+            "course_description": course.description}
+            for course in courses]
         return Response(output)
     def post(self, request, student_profile_id):
         """
@@ -136,7 +144,6 @@ class StudentUnenrolledCourses(APIView):
             data=request.data,
             context={"student": student},
         )
-        if serializer.is_valid(raise_exception=True):
-            serializer.save() 
-        return Response(serializer.data)
-        
+        serializer.is_valid(raise_exception=True)
+        enrollment = serializer.save()
+        return Response(EnrollmentSerializer(enrollment).data, status=201)

@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 dotenv = "*"
-psycopg2 = "*"
 asgiref = "==3.9.1"
 django = "==5.2.6"
 djangorestframework = "==3.16.1"
@@ -17,6 +16,7 @@ sqlparse = "*"
 python-dotenv = "*"
 django-environ = "*"
 psycopg2-binary = "==2.9.9"
+psycopg2 = "*"
 
 [dev-packages]
 
