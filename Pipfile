@@ -5,12 +5,17 @@ name = "pypi"
 
 [packages]
 asgiref = "==3.9.1"
-sqlparse = "==0.5.3"
-django = "*"
-djangorestframework = "*"
-djangorestframework-simplejwt = "*"
+django = "==5.2.6"
+djangorestframework = "==3.16.1"
 django-cors-headers = "*"
+djangorestframework-simplejwt = "*"
+pyjwt = "*"
+pytz = "*"
+sqlparse = "*"
+psycopg2-binary = "*"
+python-dotenv = "*"
 django-environ = "*"
+axios = "*"
 
 [dev-packages]
 
