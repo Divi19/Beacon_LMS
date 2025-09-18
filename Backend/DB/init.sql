@@ -144,3 +144,31 @@ CREATE TABLE IF NOT EXISTS lesson_enrollment (
 );
 
 CREATE INDEX IF NOT EXISTS idx_lesson_enr_student ON lesson_enrollment(student_id);
+
+
+-- === US5 Job 1 & 2: Classroom enrollments + flow indexing
+CREATE TABLE IF NOT EXISTS classroom_enrollment (
+  classroom_id  INT NOT NULL REFERENCES classroom(classroom_id) ON DELETE CASCADE,
+  student_id    INT NOT NULL REFERENCES student_profile(student_profile_id),
+  enrolled_at   TIMESTAMP NOT NULL DEFAULT NOW(),
+  CONSTRAINT pk_classroom_enrollment PRIMARY KEY (classroom_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_classroom_enr_student ON classroom_enrollment(student_id);
+
+-- NOTE (US5 Job 2 rule):
+-- Business rule: a student must be enrolled in the lesson BEFORE enrolling in a classroom of that lesson.
+-- BEGIN
+--   IF NOT EXISTS (
+--     SELECT 1
+--     FROM classroom c
+--     JOIN lesson_enrollment le ON le.lesson_id = c.lesson_id
+--     WHERE c.classroom_id = NEW.classroom_id AND le.student_id = NEW.student_id
+--   ) THEN
+--     RAISE EXCEPTION 'Student must enroll in lesson before classroom';
+--   END IF;
+--   RETURN NEW;
+-- END; $$ LANGUAGE plpgsql;
+-- CREATE TRIGGER trg_classroom_enrollment_rule
+--   BEFORE INSERT ON classroom_enrollment
+--   FOR EACH ROW EXECUTE FUNCTION ensure_lesson_enrolled();
