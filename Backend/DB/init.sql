@@ -130,3 +130,7 @@ CREATE TABLE IF NOT EXISTS classroom (
   capacity        INT,
   created_at      TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- === US3 Job 2: Indexes for fast classroom access
+CREATE INDEX IF NOT EXISTS idx_classroom_lesson     ON classroom(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_classroom_instructor ON classroom(instructor_id);
