@@ -118,3 +118,15 @@ ALTER TABLE course_draft
 CREATE INDEX IF NOT EXISTS idx_lesson_course     ON lesson(course_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_status     ON lesson(status);
 CREATE INDEX IF NOT EXISTS idx_lesson_created_by ON lesson(created_by);
+
+-- === US3 Job 1: Classrooms offered for a lesson
+CREATE TABLE IF NOT EXISTS classroom (
+  classroom_id    SERIAL PRIMARY KEY,
+  lesson_id       INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  instructor_id   INT NOT NULL REFERENCES instructor_profile(instructor_profile_id),
+  title           VARCHAR(255) NOT NULL,
+  duration_weeks  INT,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  capacity        INT,
+  created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
