@@ -123,12 +123,13 @@ textarea.input {
 .label {
   font-weight: 500;
   font-size: 16px;
+  color:#783e0c;
 }
 
 .lessonList {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px; 
-  flex-wrap: wrap;
 }
 
 .lessonItem {
@@ -219,7 +220,7 @@ textarea.input {
 }
 
 .addText {
-  color: #3fc6e4; 
+  color: #783e0c; 
   font-weight: 600;
   margin-left: 8px; 
 }
