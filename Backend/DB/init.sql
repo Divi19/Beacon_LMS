@@ -113,3 +113,8 @@ ALTER TABLE course_draft
 --  JSON -> JSONB for better querying (safe cast)
 ALTER TABLE course_draft
   ALTER COLUMN outline_json TYPE JSONB USING outline_json::jsonb;
+
+-- === US2 Job 2: Indexes to speed up common lesson workflows
+CREATE INDEX IF NOT EXISTS idx_lesson_course     ON lesson(course_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_status     ON lesson(status);
+CREATE INDEX IF NOT EXISTS idx_lesson_created_by ON lesson(created_by);
