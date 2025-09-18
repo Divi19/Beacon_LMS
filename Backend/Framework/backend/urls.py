@@ -21,5 +21,16 @@ from api.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('courses/frontend', FrontendView.as_view(), name="frontend"),
+    path('courses/frontend/', FrontendView.as_view(), name="frontend"),
+    path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
+    path('courses/<str:course_id>/lessons/', LessonsView.as_view(), name="course-lessons"),
+    path('lessons/<str:course_id>/', LessonDetailView.as_view(), name="lesson-detail"),
+    #students
+    #path('students/<str:student_id>/my_courses/', StudentEnrolledCourses.as_view(), name='my_courses'),
+    #path('students/<str:student_id>/enrollment/', StudentUnenrolledCourses.as_view(), name='enrollment'),
+    path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
+    path("courses/frontend/<int:student_profile_id>/student/enrollment/", StudentUnenrolledCourses.as_view(), name="my-courses"),
+    path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentEnroll.as_view(), name="my-courses"),
+    
+   
 ]
