@@ -80,3 +80,36 @@ ALTER TABLE course
   ON DELETE RESTRICT;
 
 CREATE INDEX IF NOT EXISTS idx_course_owner ON course(owner_instructor_id);
+
+
+-- === US2 Job 1: LESSON + PREREQUISITE core structures
+
+-- LESSON: instructors can pre-structure lessons under a course
+CREATE TABLE IF NOT EXISTS lesson (
+  lesson_id       SERIAL PRIMARY KEY,
+  course_id       INT NOT NULL REFERENCES course(course_id),
+  title           VARCHAR(255) NOT NULL,
+  description     TEXT,
+  objectives      TEXT,
+  duration_weeks  INT,                     
+  status          VARCHAR(50) NOT NULL DEFAULT 'draft',
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by      INT NOT NULL REFERENCES instructor_profile(instructor_profile_id),
+  created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Self-referencing many-to-many prerequisites
+CREATE TABLE IF NOT EXISTS lesson_prerequisite (
+  lesson_id        INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  prereq_lesson_id INT NOT NULL REFERENCES lesson(lesson_id),
+  CONSTRAINT pk_lesson_prerequisite PRIMARY KEY (lesson_id, prereq_lesson_id),
+  CONSTRAINT chk_no_self_prereq CHECK (lesson_id <> prereq_lesson_id)
+);
+
+-- Tighten COURSE_DRAFT author requirement 
+ALTER TABLE course_draft
+  ALTER COLUMN created_by SET NOT NULL;
+
+--  JSON -> JSONB for better querying (safe cast)
+ALTER TABLE course_draft
+  ALTER COLUMN outline_json TYPE JSONB USING outline_json::jsonb;
