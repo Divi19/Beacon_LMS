@@ -134,3 +134,13 @@ CREATE TABLE IF NOT EXISTS classroom (
 -- === US3 Job 2: Indexes for fast classroom access
 CREATE INDEX IF NOT EXISTS idx_classroom_lesson     ON classroom(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_classroom_instructor ON classroom(instructor_id);
+
+-- === US4 : Student enrollments at the lesson level
+CREATE TABLE IF NOT EXISTS lesson_enrollment (
+  lesson_id    INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  student_id   INT NOT NULL REFERENCES student_profile(student_profile_id),
+  enrolled_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+  CONSTRAINT pk_lesson_enrollment PRIMARY KEY (lesson_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_lesson_enr_student ON lesson_enrollment(student_id);
