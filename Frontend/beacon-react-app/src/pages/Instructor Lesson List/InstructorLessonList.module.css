@@ -1,0 +1,117 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;           
+  padding: 0 20px;       
+  height: 100px;                   
+}
+
+.left {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.right {
+  display: flex;
+  gap: 12px; 
+}
+
+.enrollBtn {
+  max-width: 340px;
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: clamp(16px, 2.2vw, 20px);
+  margin: 10px 30px 0 30px;
+}
+
+.button:hover {
+  transform: scale(1.05);
+}
+
+.title {
+  margin: 0;
+  padding-top: 10px;
+  letter-spacing: 0.25em;
+  font-weight: 800;
+  font-size: clamp(26px, 4.8vw, 46px);
+  color: #e4973f; 
+  padding-left: 30px;
+}
+
+.container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 50px;
+  width: 100%;
+  padding: 20px 50px;
+  box-sizing: border-box;
+
+  grid-auto-rows: auto;
+  align-content: start;
+  min-height: 0;       
+}
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column; 
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 20px;
+  padding-bottom: 80px; 
+  border-radius: 20px;
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  color: brown;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
+}
+
+
+.cardTitle {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.cardDesc1 {
+  display: flex;
+  justify-content: left;
+  width: 100%;
+  font-size: 16px;
+}
+
+.cardDesc1 span:last-child {
+  margin-right: 10px;
+}
+
+.cardDesc2 {
+  display: flex;
+  justify-content: left; 
+  width: 100%;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.cardDesc2 span:last-child {
+  margin-right: 10px;
+}
+
+.leftGroup {
+  display: flex;
+  gap: 8px; 
+}
