@@ -6,6 +6,10 @@ import CourseDetail from "./pages/StudentEnrollment/CourseDetail";
 import InstructorCourseCreation from "./pages/InstructorCourseCreation";
 import InstructorCourseCreate from "./pages/Instructor Course Create/InstructorCourseCreate";
 import InstructorCourseList from "./pages/Instructor Course List/InstructorCourseList";
+import InstructorCourseDescription from "./pages/InstructorCourseDescription/InstructorCourseDescription";
+import InstructorLessonCreation from "./pages/InstructorLessonCreation";
+import InstructorLessonCreate from "./pages/Instructor Lesson Create/InstructorLessonCreate";
+import InstructorLessonList from "./pages/Instructor Lesson List/InstructorLessonList";
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
   
@@ -39,6 +43,10 @@ export default function App(){
       <Route path="/instructor/courses/new" element={<InstructorCourseCreation />} />
       <Route path="/instructor/course-create" element={<InstructorCourseCreate />} />
       <Route path="/instructor/course-list" element={<InstructorCourseList />} />
+      <Route path="/instructor/course/:courseId" element={<InstructorCourseDescription />} />
+      <Route path="/instructor/course/:courseId/lessons" element={<InstructorLessonCreation />} />
+      <Route path="/instructor/course/:courseId/lesson-list" element={<InstructorLessonList />} />
+      <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} />
     </Routes>
   </div>
   );

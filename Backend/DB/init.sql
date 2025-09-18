@@ -1,5 +1,5 @@
 -- Switch default schema
-SET search_path = lms_schema;
+SET search_path = public;
 
 -- Drop existing tables in correct dependency order
 DROP TABLE IF EXISTS enrollment CASCADE;
