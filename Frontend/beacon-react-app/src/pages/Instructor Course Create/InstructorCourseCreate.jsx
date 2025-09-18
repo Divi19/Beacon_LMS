@@ -6,7 +6,7 @@ import axios from 'axios';
 
 export default function InstructorCourseCreate({ onCourseCreated }) {
   const navigate = useNavigate();
-  const [lessons, setLessons] = useState([]);
+  const [lessons, setLessons] = useState(["Lesson 1"]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
@@ -34,11 +34,10 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   };
 
   const addLesson = () => {
-    if (lessonInput.trim() !== "") {
-      setLessons([...lessons, lessonInput.trim()]);
-      closeModal();
-    }
-  };
+  const newLessonNumber = lessons.length + 1;
+  const newLessonName = `Lesson ${newLessonNumber}`;
+  setLessons([...lessons, newLessonName]);
+};
 
   const goToCoursePage = () => {
     setShowOptionalModal(false); 
@@ -166,21 +165,21 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
 
             <div className={i.rowBlock}>
               <div className={i.lessonHeader}>
-                <span className={i.label}>Course Core Lessons:</span>
+    <span className={i.label}>Course Core Lessons:</span>
 
-                <div className={i.lessonList}>
-                  {lessons.map((lesson, index) => (
-                    <div key={index} className={i.lessonItem}>
-                      {lesson}
-                    </div>
-                  ))}
-                </div>
+    <div className={i.lessonList}>
+      {lessons.map((lesson, index) => (
+        <div key={index} className={i.lessonItem}>
+          {lesson}
+        </div>
+      ))}
+    </div>
 
-                <button type="button" className={i.addButton} onClick={openModal}>
-                  +
-                </button>
-                <span className={i.addText}>Add Lessons</span>
-              </div>
+    <button type="button" className={i.addButton} onClick={addLesson}>
+      +
+    </button>
+    <span className={i.addText}>Add Lessons</span>
+  </div>
 
               {showModal && (
                 <div className={i.modalOverlay}>
