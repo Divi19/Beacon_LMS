@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
 import s from "./InstructorLessonDetail.module.css";
 
@@ -8,8 +8,7 @@ export default function LessonDetail() {
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
   const [error, setError] = useState("");
-
-
+  const [classrooms, setClassrooms] = useState([]);
   const navigate = useNavigate();
 
   // replace with real API call later
@@ -36,12 +35,22 @@ export default function LessonDetail() {
     );
   }
 
+  async function loadClassrooms() {
+    // Later: GET /api/courses/:courseId/lessons/:lessonId/classrooms/
+    // Return [{ id, day, start_time, end_time, duration_minutes, capacity, enrolled_count }, ...]
+    return [];
+  }
+
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const data = await loadLesson();
-        setLesson(data);
+        const [lessonData, classroomData] = await Promise.all([
+          loadLesson(),
+          loadClassrooms(),
+        ]);
+        setLesson(lessonData);
+        setClassrooms(classroomData);
       } catch (e) {
         setError("Failed to load lesson.");
       } finally {
@@ -107,11 +116,76 @@ export default function LessonDetail() {
           </div>
 
           <section className={`${s.cardBase} ${s.classrooms}`}>
-            <h3 className={s.clsTitle}>My Classrooms</h3>
-            <div className={s.clsBody}>
-              <p className={s.empty}>No classroom created yet</p>
+            <div className={s.clsHeaderRow}>
+              <h3 className={s.clsTitle}>Lesson Classrooms</h3>
+
               <button
-                className={s.ghostCta}
+                className={s.addBtn}
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/instructor/course/${courseId}/lesson/${lessonId}/classroom/new`
+                  )
+                }
+              >
+                Add Classroom →
+              </button>
+            </div>
+
+            {!classrooms || classrooms.length === 0 ? (
+              <>
+                <p className={s.empty}>No classroom created yet</p>
+              </>
+            ) : (
+              <div className={s.clsList}>
+                {classrooms.map((c) => {
+                  const enrolled = c.enrolled_count ?? 0;
+                  const capacity = c.capacity ?? 0;
+                  const availability = `${Math.max(
+                    capacity - enrolled,
+                    0
+                  )}/${capacity}`;
+                  const hours = Math.floor((c.duration_minutes ?? 0) / 60) || 0;
+
+                  return (
+                    <div key={c.id} className={s.clsCard}>
+                      <div className={s.clsColDay}>
+                        <div className={s.clsDay}>{c.day}</div>
+                        <div className={s.clsDur}>{hours} Hours</div>
+                      </div>
+
+                      <div className={s.clsColTime}>
+                        <div className={s.clsTime}>
+                          {c.start_time} – {c.end_time}
+                        </div>
+                        <div className={s.clsMetaRow}>
+                          <span>{enrolled} students</span>
+                          <span>Availability: {availability}</span>
+                          <span>ID: {c.id}</span>
+                        </div>
+                      </div>
+
+                      <div className={s.clsColActions}>
+                        <button
+                          className={s.studentsBtn}
+                          type="button"
+                          disabled
+                        >
+                          Students
+                        </button>
+                        <button className={s.arrowBtn} type="button" disabled>
+                          →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className={s.clsFooter}>
+              <button
+                className={s.addBottomBtn}
                 type="button"
                 onClick={() =>
                   navigate(
