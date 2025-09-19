@@ -9,7 +9,7 @@ import InstructorCourseCreate from "./pages/Instructor Course Create/InstructorC
 import InstructorCourseList from "./pages/Instructor Course List/InstructorCourseList";
 import InstructorCourseDescription from "./pages/InstructorCourseDescription/InstructorCourseDescription";
 import InstructorLogin from "./pages/InstructorLogin";
-import InstructorLessonDetail from "./pages/Instructor Lesson detail/InstructorLessonDetail"
+import InstructorLessonDetail from "./pages/InstructorLessonDetail/InstructorLessonDetail";
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
   
