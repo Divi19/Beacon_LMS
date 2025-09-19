@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
+import s from "./InstructorClassCreation.module.css";
 
 export default function InstructorClassroomCreate() {
   const navigate = useNavigate();

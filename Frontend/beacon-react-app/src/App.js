@@ -48,7 +48,7 @@ export default function App(){
       <Route path="/instructor/course/:courseId" element={<InstructorCourseDescription />} />
       <Route path="/instructor/login" element={<InstructorLogin/>} />
       <Route path="/instructor/course/:courseId/lesson/:lessonId" element={<InstructorLessonDetail />}/>
-      <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassroomCreate />}/>
+      <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassCreation />}/>
     </Routes>
   </div>
   );
