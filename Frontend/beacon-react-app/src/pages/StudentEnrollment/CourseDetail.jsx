@@ -11,11 +11,6 @@ export default function CourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { enroll, isEnrolled } = useEnrollment();
-
-  // const course = useMemo(
-  //   () => courses.find((c) => c.id === courseId),
-  //   [courseId]
-  // );
   const [course, setCourse] = useState(null);
 
   useEffect(() => {

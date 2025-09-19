@@ -1,35 +1,45 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
 import Button from "../../components/Button/Button";
-import { useEnrollment } from "../../state/EnrollmentContext";
-import s from "./InstructorCourseDescription.module.css";
+import s from "./CourseDetailEnrolled.module.css";
 import axios from "axios";
-import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
 
-export default function InstructorCourseDescription() {
+export default function CourseDetailEnrolled() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { enroll, isEnrolled } = useEnrollment();
 
-  // const course = useMemo(
-  //   () => courses.find((c) => c.id === courseId),
-  //   [courseId]
-  // );
   const [course, setCourse] = useState(null);
+  const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
-    axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
-    .then((res) => setCourse(res.data))
-    .catch(() => setCourse(null));
+    let cancelled = false;
+    axios
+      .get(`http://localhost:8000/courses/frontend/${courseId}/`)
+      .then((res) => { if (!cancelled) setCourse(res.data); })
+      .catch(() => { if (!cancelled) setCourse(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [courseId]);
+
+  if (loading) {
+    return (
+      <>
+        <StudentTopBar />
+        <div style={{ padding: 24 }}>Loading…</div>
+      </>
+    );
+  }
 
   if (!course) {
     return (
       <>
-        <InstructorTopBar />
+        <StudentTopBar />
         <div style={{ padding: 24 }}>
           <p>Course not found.</p>
-          <Button onClick={() => navigate("/student/enrollment")}>Back</Button>
+          <Button onClick={() => navigate("/student/my-courses")}>Back</Button>
         </div>
       </>
     );
@@ -37,7 +47,7 @@ export default function InstructorCourseDescription() {
 
   return (
     <>
-      <InstructorTopBar />
+      <StudentTopBar />
       <div className={s.wrap}>
         <div className={s.panel}>
           <h2 className={s.title}>{course.course_title}</h2>
@@ -66,30 +76,30 @@ export default function InstructorCourseDescription() {
             ) : (
               <span className={s.noLessons}>No lessons</span>
             )}
-          {/* can delete button if not needed here */}
           </div>
-          <div className={s.lessonActions}>
-            <Button
-            className={s.addLessonBtn}
-            // style={{ backgroundColor: "orange", padding: "8px", marginTop: "12px" }}
-              // className={s.addLessonBtn}
-              onClick={() =>
-                navigate(`/instructor/course/${course.course_id}/lesson-create`)
-              }
-            >
-              + Add Lesson
-            </Button>
-            <Button
-              className={s.viewLessonsBtn}
-                onClick={() =>
-                  navigate(`/instructor/course/${course.course_id}/lesson-list`)
-                }
+
+          <div className={s.actions}>
+            <Button className={s.enrollBtn} onClick={() => navigate("/student/my-courses")}>
+              Back to My Courses
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                View Lessons
-              </Button>
-          </div>
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 8 8 12 12 16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+            </Button>
           </div>
         </div>
+      </div>
     </>
   );
 }

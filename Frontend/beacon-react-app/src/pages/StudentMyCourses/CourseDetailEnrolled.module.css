@@ -8,18 +8,17 @@
     padding: 24px 32px;
     border-radius: 18px;
     background: linear-gradient(
-    to bottom,
-    #f1cea8 0%,  
-    #f1cea8 70%, 
-    #71bfcd 100% 
-  );
+      to bottom,
+      var(--bg-right-top),
+      var(--bg-right-bot)
+    );
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
   
   .title {
     margin: 0 0 12px;
     font-size: clamp(22px, 3.8vw, 30px);
-    color: #e96d1f;
+    color: #0e5f6b;
     font-weight: 800;
   }
   
@@ -27,13 +26,13 @@
     display: flex;
     flex-wrap: wrap;
     gap: 18px 28px;
-    color: #a8581b;
+    color: #0e5f6b;
     font-weight: 700;
     margin-bottom: 16px;
   }
   .subhead {
     margin: 18px 0 18px;
-    color: #cb5425;
+    color: #0e5f6b;
     font-size: clamp(16px, 2.6vw, 22px);
   }
   .desc {
@@ -57,9 +56,9 @@
     padding: 8px 14px;
   }
   .noLessons {
-    color: #cf6429;
+    color: #0e5f6b;
     font-weight: 700;
-    background: #ffb16d;
+    background: #9fdbe3;
     padding: 8px 14px;
     border-radius: 10px;
   }
@@ -68,26 +67,25 @@
     justify-content: flex-end;
     margin-top: 18px;
   }
-
-  /* Extra stuff here can delete if wanted */
-  .lessonActions {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 12px;
-}
-
-.addLessonBtn {
-  padding: 8px 20px;
-  border-radius: 10px;
-  background: orange;
-  color: white;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-}
-
-.addLessonBtn:hover {
-  background: darkorange;
-}
   
+  .enrollBtn {
+    padding: 8px 28px;
+    border-radius: 30px;
+    width: auto;
+    font-size: 16px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #9fdbe3;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .enrollBtn:hover {
+    background: var(--brand-teal-600);
+  }
   

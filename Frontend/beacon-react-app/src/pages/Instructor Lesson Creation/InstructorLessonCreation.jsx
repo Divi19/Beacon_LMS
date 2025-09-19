@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import i from "./InstructorCourseCreate.module.css";
+import i from "./InstructorLessonCreation.module.css";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 
-export default function InstructorCourseCreate({ onCourseCreated }) {
+export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
-  const [lessons, setLessons] = useState(["Lesson 1"]);
+  const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
@@ -34,10 +34,11 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   };
 
   const addLesson = () => {
-  const newLessonNumber = lessons.length + 1;
-  const newLessonName = `Lesson ${newLessonNumber}`;
-  setLessons([...lessons, newLessonName]);
-};
+    if (lessonInput.trim() !== "") {
+      setLessons([...lessons, lessonInput.trim()]);
+      closeModal();
+    }
+  };
 
   const goToCoursePage = () => {
     setShowOptionalModal(false); 
@@ -88,8 +89,8 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
       setShowOptionalModal(true);
       
     } catch (error) {
-      console.error('Error creating course:', error);
-      alert('Error creating course. Please try again.');
+      console.error('Error creating lesson:', error);
+      alert('Error creating lesson. Please try again.');
     }
   };
 
@@ -99,13 +100,16 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         <InstructorTopBar />
       </div>
       <header className={i.header}>
-        <h1 className={i.title}>COURSE CREATION</h1>
+        <h1 className={i.title}>LESSON CREATION</h1>
       </header>
       <div>
         <form className={i.form} onSubmit={handleSubmit}>
           <div className={i.formContainer}>
             <div className={i.row}>
-              <label className={i.label}>Course Title:</label>
+              <label className={i.label}>Lesson Details</label>
+            </div>
+            <div className={i.row}>
+              <label className={i.label}>Lesson Title:</label>
               <input
                 className={i.input}
                 type="text"
@@ -117,7 +121,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course ID:</label>
+              <label className={i.label}>Lesson ID:</label>
               <input
                 className={i.input}
                 type="text"
@@ -129,7 +133,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course Credits:</label>
+              <label className={i.label}>Lesson Credits:</label>
               <input
                 className={i.input}
                 type="text"
@@ -141,7 +145,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course Director:</label>
+              <label className={i.label}>Lesson Duration:</label>
               <input
                 className={i.input}
                 type="text"
@@ -153,7 +157,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Description:</label>
+              <label className={i.label}>Lesson Description:</label>
               <textarea
                 className={i.input}
                 name="description"
@@ -163,55 +167,35 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
               />
             </div>
 
-            <div className={i.rowBlock}>
-              <div className={i.lessonHeader}>
-    <span className={i.label}>Course Core Lessons:</span>
+            <div className={i.row}>
+              <label className={i.label}>Lesson Objective:</label>
+              <textarea
+                className={i.input}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-    <div className={i.lessonList}>
-      {lessons.map((lesson, index) => (
-        <div key={index} className={i.lessonItem}>
-          {lesson}
-        </div>
-      ))}
-    </div>
-
-    <button type="button" className={i.addButton} onClick={addLesson}>
-      +
-    </button>
-    <span className={i.addText}>Add Lessons</span>
-  </div>
-
-              {showModal && (
-                <div className={i.modalOverlay}>
-                  <div className={i.modalContent}>
-                    <h3>Add Core Lesson</h3>
-                    <input
-                      type="text"
-                      value={lessonInput}
-                      onChange={(e) => setLessonInput(e.target.value)}
-                      className={i.input}
-                      placeholder="Enter lesson name"
-                    />
-                    <div className={i.modalButtons}>
-                      <button className={i.selectButton} onClick={addLesson}>
-                        Select
-                      </button>
-                      <button className={i.cancelButton} onClick={closeModal}>
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div className={i.row}>
+              <label className={i.label}>Prerequisite Lesson:</label>
+              <textarea
+                className={i.input}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             {showOptionalModal && (
               <div className={i.modalOverlay}>
                 <div className={i.modalContent}>
-                  <h3>Course Created Successfully!</h3>
+                  <h3>Lesson Created Successfully!</h3>
                   <div className={i.modalButtons}>
                     <button className={i.selectButton} onClick={goToCoursePage}>
-                      Go to course page
+                      Go to lesson page
                     </button>
                   </div>
                 </div>
