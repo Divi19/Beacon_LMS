@@ -1,6 +1,6 @@
 -- =========================================================
 -- Switch default schema
-SET search_path = lms_schema;
+SET search_path = public;
 
 -- =========================================================
 -- 1) DROP tables
