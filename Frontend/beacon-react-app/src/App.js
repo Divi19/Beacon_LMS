@@ -11,6 +11,7 @@ import InstructorCourseDescription from "./pages/InstructorCourseDescription/Ins
 import InstructorLessonCreation from "./pages/InstructorLessonCreation";
 import InstructorLessonCreate from "./pages/Instructor Lesson Create/InstructorLessonCreate";
 import InstructorLessonList from "./pages/Instructor Lesson List/InstructorLessonList";
+import InstructorLessonCreation from "./pages/Instructor Lesson Creation/InstructorLessonCreation"
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
   
@@ -49,6 +50,7 @@ export default function App(){
       <Route path="/instructor/course/:courseId/lessons" element={<InstructorLessonCreation />} />
       <Route path="/instructor/course/:courseId/lesson-list" element={<InstructorLessonList />} />
       <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} />
+      <Route path="/instructor/lesson-creation" element={<InstructorLessonCreation />} />
     </Routes>
   </div>
   );

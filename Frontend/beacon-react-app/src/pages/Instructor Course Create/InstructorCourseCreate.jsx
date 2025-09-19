@@ -105,6 +105,9 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         <form className={i.form} onSubmit={handleSubmit}>
           <div className={i.formContainer}>
             <div className={i.row}>
+              <label className={i.label}>Course Details</label>
+            </div>
+            <div className={i.row}>
               <label className={i.label}>Course Title:</label>
               <input
                 className={i.input}

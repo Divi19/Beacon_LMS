@@ -57,6 +57,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       credits: "",
       director: "",
       description: "",
+      objective: "",
+      prerequisite: "",
     });
     setLessons([]);      
     setLessonInput("");  
@@ -171,7 +173,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <label className={i.label}>Lesson Objective:</label>
               <textarea
                 className={i.input}
-                name="description"
+                name="objective"
                 value={formData.description}
                 onChange={handleChange}
                 required
@@ -182,7 +184,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <label className={i.label}>Prerequisite Lesson:</label>
               <textarea
                 className={i.input}
-                name="description"
+                name="prerequisite"
                 value={formData.description}
                 onChange={handleChange}
                 required

@@ -11,10 +11,10 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(20px, 3vw, 35px);
-  color: #e4973f; /* headline teal like your mock */
+  color: #e4973f; 
 }
 .formContainer {
-  background: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%); /* big gradient */
+  background: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%); 
   padding: 30px;
   border-radius: 20px;
   box-shadow: 0 6px 12px rgba(0,0,0,0.1);
