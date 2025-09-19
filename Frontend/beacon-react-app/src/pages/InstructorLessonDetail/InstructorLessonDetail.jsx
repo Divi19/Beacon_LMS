@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import {useNavigate, useParams } from "react-router-dom";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
 import s from "./InstructorLessonDetail.module.css";
 
@@ -8,6 +8,9 @@ export default function LessonDetail() {
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
   const [error, setError] = useState("");
+
+
+  const navigate = useNavigate();
 
   // replace with real API call later
   async function loadLesson() {

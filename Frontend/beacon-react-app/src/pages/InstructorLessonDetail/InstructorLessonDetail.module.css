@@ -79,6 +79,9 @@
 }
 .cta:hover {
   filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 .cta:active {
   transform: translateY(1px);
@@ -116,9 +119,18 @@
   background: #ffb267;
   color: #fff;
   border: none;
-  cursor: not-allowed;
 }
+
+.ghostCta:hover{
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+
+}
+
 
 .err {
   color: #b00020;
 }
+
