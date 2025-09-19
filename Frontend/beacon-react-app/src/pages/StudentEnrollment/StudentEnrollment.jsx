@@ -20,7 +20,7 @@ export default function StudentEnrollment() {
 
   const fetchCourses = async () => {
     try {
-      await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/enrollment/`).then(
+      await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/unenrolled/`).then(
         res => {
           setUnenrolled(res.data);
         }
@@ -37,7 +37,7 @@ export default function StudentEnrollment() {
       await axios.post( `http://localhost:8000/courses/frontend/${student_id}/student/enroll/`, {
         course_id: courseId,
       });
-      await fetchCourses(); // refresh after write so UI stays correct
+      fetchCourses(); // refresh after write so UI stays correct (the number of unenrolled)
     } catch (err) {
       const detail = err?.response?.data?.detail;
       if (detail === "Student already enrolled") {
@@ -69,7 +69,7 @@ export default function StudentEnrollment() {
             return <CourseCard
               key={c.course_id}
               course={{
-                code: c.course_id,
+                code: c.course_code,
                 title: c.course_title,
                 credits: c.course_credits,
                 director: c.course_director,

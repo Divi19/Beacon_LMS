@@ -4,13 +4,18 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+dotenv = "*"
 asgiref = "==3.9.1"
-sqlparse = "==0.5.3"
-django = "*"
-djangorestframework = "*"
-djangorestframework-simplejwt = "*"
+django = "==5.2.6"
 django-cors-headers = "*"
+djangorestframework-simplejwt = "*"
+pyjwt = "*"
+pytz = "*"
+sqlparse = "*"
+psycopg2-binary = "*"
+python-dotenv = "*"
 django-environ = "*"
+djangorestframework = "*"
 
 [dev-packages]
 
