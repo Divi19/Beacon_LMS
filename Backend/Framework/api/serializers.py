@@ -67,7 +67,7 @@ class UserSerializer(serializers.ModelSerializer):
     Receiving json about user and parsing it in GET
     """
     class Meta:
-        model = User 
+        model = User
         fields = ['user_id', 'email', 'password_hash', 'role', 'created_at']
         extra_kwargs = { #Extra sttings for certain fiels 
             'email': {'write_only': True}, # Never send email hash back to clients

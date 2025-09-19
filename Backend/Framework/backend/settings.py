@@ -117,12 +117,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'my_new_lms_db',
-        'USER': 'a27',
+        'NAME': 'lms_db',
+        'USER': 'myuser',
         'PASSWORD': 'mypassword',
         'HOST': "127.0.0.1",
         'PORT': '5432',
-
         "DISABLE_SERVER_SIDE_CURSORS": True
 }
 }
