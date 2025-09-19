@@ -18,7 +18,8 @@ export default function LessonDetail() {
             lesson_id: lessonId,
             course_id: courseId,
             title: "Mathematics",
-            description: "This courses will teach you about the importance of statistics",
+            description:
+              "This courses will teach you about the importance of statistics",
             objectives: [
               "Lorem ipsum dolor sit amet.",
               "consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -106,7 +107,15 @@ export default function LessonDetail() {
             <h3 className={s.clsTitle}>My Classrooms</h3>
             <div className={s.clsBody}>
               <p className={s.empty}>No classroom created yet</p>
-              <button className={s.ghostCta} type="button" aria-disabled="true">
+              <button
+                className={s.ghostCta}
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/instructor/course/${courseId}/lesson/${lessonId}/classroom/new`
+                  )
+                }
+              >
                 Add Classroom →
               </button>
             </div>
