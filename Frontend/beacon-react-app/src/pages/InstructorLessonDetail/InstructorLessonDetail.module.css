@@ -1,0 +1,124 @@
+.wrap {
+  padding: clamp(16px, 4vw, 40px);
+  padding-top: 22vh;
+}
+
+.page {
+  padding: clamp(16px, 3vw, 28px) clamp(16px, 6vw, 56px) 48px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: clamp(16px, 3vw, 24px);
+  margin-bottom: clamp(18px, 3.6vw, 28px);
+}
+
+.cardBase {
+  border-radius: 18px;
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  padding: clamp(14px, 2.4vw, 22px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.summaryCard {
+}
+.objectiveCard {
+}
+.classrooms {
+}
+
+.summaryTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: clamp(6px, 1.5vw, 10px);
+}
+.code {
+  font-size: clamp(18px, 2.2vw, 22px);
+  color: #6a3a1f;
+  letter-spacing: 0.02em;
+}
+.metaRight {
+  color: #6a3a1f;
+  font-weight: 600;
+}
+.metaValue {
+  white-space: nowrap;
+}
+
+.title {
+  font-size: clamp(28px, 4.2vw, 40px);
+  line-height: 1.1;
+  margin: 2px 0 12px;
+  color: #6a3a1f;
+}
+
+.kv {
+  margin: 6px 0;
+}
+.k {
+  font-weight: 700;
+  color: #6a3a1f;
+  margin-right: 6px;
+}
+.v {
+  color: #252525;
+}
+
+.cta {
+  margin-top: clamp(10px, 1.6vw, 16px);
+  height: 46px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 999px;
+  background: #ffb267;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cta:hover {
+  filter: brightness(1.05);
+}
+.cta:active {
+  transform: translateY(1px);
+}
+
+.objTitle {
+  font-size: clamp(18px, 2.4vw, 24px);
+  font-weight: 800;
+  color: #6a3a1f;
+  margin-bottom: 10px;
+}
+.objList {
+  padding-left: 18px;
+}
+
+.clsTitle {
+  font-size: clamp(18px, 2.4vw, 24px);
+  font-weight: 800;
+  color: #6a3a1f;
+  margin-bottom: clamp(10px, 2vw, 14px);
+}
+.clsBody {
+  display: grid;
+  place-items: center;
+  padding: clamp(22px, 4vw, 36px);
+}
+.empty {
+  font-size: clamp(16px, 1.8vw, 20px);
+  margin-bottom: 14px;
+}
+.ghostCta {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #ffb267;
+  color: #fff;
+  border: none;
+  cursor: not-allowed;
+}
+
+.err {
+  color: #b00020;
+}

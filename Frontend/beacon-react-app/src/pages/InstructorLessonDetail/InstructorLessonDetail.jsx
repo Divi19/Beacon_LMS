@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
+import s from "./InstructorLessonDetail.module.css";
 
 export default function LessonDetail() {
   const { courseId, lessonId } = useParams();
@@ -17,7 +18,7 @@ export default function LessonDetail() {
             lesson_id: lessonId,
             course_id: courseId,
             title: "Mathematics",
-            description: "",
+            description: "This courses will teach you about the importance of statistics",
             objectives: [
               "Lorem ipsum dolor sit amet.",
               "consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -65,7 +66,7 @@ export default function LessonDetail() {
       <main className={s.wrap}>
         <section className={s.page}>
           <div className={s.grid}>
-            <article className={s.summaryCard}>
+            <article className={`${s.cardBase} ${s.summaryCard}`}>
               <div className={s.summaryTop}>
                 <h4 className={s.code}>
                   {lesson.lesson_id?.toString().toUpperCase()}
@@ -91,7 +92,7 @@ export default function LessonDetail() {
               </button>
             </article>
 
-            <aside className={s.objectiveCard}>
+            <aside className={`${s.cardBase} ${s.objectiveCard}`}>
               <h3 className={s.objTitle}>Objective</h3>
               <ul className={s.objList}>
                 {lesson.objectives.map((item, idx) => (
@@ -101,7 +102,7 @@ export default function LessonDetail() {
             </aside>
           </div>
 
-          <section className={s.classrooms}>
+          <section className={`${s.cardBase} ${s.classrooms}`}>
             <h3 className={s.clsTitle}>My Classrooms</h3>
             <div className={s.clsBody}>
               <p className={s.empty}>No classroom created yet</p>
