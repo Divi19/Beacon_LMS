@@ -1,13 +1,12 @@
 .wrap {
-  min-height: 100dvh;
-  background: #efefef;
+  padding: clamp(16px, 4vw, 40px);
+  padding-top: 20vh;
 }
 
 .page {
   padding: clamp(16px, 3vw, 28px) clamp(16px, 6vw, 56px) 56px;
 }
 
-/* Title like the mockup */
 .pageTitle {
   letter-spacing: 0.25em;
   font-weight: 800;
@@ -16,14 +15,9 @@
   margin: 18px 0 18px;
 }
 
-/* Card */
 .cardBase {
   border-radius: 18px;
-  background:
-    linear-gradient(#f7f8fb, #f7f8fb) padding-box,
-    linear-gradient(180deg, rgba(255,170,120,0.6), rgba(140,210,215,0.6)) border-box;
-  border: 2px solid transparent;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  background: linear-gradient(to right, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
 }
 
 .formCard {
@@ -37,7 +31,6 @@
   margin-bottom: clamp(12px, 2vw, 18px);
 }
 
-/* Form grid */
 .form {
   display: grid;
   gap: 16px;
@@ -84,7 +77,6 @@
   color: #8a8a8a;
 }
 
-/* select with custom caret */
 .selectWrap {
   position: relative;
 }
@@ -118,7 +110,6 @@
   color: #8a8a8a;
 }
 
-/* time inputs row */
 .timeRow {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -146,7 +137,7 @@
   border-radius: 999px;
   display: inline-grid;
   place-items: center;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   border: none;
   cursor: pointer;
@@ -157,9 +148,20 @@
   background: #d86464;
 }
 
+.discardBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #ab1616;
+}
 
 .createBtn {
   background: #58a88a;
+}
+
+.createBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #1cb17b;
 }
 
 .createBtn:disabled {
@@ -168,7 +170,9 @@
 }
 
 /* Errors */
-.error { color: #b00020; }
+.error {
+  color: #b00020;
+}
 
 /* Responsive */
 @media (max-width: 860px) {
