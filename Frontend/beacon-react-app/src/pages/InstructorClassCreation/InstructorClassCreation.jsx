@@ -42,12 +42,20 @@ export default function InstructorClassroomCreate() {
     setForm((f) => ({ ...f, [name]: value }));
   }
 
+  const [showSuccess, setShowSuccess] = useState(false);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
     // simple client validation
-    if (!form.classroom_id || !form.day || !form.start_time || !form.end_time || !form.capacity) {
+    if (
+      !form.classroom_id ||
+      !form.day ||
+      !form.start_time ||
+      !form.end_time ||
+      !form.capacity
+    ) {
       setError("Please fill in all fields.");
       return;
     }
@@ -62,9 +70,8 @@ export default function InstructorClassroomCreate() {
       // POST /api/courses/:courseId/lessons/:lessonId/classrooms/
       // body: { classroom_id, day, start_time, end_time, duration_minutes, capacity }
       await new Promise((r) => setTimeout(r, 600)); // simulate latency
-
-      // when successful, go back to lesson page
-      navigate(`/instructor/course/${courseId}/lesson/${lessonId}`, { replace: true });
+      // Show successfull creation popup
+      setShowSuccess(true);
     } catch (err) {
       setError("Failed to create classroom. Please try again.");
     } finally {
@@ -84,7 +91,9 @@ export default function InstructorClassroomCreate() {
 
             <form className={s.form} onSubmit={handleSubmit} noValidate>
               <div className={s.row}>
-                <label htmlFor="classroom_id" className={s.label}>Classroom ID:</label>
+                <label htmlFor="classroom_id" className={s.label}>
+                  Classroom ID:
+                </label>
                 <input
                   id="classroom_id"
                   name="classroom_id"
@@ -108,9 +117,10 @@ export default function InstructorClassroomCreate() {
                 <span className={s.hint}>Duration (calculated from time)</span>
               </div>
 
-              {/* Day */}
               <div className={s.row}>
-                <label htmlFor="day" className={s.label}>Classroom Day:</label>
+                <label htmlFor="day" className={s.label}>
+                  Classroom Day:
+                </label>
                 <div className={s.selectWrap}>
                   <select
                     id="day"
@@ -120,7 +130,9 @@ export default function InstructorClassroomCreate() {
                     onChange={onChange}
                     required
                   >
-                    <option value="" disabled>Classroom Day</option>
+                    <option value="" disabled>
+                      Classroom Day
+                    </option>
                     <option>Monday</option>
                     <option>Tuesday</option>
                     <option>Wednesday</option>
@@ -129,7 +141,9 @@ export default function InstructorClassroomCreate() {
                     <option>Saturday</option>
                     <option>Sunday</option>
                   </select>
-                  <span className={s.selectCaret} aria-hidden="true">▾</span>
+                  <span className={s.selectCaret} aria-hidden="true">
+                    ▾
+                  </span>
                 </div>
               </div>
 
@@ -157,7 +171,9 @@ export default function InstructorClassroomCreate() {
               </div>
 
               <div className={s.row}>
-                <label htmlFor="capacity" className={s.label}>Classroom Student Capacity:</label>
+                <label htmlFor="capacity" className={s.label}>
+                  Classroom Student Capacity:
+                </label>
                 <input
                   id="capacity"
                   name="capacity"
@@ -172,7 +188,11 @@ export default function InstructorClassroomCreate() {
                 />
               </div>
 
-              {error && <p className={s.error} role="alert">{error}</p>}
+              {error && (
+                <p className={s.error} role="alert">
+                  {error}
+                </p>
+              )}
 
               <div className={s.actions}>
                 <Link
@@ -182,7 +202,11 @@ export default function InstructorClassroomCreate() {
                   Discard
                 </Link>
 
-                <button type="submit" className={s.createBtn} disabled={submitting}>
+                <button
+                  type="submit"
+                  className={s.createBtn}
+                  disabled={submitting}
+                >
                   {submitting ? "Creating…" : "Create"}
                 </button>
               </div>
@@ -190,6 +214,24 @@ export default function InstructorClassroomCreate() {
           </section>
         </section>
       </main>
+
+      {showSuccess && (
+        <div className={s.modalOverlay} role="dialog" aria-modal="true">
+          <div className={s.modalCard}>
+            <h3 className={s.modalTitle}>Classroom Created Successfully!</h3>
+            <button
+              className={s.modalCta}
+              onClick={() =>
+                navigate(`/instructor/course/${courseId}/lesson/${lessonId}`, {
+                  replace: true,
+                })
+              }
+            >
+              Go to lesson detail
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
