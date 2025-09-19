@@ -18,10 +18,15 @@ export default function InstructorCourseDescription() {
   const [course, setCourse] = useState(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
-    .then((res) => setCourse(res.data))
-    .catch(() => setCourse(null));
+    axios
+      .get(`http://localhost:8000/courses/frontend/${courseId}/`)
+      .then((res) => setCourse(res.data))
+      .catch(() => setCourse(null));
   }, [courseId]);
+
+  const handleGoToLesson = (lessonId = "draft-1") => {
+    navigate(`/instructor/course/${courseId}/lesson/${lessonId}`);
+  };
 
   if (!course) {
     return (
@@ -67,8 +72,17 @@ export default function InstructorCourseDescription() {
               <span className={s.noLessons}>No lessons</span>
             )}
           </div>
-          </div>
         </div>
+
+  
+        <button  // Button to go to lesson detail from course detail placeholder for testing purposes
+          className="goLessonsCta" 
+          onClick={() => handleGoToLesson()}
+          type="button"
+        >
+          Go to my course lessons detail
+        </button>
+      </div>
     </>
   );
 }
