@@ -15,6 +15,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,19 +37,31 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
     "DEFAULT_PERMISSION_CLASSES":[
         "rest_framework.permissions.AllowAny"
     ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer", 
+    ]
 }
 
 APPEND_SLASH = False
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=700),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=700),
+    "ROTATE_REFRESH_TOKENS": True, 
+    "BLACKLIST_AFTER_ROTATION": True, 
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "VERIFYING_KEY": None, 
+    "AUDIENCE": None, 
+    "ISSUER": None,
+    "JWK_URL": None, 
+    "LEEWAY": 0,
+    "USER_ID_FIELD": "user_id",   # <— match your model PK
+    "USER_ID_CLAIM": "user_id",   # optional but keeps the token claim name consistent
 }
 
 # Application definition
@@ -77,6 +90,8 @@ MIDDLEWARE = [
 
 ]
 
+APPEND_SLASH = True
+
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
@@ -99,18 +114,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'lms_dev',
-        'USER': 'myuser',
-        'PASSWORD': 'LmsPass123!',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -159,5 +168,6 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:3000"]
-CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ["authorization", "content-type", "x-csrftoken"]
 #CORS_ALLOW_ORIGINS = True

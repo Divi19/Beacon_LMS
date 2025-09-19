@@ -1,136 +1,214 @@
+from contextvars import Token
+
+from .forms import *
+
+#django 
 from django.shortcuts import render, redirect
-from .forms import CoursesForm
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .serializers import CourseSerializer, StudentSerializer
-from .models import Course, Student
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from rest_framework.permissions import AllowAny
+from django.contrib.auth import authenticate, login, logout 
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.hashers import check_password
+
+#Res
+from rest_framework.decorators import api_view
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.generics import RetrieveAPIView 
+
+#Inner
+from .serializers import *
+from .models import *
+from .auth import CustomJWTAuthentication
+
+
+
+"""
+Shared Part
+"""
+class UserLogout(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+class CurrentUser(RetrieveAPIView):#Receiving a single object, read-only
+    authentication_classes = [CustomJWTAuthentication] 
+    permission_classes = [IsAuthenticated]
+    serializer_class = CurrentUserSerializer
+    def get_object(self):
+        return self.request.user #According to the json upon logged in, the user nested content
+
 
 """
 Instructor Part
 """
+"""
+Authentication for Instructors 
+Instructor login function using simple Jwt
+https://medium.com/@preciousimoniakemu/create-a-react-login-page-that-authenticates-with-django-auth-token-8de489d2f751 
+https://www.youtube.com/watch?v=1pIrRTxGnJ4
+"""
 
-#For getting list of courses
-@method_decorator(csrf_exempt, name='dispatch')
-class FrontendView(APIView):
+class InstructorLogin(APIView): 
+    """
+    Posting login request. 
+    """
     permission_classes = [AllowAny]
+    authentication_classes = [] #Bypassing authentication
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user'] #in the post json
+        token = RefreshToken.for_user(user) #Creates a token
+
+        instructor = (
+            InstructorProfile.objects
+            .select_related("user")
+            .filter(user=user)
+            .first()
+        )
+        if not instructor:
+            # Auth succeeded, but user lacks instructor privileges
+            return Response({"error": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        
+        payload = {
+            "access": str(token.access_token),
+            "refresh": str(token),
+            "user": {
+                "instructor_profile_id": instructor.instructor_profile_id,
+                "full_name": instructor.full_name,
+                "role": "instructor",
+                "email": user.email,
+                "user_id": user.user_id,
+            },
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class InstructorCoursesView(APIView):
+    """
+    Instructor viewing own created courses
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+
     def get(self, request):
-        courses = Course.objects.all()
-        output = [{"course_title": course.course_title,
-                   "course_id": course.course_id,
-                   "course_credits": course.course_credits,
-                   "course_director": course.course_director,
-                   "course_description": course.course_description}
+        """
+        Fetching course and returning a customised json response
+        """
+        user = self.request.user
+        instr = InstructorProfile.objects.filter(user=user).first()
+        if not instr:
+            return Response({"detail": "Not an instructor."}, status=403)
+        courses = Course.objects.filter(owner_instructor=instr).select_related("owner_instructor") if instr else Course.objects.none()
+        output = [{
+                "course_id": course.course_id,
+                "course_title": course.title,
+                "course_code": course.code,
+                "course_credits": course.credits,
+                "course_director": course.owner_instructor.full_name,
+                "course_description": course.description}
                    for course in courses]
-        return Response(output)
+        return Response(output, status=status.HTTP_200_OK)
     
     def post(self, request):
+        """
+        Creating a new course
+        """
         serializer = CourseSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data)
+            serializer.save() 
+            return Response(serializer.data,  status=status.HTTP_201_OK)
 
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
-class FrontendDetailView(APIView):
+class CourseDetailView(APIView):
+    """
+    Fetching course and returning a customised json response
+    """
     permission_classes = [AllowAny]
     def get(self, request, pk):
-        courses = Course.objects.get(course_id=pk)
-        output = {"course_title": courses.course_title,
-                   "course_id": courses.course_id,
-                   "course_credits": courses.course_credits,
-                   "course_director": courses.course_director,
-                   "course_description": courses.course_description}
-        return Response(output)
-    
+        course = Course.objects.get(course_id=pk)
+        output = {
+            "course_id": course.course_id,
+            "course_title": course.title,
+            "course_code": course.code,
+            "course_credits": course.credits,
+            "course_director": course.owner_instructor.full_name,
+            "course_description": course.description}
+        return Response(output,  status=status.HTTP_200_OK)
+
 """
 Student Part
 """
 class StudentEnrolledCourses(APIView):
     permission_classes = [AllowAny]
     def get(self, request, student_profile_id):
-        student = get_object_or_404(Student, student_profile_id = student_profile_id)
-        res = student.courses.all()
-        data = CourseSerializer(res, many=True).data
-        return Response(data)
+        """
+        Fetching all enrolled course 
+        - Look for the student 
+        - Reverse relationship to grab enrolled courses
+        - Parse and return json 
+        """
+        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        courses = Course.objects.filter(enrollment__student=student, status="Active").distinct() 
+        output = [{
+                "course_id": course.course_id,
+                "course_title": course.title,
+                "course_code": course.code,
+                "course_credits": course.credits,
+                "course_director": course.owner_instructor.full_name,
+                "course_description": course.description}
+                for course in courses]
+        return Response(output, status=status.HTTP_200_OK)
 
 class StudentUnenrolledCourses(APIView):
     permission_classes = [AllowAny]
     def get(self, request, student_profile_id):
-        student = get_object_or_404(Student, student_profile_id = student_profile_id)
-        enrolled_ids = student.courses.values_list("pk", flat = True) #gives list of pk values (course_ids)
-        res = Course.objects.exclude(pk__in=enrolled_ids) #Exclude by pk
-        data = CourseSerializer(res, many=True).data
-        return Response(data)
-    
-class StudentEnroll(APIView):
-    permission_classes=[AllowAny]
+        """
+        Fetching all unenrolled course 
+        - Look for the student 
+        - Reverse relationship to grab unenrolled courses
+        - Parse and return json 
+        """
+        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        #Grab all courses that are not enrolled using backward relationship
+        courses = Course.objects.filter(status="Active").exclude(enrollment__student=student).distinct() #Preventing duplicate courses
+        output = [{
+            "course_id": course.course_id,
+            "course_title": course.title,
+            "course_code": course.code,
+            "course_credits": course.credits,
+            "course_director": course.owner_instructor.full_name,
+            "course_description": course.description}
+            for course in courses]
+        return Response(output, status=status.HTTP_200_OK)
     def post(self, request, student_profile_id):
-        student = get_object_or_404(Student, student_profile_id=student_profile_id)
-        course_id = request.data.get("course_id")
-        if not course_id:
-            return Response({"detail": "course_id is required"})
-
-        course = get_object_or_404(Course, pk=course_id)
-
-        if student.courses.filter(pk=course.pk).exists():
-            # idempotent: already enrolled
-            return Response(
-                {"detail": "Student already enrolled", "course": CourseSerializer(course).data},
-            )
-
-        student.courses.add(course)
-        return Response(CourseSerializer(course).data)
-
-
-
-"""
-class StudentEnrolledCourses(APIView):
-    def get(self, student_id):
-        #Grab current student if 
-        try:
-            #Checking if the student exists.
-            student = StudentProfile.objects.get(pk=student_id)
-        except StudentProfile.DoesNotExist:
-            return Response({'error': 'Student not found'}, status=404)
-
-        enrolled_courses = Course.objects.filter(enrollments__student=student)
-        serializer = CourseSerializer(enrolled_courses, many=True)
-        return Response(serializer.data, status=200)
-
-
-class StudentUnenrolledCourses(APIView):
-    def get(self, student_id):
-        try:
-            student = StudentProfile.objects.get(pk=student_id)
-        except StudentProfile.DoesNotExist:
-            return Response({'error': 'Student not found'}, status=404)
-
-        unenrolled_courses = Course.objects.exclude(enrollments__student=student)
-        serializer = CourseSerializer(unenrolled_courses, many=True)
-        return Response(serializer.data, status=200)
-
-    def post(self, request, student_id):
-
-        course_id = request.data.get("course_id")
-
-        try:
-            student = StudentProfile.objects.get(pk=student_id)
-            course = Course.objects.get(course_id=course_id)
-        except StudentProfile.DoesNotExist:
-            return Response({'error': 'Student not found'}, status=404)
-        except Course.DoesNotExist:
-            return Response({'error': 'Course not found'}, status=404)
-
-        enrollment, created = Enrollment.objects.get_or_create(student=student, course=course)
-        if not created: #If the way it's fetched is not created 
-            return Response({'error': 'Already enrolled'}, status=400)
-
-        serializer = EnrollmentSerializer(enrollment)
-        
-        return Response(serializer.data, status=201)
-"""
+        """
+        Enroll a student
+        - Look for the student 
+        - Look for course
+        - Create new Enrollment objects
+        """
+        student = get_object_or_404(StudentProfile, pk=student_profile_id)
+        #Checking if course id is present and if student has already enrolled 
+        serializer = EnrollmentSerializer(
+            data=request.data,
+            context={"student": student},
+        )
+        serializer.is_valid(raise_exception=True)
+        enrollment = serializer.save()
+        return Response(EnrollmentSerializer(enrollment).data, status=201)

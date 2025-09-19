@@ -7,15 +7,19 @@
   background: linear-gradient(to bottom, #71bfcd 0%, #b6c2ae 70%, #f1cea8 100%);
   border-bottom: 2px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
-
 
 .leftSide {
   display: flex;
   align-items: center;
   gap: 12px;
   text-decoration: none;
-  color: inherit;       
+  color: inherit;
 }
 
 .title {
