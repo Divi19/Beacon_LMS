@@ -2,13 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import CourseCard from "../../components/CourseCard/CourseCard";
+import CourseCard from "../../../components/CourseCard/CourseCard";
 import s from "./StudentMyCourses.module.css";
-import Button from "../../components/Button/Button";
-import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
-import courses from "../../data/courses";
-import { useEnrollment } from "../../state/EnrollmentContext";
-
+import Button from "../../../components/Button/Button";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 
 export default function StudentEnrollmentPage() {
   const navigate = useNavigate();
@@ -17,8 +14,12 @@ export default function StudentEnrollmentPage() {
   const student_id = 1 
   
   useEffect( () => {
-  axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/my_courses/`)
-    .then(res => setEnrolled(res.data))
+  console.log(`[StudentEnrollmentPage] fetching courses for student_id=${student_id}`);
+  axios.get(`http://localhost:8000/student/${student_id}/my_courses/`)
+    .then(res => {
+      console.log("[StudentEnrollmentPage] fetch success:", res.data);
+      setEnrolled(res.data)
+    })
     .catch(err => 
       console.error('Error fetching data', err));
     }, []);
@@ -67,7 +68,7 @@ export default function StudentEnrollmentPage() {
             <section className={s.grid}>
               {enrolled.map((c) => (
                 <CourseCard
-                  key={c.id}
+                  key={c.course_id}
                   course={{
                     code: c.course_code,
                     title: c.course_title,

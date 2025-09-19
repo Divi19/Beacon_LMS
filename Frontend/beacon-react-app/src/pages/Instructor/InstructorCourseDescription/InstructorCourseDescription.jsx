@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Button from "../../components/Button/Button";
-import { useEnrollment } from "../../state/EnrollmentContext";
+import Button from "../../../components/Button/Button";
+import { useEnrollment } from "../../../state/EnrollmentContext";
 import s from "./InstructorCourseDescription.module.css";
 import axios from "axios";
-import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
+import {api} from "../../../api" 
 
 export default function InstructorCourseDescription() {
   const { courseId } = useParams();
@@ -18,7 +19,7 @@ export default function InstructorCourseDescription() {
   const [course, setCourse] = useState(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
+    api.get(`instructor/courses/${courseId}/detail/`)
     .then((res) => setCourse(res.data))
     .catch(() => setCourse(null));
   }, [courseId]);
