@@ -1,6 +1,6 @@
 .wrap {
   padding: clamp(16px, 4vw, 40px);
-  padding-top: 22vh;
+  padding-top: 20vh;
 }
 
 .page {
@@ -36,11 +36,11 @@
 }
 .code {
   font-size: clamp(18px, 2.2vw, 22px);
-  color: #6a3a1f;
+  color: #9c440c;
   letter-spacing: 0.02em;
 }
 .metaRight {
-  color: #6a3a1f;
+  color: #9c440c;
   font-weight: 600;
 }
 .metaValue {
@@ -51,7 +51,7 @@
   font-size: clamp(28px, 4.2vw, 40px);
   line-height: 1.1;
   margin: 2px 0 12px;
-  color: #6a3a1f;
+  color: #9c440c;
 }
 
 .kv {
@@ -59,11 +59,11 @@
 }
 .k {
   font-weight: 700;
-  color: #6a3a1f;
+  color: #9c440c;
   margin-right: 6px;
 }
 .v {
-  color: #252525;
+  color:#9c440c;
 }
 
 .cta {
@@ -87,7 +87,7 @@
 .objTitle {
   font-size: clamp(18px, 2.4vw, 24px);
   font-weight: 800;
-  color: #6a3a1f;
+  color: #9c440c;
   margin-bottom: 10px;
 }
 .objList {
@@ -97,7 +97,7 @@
 .clsTitle {
   font-size: clamp(18px, 2.4vw, 24px);
   font-weight: 800;
-  color: #6a3a1f;
+  color:#9c440c;
   margin-bottom: clamp(10px, 2vw, 14px);
 }
 .clsBody {
