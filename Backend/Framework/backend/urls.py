@@ -25,14 +25,29 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     #Fetch current logged in user
     path("user/", CurrentUser.as_view(), name="current-user"),
+
+    #Course details
+    path('courses/<str:pk>/detail', CourseDetailView.as_view(), name="frontend-detail"),
     
     #Instructors
-    path('courses/frontend/', InstructorCoursesView.as_view(), name="frontend"),
-    path('courses/frontend/<str:pk>/', CourseDetailView.as_view(), name="frontend-detail"),
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
-    #students
-    path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
-    path("courses/frontend/<int:student_profile_id>/student/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
-    path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
+    #Instructors Courses
+    path('instructor/courses/', InstructorCoursesView.as_view(), name="frontend"),
+    #Instructors Classrooms
+    path("instructor/classrooms/", ClassroomView.as_view(), name="classrooms"),
+    
+    
+    #Students login TODO
+    path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
+    #Student Courses
+    path("student/<int:student_profile_id>/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
+    path("student/<int:student_profile_id>/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
+    path("student/<int:student_profile_id>/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
+    #Students Classrooms
+    path("student/<int:student_profile_id>/classooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    path("student/<int:student_profile_id>/classooms/enrolled/", StudentEnrolledClassrooms.as_view(), name="enrolled-classrooms"),
+    path("student/<int:student_profile_id>/classooms/enroll/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")
+    
 ]
