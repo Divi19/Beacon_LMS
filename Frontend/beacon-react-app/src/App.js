@@ -11,7 +11,8 @@ import InstructorCourseDescription from "./pages/InstructorCourseDescription/Ins
 // import InstructorLessonCreation from "./pages/InstructorLessonCreation";
 import InstructorLessonCreate from "./pages/Instructor Lesson Create/InstructorLessonCreate";
 import InstructorLessonList from "./pages/Instructor Lesson List/InstructorLessonList";
-import InstructorLessonCreation from "./pages/Instructor Lesson Creation/InstructorLessonCreation"
+import InstructorLessonCreation from "./pages/Instructor Lesson Creation/InstructorLessonCreation";
+import StudentMyLessonsPage from "./pages/StudentMyLessonsPage/StudentMyLessonsPage";
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
   
@@ -52,6 +53,7 @@ export default function App(){
       {/* <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} /> */}
       {/* Changed from Isabella version */}
       <Route path="/instructor/course/:courseId/lesson-creation" element={<InstructorLessonCreate />} /> 
+      <Route path="/student/my-lesson" element={<StudentMyLessonsPage />} /> 
       
     </Routes>
   </div>
