@@ -70,6 +70,9 @@ class Lesson(models.Model):
     lesson_prerequisite = models.TextField(max_length=500)
     courses = models.ForeignKey(Course, related_name="lessons", on_delete=models.CASCADE)
     
+    def __str__(self):
+        return f"{self.lesson_id} : {self.lesson_title}"
+
 class Student(models.Model):
     student_profile_id = models.AutoField(primary_key=True)
     full_name = models.CharField(max_length=255)

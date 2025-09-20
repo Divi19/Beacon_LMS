@@ -1,3 +1,6 @@
+-- =========================================================
+-- Switch default schema
+-- =========================================================
 SET search_path = public;
 
 -- =========================================================
@@ -161,6 +164,26 @@ ALTER TABLE course_draft
 ALTER TABLE classroom
   ADD CONSTRAINT uq_lesson_day_time UNIQUE (lesson_id, day_of_week, time_start, time_end);
 
+---Adding surrogate keys
+-- LESSON_PREREQUISITE: drop composite PK, add id, add UNIQUE
+ALTER TABLE lesson_prerequisite DROP CONSTRAINT pk_lesson_prerequisite;
+ALTER TABLE lesson_prerequisite ADD COLUMN id SERIAL;
+ALTER TABLE lesson_prerequisite ADD CONSTRAINT lesson_prerequisite_pkey PRIMARY KEY (id);
+ALTER TABLE lesson_prerequisite ADD CONSTRAINT uq_lesson_prereq UNIQUE (lesson_id, prereq_lesson_id);
+
+-- LESSON_ENROLLMENT: drop composite PK, add id, add UNIQUE
+ALTER TABLE lesson_enrollment DROP CONSTRAINT pk_lesson_enrollment;
+ALTER TABLE lesson_enrollment ADD COLUMN id SERIAL;
+ALTER TABLE lesson_enrollment ADD CONSTRAINT lesson_enrollment_pkey PRIMARY KEY (id);
+ALTER TABLE lesson_enrollment ADD CONSTRAINT uq_lesson_enrollment UNIQUE (lesson_id, student_id);
+
+-- CLASSROOM_ENROLLMENT: drop composite PK, add id, add UNIQUE
+ALTER TABLE classroom_enrollment DROP CONSTRAINT pk_classroom_enrollment;
+ALTER TABLE classroom_enrollment ADD COLUMN id SERIAL;
+ALTER TABLE classroom_enrollment ADD CONSTRAINT classroom_enrollment_pkey PRIMARY KEY (id);
+ALTER TABLE classroom_enrollment ADD CONSTRAINT uq_classroom_enrollment UNIQUE (classroom_id, student_id);
+
+
 -- =========================================================
 -- 4) INDEXES (performance/lookup)
 -- =========================================================
@@ -196,3 +219,4 @@ CREATE INDEX IF NOT EXISTS idx_enrollment_student ON enrollment(student_id);
 --   before enrolling in any classroom of that lesson. Enforce later
 --   via trigger or application logic.
 -- =========================================================
+

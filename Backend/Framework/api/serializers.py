@@ -7,15 +7,16 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = ["course_title", "course_id", "course_credits", "course_director", "course_description"]
 
 class LessonSerializer(serializers.ModelSerializer):
-    course_id = serializers.PrimaryKeyRelatedField(
-        source="courses", queryset=Course.objects.all(),
-        write_only=True, required=False
-    )
-    courses = CourseSerializer(read_only=True)
+    # course_id = serializers.PrimaryKeyRelatedField(
+    #     source="courses", queryset=Course.objects.all(),
+    #     write_only=True, required=False
+    # )
+    # courses = CourseSerializer(read_only=True)
+    courses = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
 
     class Meta:
         model = Lesson
-        fields = ["lesson_id", "lesson_title", "lesson_credits", "lesson duration", "lesson_description", "lesson_objective", "lesson_prerequisite", "courses", "course_id"]
+        fields = ["lesson_id", "lesson_title", "lesson_credits", "lesson_duration", "lesson_description", "lesson_objective", "lesson_prerequisite", "courses"]
         # read_only_fields = ["lesson_title"]
 
 class StudentSerializer(serializers.ModelSerializer):
