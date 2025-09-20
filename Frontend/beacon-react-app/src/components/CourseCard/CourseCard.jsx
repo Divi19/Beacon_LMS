@@ -36,7 +36,7 @@ export default function CourseCard({
           type="button"
           className={s.cta}
           onClick={(e) => { e.stopPropagation();
-            onClick?.();
+            window.location.href = "/student/my-lesson";
           
           }}>Go to my course lesson<svg
             xmlns="http://www.w3.org/2000/svg"
