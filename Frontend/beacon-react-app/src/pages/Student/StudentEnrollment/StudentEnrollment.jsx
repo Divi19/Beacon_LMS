@@ -2,10 +2,10 @@ import React, {useEffect, useState} from 'react';
 
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
-import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
-import { useEnrollment } from "../../state/EnrollmentContext";
-import allCourses from "../../data/courses";
-import CourseCard from "../../components/CourseCard/CourseCard";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
+import { useEnrollment } from "../../../state/EnrollmentContext";
+import allCourses from "../../../data/courses";
+import CourseCard from "../../../components/CourseCard/CourseCard";
 import s from "./StudentEnrollment.module.css";
 
 
@@ -20,7 +20,7 @@ export default function StudentEnrollment() {
 
   const fetchCourses = async () => {
     try {
-      await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/unenrolled/`).then(
+      await axios.get(`http://localhost:8000/student/${student_id}/courses/unenrolled/`).then(
         res => {
           setUnenrolled(res.data);
         }
@@ -34,7 +34,7 @@ export default function StudentEnrollment() {
   const handleEnroll = async (courseId) => {
     try {
       setSubmittingId(courseId);
-      await axios.post( `http://localhost:8000/courses/frontend/${student_id}/student/enroll/`, {
+      await axios.post( `http://localhost:8000/student/${student_id}/courses/enroll/`, {
         course_id: courseId,
       });
       fetchCourses(); // refresh after write so UI stays correct (the number of unenrolled)

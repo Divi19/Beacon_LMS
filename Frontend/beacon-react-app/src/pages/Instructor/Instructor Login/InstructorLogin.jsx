@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "./InstructorLogin.module.css";
-import {api} from "../api" 
+import {api} from "../../../api" 
 
 // Optional: pass a logo URL via props if you prefer
 // Usage: <InstructorLogin logoSrc="/assets/beacon-logo.png" />

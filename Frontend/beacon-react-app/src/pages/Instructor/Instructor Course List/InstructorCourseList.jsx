@@ -1,10 +1,10 @@
 import s from "./InstructorCourseList.module.css";
-import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
-import Button from "../../components/Button/Button";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
+import Button from "../../../components/Button/Button";
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import {api} from "../../api" 
+import {api} from "../../../api" 
 
 export default function InstructorCourseList() {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export default function InstructorCourseList() {
         await api.get("/user/");
         setReady(true);      
         // then fetch courses
-        const { data } = await api.get("/courses/frontend/");
+        const { data } = await api.get("/instructor/courses/");
         setCourses(data);
       } catch (e) {
         if (e?.response?.status === 401) {
