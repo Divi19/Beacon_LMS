@@ -11,6 +11,7 @@ export default function LessonDetail() {
   const [error, setError] = useState("");
   const [classrooms, setClassrooms] = useState([]);
   const navigate = useNavigate();
+  const [students, setStudents] = useState([])
 
   // replace with real API call later
   async function loadLesson() {
@@ -164,7 +165,7 @@ export default function LessonDetail() {
                   const hours = Math.floor((c.duration_minutes ?? 0) / 60) || 0;
 
                   return (
-                    <div key={c.id} className={s.clsCard}>
+                    <div key={c.classroom_id} className={s.clsCard}>
                       <div className={s.clsColDay}>
                         <div className={s.clsDay}>{c.day}</div>
                         <div className={s.clsDur}>{hours} Hours</div>
@@ -177,7 +178,7 @@ export default function LessonDetail() {
                         <div className={s.clsMetaRow}>
                           <span>{enrolled} students</span>
                           <span>Availability: {availability}</span>
-                          <span>ID: {c.id}</span>
+                          <span>ID: {c.classroom_id}</span>
                         </div>
                       </div>
 

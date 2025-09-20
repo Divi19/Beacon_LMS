@@ -10,6 +10,9 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login, logout 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
+from django.db import IntegrityError
+from django.db.models import OuterRef, Subquery, Q
+from django.db.models import Count
 
 #Res
 from rest_framework.decorators import api_view
@@ -112,11 +115,10 @@ class InstructorCoursesView(APIView):
         instr = InstructorProfile.objects.filter(user=user).first()
         if not instr:
             return Response({"detail": "Not an instructor."}, status=403)
-        courses = Course.objects.filter(owner_instructor=instr).select_related("owner_instructor") if instr else Course.objects.none()
+        courses =( Course.objects.filter(owner_instructor=instr).select_related("owner_instructor").annotate(enrolled_count=Count("enrollment", distinct=True)) if instr else Course.objects.none())
         output = [{
                 "course_id": course.course_id,
                 "course_title": course.title,
-                "course_code": course.code,
                 "course_credits": course.credits,
                 "course_director": course.owner_instructor.full_name,
                 "course_description": course.description}
@@ -132,25 +134,7 @@ class InstructorCoursesView(APIView):
             serializer.save() 
             return Response(serializer.data,  status=status.HTTP_201_OK)
 
-#For getting a single course, no list and no post method
-@method_decorator(csrf_exempt, name='dispatch')
-class CourseDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication] 
-    def get(self, request, pk):
-        """
-        GET method. Fetching course and returning a customised json response
-        """
-        course = Course.objects.get(course_id=pk)
-        output = {
-            "course_id": course.course_id,
-            "course_title": course.title,
-            "course_code": course.code,
-            "course_credits": course.credits,
-            "course_director": course.owner_instructor.full_name,
-            "course_description": course.description}
-        return Response(output, status=status.HTTP_200_OK)
-    
+
 class ClassroomView(APIView):
     """
     Classrooms specific to instructors 
@@ -158,7 +142,7 @@ class ClassroomView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication] 
 
-    def get(self, request, pk):
+    def get(self, request, lesson_id):
         """
         GET method. Receive current lesson pk and instructor to differentiate between classrooms
         and to show classrooms specific to instructors. Customised json response returned
@@ -166,29 +150,114 @@ class ClassroomView(APIView):
         #Receiving instructor 
         user = self.request.user
         instr = InstructorProfile.objects.filter(user=user).first()
-        #Reveiving lessons  
-        lesson = Lesson.objects.get(lesson_id=pk)
-        classrooms = Classroom.objects.filter(lesson=lesson, instructor=instr) if instr and lesson else Classroom.objects.none()
+        #Receiving lessons  
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
         if not instr:
             return Response({"detail": "Not an instructor."}, status=403)
         if not lesson:
             return Response({"detail": "No related lessons."}, status=403)
-        output =[{
-                "day_of_week": classroom.day_of_week,
-                "time_start": classroom.time_start,
-                "time_end": classroom.time_end,
-                "instructor": classroom.instructor,
-                    } for classroom in classrooms]
-        return Response(output,  status=status.HTTP_200_OK)
+        classrooms = (Classroom.objects.filter(lesson=lesson, instructor=instr).annotate(enrolled_count=Count("classroomenrollment", distinct=True)) if instr and lesson else Classroom.objects.none())
+        serializer = ClassroomSerializer(classrooms, many=True, context={"request": request})
+        return Response(serializer.data,  status=status.HTTP_200_OK)
     
-    def post(self, request):
+    def post(self, request, lesson_id):
         """
         POST method. Creating classrooms
         """
-        serializer = ClassroomSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save() 
-            return Response(serializer.data,  status=status.HTTP_201_OK)
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        user = self.request.user
+        try:
+            instructor = InstructorProfile.objects.get(user=request.user)
+        except InstructorProfile.DoesNotExist:
+            raise serializers.ValidationError("This user is not an instructor.")
+        ser = ClassroomSerializer(data=request.data, context={"request": request, "lesson": lesson})
+        ser.is_valid(raise_exception=True)
+        ser.is_valid(raise_exception=True)
+        try:
+            classroom = ser.save(lesson=lesson, instructor=instructor)
+        except IntegrityError:
+            return Response(
+                {"detail": "A classroom with the same day & time already exists for this lesson."},
+                status=400,
+            )
+        return Response(ClassroomSerializer(classroom, context={"request": request}).data, status=201)
+
+
+
+class StudentsEnrolledView(APIView):
+    """
+    GET /api/students/enrolled?course_id=...&lesson_id=...&classroom_id=...&q=...&ordering=full_name
+    - Provide any combination of course_id, lesson_id, classroom_id.
+    - If multiple are provided, the result is the INTERSECTION (i.e., students satisfying all filters).
+    - Optional 'q' searches name/student_no/email.
+    - Optional 'ordering' (e.g., 'full_name', '-full_name', 'student_no').
+    - Uses simple page params: page (1-based), page_size (default 25).
+
+
+    use this: 
+    const { data } = await api.get('/api/students/enrolled?course_id=AB1234');
+        setStudents(data.results);      // list to display
+        setTotal(data.count);
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+
+    def get(self, request):
+        course_id = request.query_params.get("course_id")
+        lesson_id = request.query_params.get("lesson_id")
+        classroom_id = request.query_params.get("classroom_id")
+        q = request.query_params.get("q", "").strip()
+        ordering = request.query_params.get("ordering", "full_name")
+        page = max(int(request.query_params.get("page", 1) or 1), 1)
+        page_size = min(max(int(request.query_params.get("page_size", 25) or 25), 1), 200)
+
+        if not (course_id or lesson_id or classroom_id):
+            return Response(
+                {"detail": "Provide at least one of: course_id, lesson_id, classroom_id."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate referenced objects (and normalize to instances)
+        course = lesson = classroom = None
+        if course_id:
+            course = get_object_or_404(Course, course_id=course_id)
+        if lesson_id:
+            lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        if classroom_id:
+            classroom = get_object_or_404(Classroom, classroom_id=classroom_id)
+
+        # Base queryset
+        qs = StudentProfile.objects.all()
+        # Apply filters (intersection semantics)
+        if course:
+            qs = qs.filter(enrollment__course=course)
+        if lesson:
+            qs = qs.filter(lessonenrollment__lesson=lesson)
+        if classroom:
+            qs = qs.filter(classroomenrollment__classroom=classroom)
+        qs = qs.distinct()
+
+        # Ordering (whitelist)
+        allowed_order = {"full_name", "-full_name", "student_no", "-student_no", "enrolled_at", "-enrolled_at"}
+        if ordering not in allowed_order:
+            ordering = "full_name"
+        qs = qs.order_by(ordering)
+
+        # Pagination
+        total = qs.count() #the number of students
+        start = (page - 1) * page_size
+        end = start + page_size
+        items = list(qs[start:end])
+
+        ser = StudentSerializer(items, many=True)
+        return Response({
+            "count": total,
+            "page": page,
+            "page_size": page_size,
+            "results": ser.data
+        }, status=status.HTTP_200_OK)
+
+
 
 """
 Student Part
@@ -207,7 +276,6 @@ class StudentEnrolledCourses(APIView):
         output = [{
                 "course_id": course.course_id,
                 "course_title": course.title,
-                "course_code": course.code,
                 "course_credits": course.credits,
                 "course_director": course.owner_instructor.full_name,
                 "course_description": course.description}
@@ -229,7 +297,6 @@ class StudentUnenrolledCourses(APIView):
         output = [{
             "course_id": course.course_id,
             "course_title": course.title,
-            "course_code": course.code,
             "course_credits": course.credits,
             "course_director": course.owner_instructor.full_name,
             "course_description": course.description}
@@ -246,7 +313,7 @@ class StudentUnenrolledCourses(APIView):
         #Checking if course id is present and if student has already enrolled 
         serializer = EnrollmentSerializer(
             data=request.data,
-            context={"student": student},
+            context={"student": student}, 
         )
         serializer.is_valid(raise_exception=True)
         enrollment = serializer.save()
@@ -276,10 +343,10 @@ class StudentUnenrolledClassrooms(APIView):
         """
         Enroll a student
         - Look for the student 
+        -Ensure not exceed capacity 
         - Create new object
         """
         student = get_object_or_404(StudentProfile, pk=student_profile_id)
-        #Checking if course id is present and if student has already enrolled 
         serializer = ClassroomEnrollmentSerializer(
             data=request.data,
             context={"student": student},
@@ -302,4 +369,24 @@ class StudentEnrolledClassrooms(APIView):
                     } for classroom in enrolled_classrooms]
         return Response(output,  status=status.HTTP_200_OK)
     
+"""
+Shared
+"""
+#For getting a single course, no list and no post method
+@method_decorator(csrf_exempt, name='dispatch')
+class CourseDetailView(APIView):
+    #permission_classes = [IsAuthenticated]
+    #authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request, pk):
+        """
+        GET method. Fetching course and returning a customised json response
+        """
+        course = Course.objects.get(course_id=pk)
+        output = {
+            "course_id": course.course_id,
+            "course_title": course.title,
+            "course_credits": course.credits,
+            "course_director": course.owner_instructor.full_name,
+            "course_description": course.description}
+        return Response(output, status=status.HTTP_200_OK)
     

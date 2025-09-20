@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.validators import UniqueTogetherValidator
 
 #djando
 from django.contrib.auth.hashers import make_password, check_password
@@ -11,8 +12,6 @@ from django.db.models.functions import Lower
 
 #local 
 from .models import *
-
-
 
 """
 Auth-related serializers
@@ -97,7 +96,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProfile
-        fields = ['student_profile_id', 'user', 'full_name', 'student_no', 'locked_at', 'password']
+        fields = ['student_profile_id', 'user', 'full_name', 'student_no', 'locked_at', 'password', 'email']
         read_only_fields = ['student_profile_id', 'student_no']
 
     #during post 
@@ -112,7 +111,7 @@ class StudentSerializer(serializers.ModelSerializer):
         
         user = User.objects.create(
             email = email,
-            password_hash=make_password(raw_pwd), #Hash the plain password 
+            password_hash=raw_pwd, #plain password 
             role=role #Set the role or default to student 
         )
         
@@ -136,7 +135,6 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         student = self.context.get('student')
         if student is None:
             raise serializers.ValidationError("Serializer context must include 'student'.")
-
         course = validated_data.pop('course')
 
         #see if object already exists 
@@ -164,6 +162,7 @@ class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
     classroom_id = serializers.PrimaryKeyRelatedField(
         source='classroom', queryset=Classroom.objects.all(), write_only=True
     ) #Receive an id which get translated to real Classroom object
+
     class Meta:
         model = ClassroomEnrollment
         fields = ['id', 'classroom_id', 'student_id', 'enrolled_at']
@@ -172,7 +171,8 @@ class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
         student = self.context.get('student')
         if student is None:
             raise serializers.ValidationError("Serializer context must include 'student'.")
-        classroom = validated_data.pop('classroom')
+        classroom_id = validated_data.pop('classroom_id') #Receiving only a classroom id
+        classroom = Classroom.objects.get(classroom_id = classroom_id)
 
         #see if object already exists and if the classroom is active 
         if ClassroomEnrollment.objects.filter(student=student, classroom=classroom).exists():
@@ -183,6 +183,11 @@ class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "This course is current inactive."
             )
+        if classroom.capacity >= 10:
+            raise serializers.ValidationError(
+                "This classroom is currently full."
+            )
+            
         
         #see if the student has enrolled into the lessons by 
         # - Take classroom's lesson, take id 
@@ -210,15 +215,15 @@ class CourseSerializer(serializers.ModelSerializer):
     Json parsing for courses showing and creation in POST and GET
     TODO: Needs revamp
     """
-
+    enrolled_count = serializers.IntegerField(read_only=True)
     #This is used during POST, when clicking on a course posts the id only
     owner_instructor_id = serializers.PrimaryKeyRelatedField(
         source='owner_instructor', queryset=InstructorProfile.objects.all(), write_only=True
-        )
+    )
 
     class Meta:
         model = Course
-        fields = ["code", "title", "status", "owner_instructor", "owner_instructor_id", "credits", "description"]
+        fields = ["enrolled_count", "code", "title", "status", "owner_instructor", "owner_instructor_id", "credits", "description"]
         read_only_fields = ["owner_instructor"]  
 
     #Creating a course from a form, fields in validated_data.
@@ -239,53 +244,74 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class ClassroomSerializer(serializers.ModelSerializer):
-    """
-    Json pasing for GET (Classroom showing) and POST (Classroom creation)
-    """
-    #During post, only lesson_id is being returned
-    lesson_id = serializers.PrimaryKeyRelatedField(
-        source='lesson', queryset=Lesson.objects.all(), write_only=True
-    ) 
-    #instructor_id = serializers.PrimaryKeyRelatedField(
-    #    source='instructor', queryset=InstructorProfile.objects.all(), write_only=True
-    #)
-    
-    instructor = InstructorSerializer(read_only = True)
-    
-    day_of_week = serializers.CharField(write_only = True)
-    time_start = serializers.TimeField(write_only = True)
-    time_end = serializers.TimeField(write_only = True)
-    #TODO: predetermined instructor 
+    enrolled_count = serializers.IntegerField(read_only=True)
+    lesson = serializers.PrimaryKeyRelatedField(read_only=True)
+    # API-facing names mapped to model fields
+    day = serializers.CharField(source="day_of_week")
+    start_time = serializers.TimeField(source="time_start")
+    end_time = serializers.TimeField(source="time_end")
+    capacity = serializers.IntegerField(min_value=1, max_value=10)
+    # you compute duration on the FE if missing; keeping write_only is okay
+    duration_minutes = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = Classroom
-        fields = ['id', 'lesson', 'instructor', 'title', 'duration_weeks', 'is_active', 
-                  'capacity', 'day_of_week', 'time_start', 'time_end', 'created_at']
-        read_only_fields = ["instructor", "created_at", "lesson_id"]
+        fields = [
+            "classroom_id",
+            "lesson",
+            "day", "start_time", "end_time",
+            "duration_minutes", "capacity",
+            "is_active", "instructor", "created_at",
+            "enrolled_count",
+        ]
+        read_only_fields = ["lesson", "instructor", "created_at"]
 
+    def validate(self, attrs):
+        # pull values (handles create/update)
+        inst = getattr(self.instance, "instructor", None)
+        req = self.context.get("request")
+        if not inst and req and getattr(req.user, "is_authenticated", False):
+            from .models import InstructorProfile
+            inst = InstructorProfile.objects.filter(user=req.user).first()
 
-    #During post attempt
-    def create(self, validated_data):
-        request = self.context.get("request")
-        if not request:
-            raise serializers.ValidationError("Request missing from serializer context.")
-        try:
-            #Try to add in a nested instructor including the returned instructor
-            validated_data["instructor"] = request.user.instructor
-        except InstructorProfile.DoesNotExist:
-            raise serializers.ValidationError("This user is not an instructor.")
-
-        
-        day_of_week = validated_data.pop('day_of_week', None) 
-        time_start = validated_data.pop('time_start', None)
-        time_end = validated_data.pop('time_end', None)
-        classroom = Classroom.objects.create(
-            day_of_week = day_of_week,
-            time_start = time_start, 
-            time_end = time_end,
-            instructor = request.user.instructor,
-            **validated_data
+        lesson = (
+            self.context.get("lesson")
+            or attrs.get("lesson")
+            or getattr(self.instance, "lesson", None)
         )
-        return classroom 
-    
+        day = attrs.get("day_of_week") or getattr(self.instance, "day_of_week", None)
+        t_start = attrs.get("time_start") or getattr(self.instance, "time_start", None)
+        t_end   = attrs.get("time_end")   or getattr(self.instance, "time_end", None)
 
+        if not (lesson and day and t_start and t_end):
+            return attrs
+
+        if t_end <= t_start:
+            raise serializers.ValidationError({"end_time": "end_time must be after start_time"})
+
+        from .models import Classroom
+        base = Classroom.objects.filter(day_of_week=day)
+        if self.instance:
+            base = base.exclude(pk=self.instance.pk)
+
+        # A) no overlaps within the SAME LESSON (weekly slot)
+        overlaps_lesson = base.filter(
+            lesson=lesson,
+            time_start__lt=t_end,
+            time_end__gt=t_start,
+        ).exists()
+
+        # B) no overlaps for the SAME INSTRUCTOR (across lessons)
+        overlaps_instr = False
+        if inst:
+            overlaps_instr = base.filter(
+                instructor=inst,
+                time_start__lt=t_end,
+                time_end__gt=t_start,
+            ).exists()
+
+        if overlaps_lesson or overlaps_instr:
+            raise serializers.ValidationError(
+                {"non_field_errors": ["This time overlaps an existing classroom. Pick a different slot."]}
+            )
+        return attrs

@@ -27,15 +27,19 @@ urlpatterns = [
     path("user/", CurrentUser.as_view(), name="current-user"),
 
     #Course details
-    path('courses/<str:pk>/detail', CourseDetailView.as_view(), name="frontend-detail"),
+    path('courses/<str:pk>/detail/', CourseDetailView.as_view(), name="courses-detail"),
+    #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
+    path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
+
     
     #Instructors
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #Instructors Courses
-    path('instructor/courses/', InstructorCoursesView.as_view(), name="frontend"),
+    path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
     #Instructors Classrooms
-    path("instructor/classrooms/", ClassroomView.as_view(), name="classrooms"),
-    
+    path("instructor/<str:lesson_id>/classrooms/", ClassroomView.as_view(), name="classrooms"),
+    #Show number of students
+
     
     #Students login TODO
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
