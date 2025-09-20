@@ -10,7 +10,9 @@ export default function InstructorCourseCreation() {
 
   useEffect(() => {
     let cancelled = false;
-
+    /**
+     * GET method to get courses according to current logged in instructor 
+     */
     async function checkCourses() {
       try {
         const res = await api.get("/instructor/courses/");
@@ -24,12 +26,11 @@ export default function InstructorCourseCreation() {
         console.error("Failed to check courses", err);
       }
     }
-
     checkCourses();
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate]); 
 
   return (
     <div className={i.wrap}>

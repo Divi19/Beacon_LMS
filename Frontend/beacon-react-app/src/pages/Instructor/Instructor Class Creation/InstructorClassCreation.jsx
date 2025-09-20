@@ -2,17 +2,23 @@ import React, { useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import s from "./InstructorClassCreation.module.css";
+import {api} from "../../../api" 
 
 export default function InstructorClassroomCreate() {
+  /**
+   * Classroom creation. Requires POST method from view. 
+   */
   const navigate = useNavigate();
-  const { courseId, lessonId } = useParams();
 
+  /**
+   * Backend using dummy value. TODO: Change after US2 ready 
+   */
+  const { courseId, lessonId } = useParams();
   const [form, setForm] = useState({
-    classroom_id: "",
-    day: "",
-    start_time: "",
-    end_time: "",
-    capacity: "",
+    day: "", //day_of_week
+    start_time: "", //time_start
+    end_time: "", //time_end
+    capacity: "", //capacity 
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -44,13 +50,17 @@ export default function InstructorClassroomCreate() {
 
   const [showSuccess, setShowSuccess] = useState(false);
 
+  /**
+   * Backend handling submission 
+   * @param {*} e 
+   * @returns 
+   */
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-
     // simple client validation
     if (
-      !form.classroom_id ||
       !form.day ||
       !form.start_time ||
       !form.end_time ||
@@ -66,35 +76,34 @@ export default function InstructorClassroomCreate() {
 
     setSubmitting(true);
     try {
+
       // Replace with your real API call:
       // POST /api/courses/:courseId/lessons/:lessonId/classrooms/
       // body: { classroom_id, day, start_time, end_time, duration_minutes, capacity }
-      await new Promise((r) => setTimeout(r, 600)); // simulate latency
+      //await new Promise((r) => setTimeout(r, 600)); // simulate latency
 
       // Build the classroom record to save (shape matches LessonDetail renderer)
       // local storage for frontend simulation to be replaced by backend. until setshowsuccess.
       const newClassroom = {
-        id: form.classroom_id || Math.random().toString().slice(2, 8),
+        //id: form.classroom_id || Math.random().toString().slice(2, 8),
         day: form.day,
         start_time: form.start_time,
         end_time: form.end_time,
-        duration_minutes: durationMinutes,
+        duration_minutes: Number(durationMinutes),
         capacity: Number(form.capacity),
-        enrolled_count: 0, // backend can overwrite later
       };
-
-      const storageKey = `classrooms:${courseId}:${lessonId}`;
-      const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify([...existing, newClassroom])
-      );
-
+      console.log("payload", newClassroom);
+      await api.post(`/instructor/${lessonId}/classrooms/`, newClassroom);
       // Show successfull creation popup
       setShowSuccess(true);
-      
     } catch (err) {
-      setError("Failed to create classroom. Please try again.");
+      const apiMsg =
+            err?.response?.data?.detail ||
+            (Array.isArray(err?.response?.data?.non_field_errors) && err.response.data.non_field_errors[0]) ||
+            Object.entries(err?.response?.data || {})
+              .map(([k, v]) => `${k}: ${Array.isArray(v) ? v[0] : v}`)
+              .join(", ");
+          setError(apiMsg || "Failed to create classroom. Please try again.");
     } finally {
       setSubmitting(false);
     }

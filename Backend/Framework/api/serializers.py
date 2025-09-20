@@ -15,7 +15,7 @@ from .models import *
 
 
 """
-Auth purposes
+Auth-related serializers
 """
 class LoginSerializer(serializers.Serializer):
     """
@@ -56,12 +56,6 @@ class CurrentUserSerializer(serializers.ModelSerializer):
         prof = InstructorProfile.objects.filter(user=obj).only("full_name").first()
         return prof.full_name if prof else None
 
-
-
-"""
-Model serializers
-"""
-
 class UserSerializer(serializers.ModelSerializer):
     """
     Receiving json about user and parsing it in GET
@@ -75,6 +69,10 @@ class UserSerializer(serializers.ModelSerializer):
             'created_at': {'read_only': True}, # created_at is read-only
         }
 
+
+"""
+Instructor-related serializers
+"""
 class InstructorSerializer(serializers.ModelSerializer):
     """
     Receiving json about instructors and parsing it (including nested user json) in GET
@@ -84,36 +82,10 @@ class InstructorSerializer(serializers.ModelSerializer):
         model = InstructorProfile
         fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
 
-class CourseSerializer(serializers.ModelSerializer):
-    """
-    Json parsing for courses showing and creation in POST and GET
-    """
-    owner_instructor_id = serializers.PrimaryKeyRelatedField(
-        source='owner_instructor', queryset=InstructorProfile.objects.all(), write_only=True
-        )
 
-    class Meta:
-        model = Course
-        fields = ["code", "title", "status", "owner_instructor", "owner_instructor_id", "credits", "description"]
-        read_only_fields = ["owner_instructor"]  
-
-    #Creating a course from a form, fields in validated_data.
-    def create(self, validated_data): 
-        """
-        POST function for course creation. Due to no nested fields, no need for external serializers
-        """
-        request = self.context.get("request") #read the current request (who is requesting?)
-        if "owner_instructor" not in validated_data and request and hasattr(request, "user"):
-            #In case validated data isn't storing owner_instructor, but user instead
-            try:
-                #Grab instructor based on user field
-                owner = InstructorProfile.objects.get(user=request.user)
-                validated_data["owner_instructor"] = owner
-            except InstructorProfile.DoesNotExist:
-                pass
-        return Course.objects.create(**validated_data)
-
-
+"""
+Student-related serializers
+"""
 class StudentSerializer(serializers.ModelSerializer):
     """
     Json parsing for student creation (registration) and reading in POST and GET
@@ -172,9 +144,9 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "This student is already enrolled in this course."
             )
-        if course.status != "Active":
+        if course.status != Course.CourseStatus.ACTIVE:
             raise serializers.ValidationError(
-                "This course is current inactive."
+                "This course is currently inactive."
             )
         
         enrollment = Enrollment.objects.create(
@@ -183,3 +155,137 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             **validated_data #unpack the rest of the validated data
         )
         return enrollment 
+
+class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
+    """
+    TODO: Change self.context.get('student') to request = self.context.get("request")
+    Use auth later on 
+    """
+    classroom_id = serializers.PrimaryKeyRelatedField(
+        source='classroom', queryset=Classroom.objects.all(), write_only=True
+    ) #Receive an id which get translated to real Classroom object
+    class Meta:
+        model = ClassroomEnrollment
+        fields = ['id', 'classroom_id', 'student_id', 'enrolled_at']
+    
+    def create(self, validated_data):
+        student = self.context.get('student')
+        if student is None:
+            raise serializers.ValidationError("Serializer context must include 'student'.")
+        classroom = validated_data.pop('classroom')
+
+        #see if object already exists and if the classroom is active 
+        if ClassroomEnrollment.objects.filter(student=student, classroom=classroom).exists():
+            raise serializers.ValidationError(
+                "This student is already enrolled in this course."
+            )
+        if not classroom.is_active:
+            raise serializers.ValidationError(
+                "This course is current inactive."
+            )
+        
+        #see if the student has enrolled into the lessons by 
+        # - Take classroom's lesson, take id 
+        # - Find if student present in lesson_enrollment using lesson_id 
+        # checking lessons_id and student_id pair in lesson enrollment
+        classroom_lesson = classroom.lesson 
+        if not LessonEnrollment.objects.filter(lesson=classroom_lesson, student=student).exists(): 
+            raise serializers.ValidationError(
+                "This student is not enrolled in related lessons."
+            )
+
+        classroomEnrollment = ClassroomEnrollment.objects.create(
+            student = student,
+            classroom = classroom,
+            **validated_data #unpack the rest of the validated data
+        )
+        return classroomEnrollment 
+
+"""
+Shared serializers
+"""
+
+class CourseSerializer(serializers.ModelSerializer):
+    """
+    Json parsing for courses showing and creation in POST and GET
+    TODO: Needs revamp
+    """
+
+    #This is used during POST, when clicking on a course posts the id only
+    owner_instructor_id = serializers.PrimaryKeyRelatedField(
+        source='owner_instructor', queryset=InstructorProfile.objects.all(), write_only=True
+        )
+
+    class Meta:
+        model = Course
+        fields = ["code", "title", "status", "owner_instructor", "owner_instructor_id", "credits", "description"]
+        read_only_fields = ["owner_instructor"]  
+
+    #Creating a course from a form, fields in validated_data.
+    def create(self, validated_data): 
+        """
+        POST function for course creation. Due to no nested fields, no need for external serializers
+        """
+        request = self.context.get("request") #read the current request (who is requesting?)
+        if "owner_instructor" not in validated_data and request and hasattr(request, "user"):
+            #In case validated data isn't storing owner_instructor, but user instead
+            #Grab instructor based on user field and add it into the validated data 
+            try:
+                owner = InstructorProfile.objects.get(user=request.user)
+                validated_data["owner_instructor"] = owner
+            except InstructorProfile.DoesNotExist:
+                pass
+        return Course.objects.create(**validated_data)
+
+
+class ClassroomSerializer(serializers.ModelSerializer):
+    """
+    Json pasing for GET (Classroom showing) and POST (Classroom creation)
+    """
+    #During post, only lesson_id is being returned
+    lesson_id = serializers.PrimaryKeyRelatedField(
+        source='lesson', queryset=Lesson.objects.all(), write_only=True
+    ) 
+    #instructor_id = serializers.PrimaryKeyRelatedField(
+    #    source='instructor', queryset=InstructorProfile.objects.all(), write_only=True
+    #)
+    
+    instructor = InstructorSerializer(read_only = True)
+    
+    day_of_week = serializers.CharField(write_only = True)
+    time_start = serializers.TimeField(write_only = True)
+    time_end = serializers.TimeField(write_only = True)
+    #TODO: predetermined instructor 
+
+    class Meta:
+        model = Classroom
+        fields = ['id', 'lesson', 'instructor', 'title', 'duration_weeks', 'is_active', 
+                  'capacity', 'day_of_week', 'time_start', 'time_end', 'created_at']
+        read_only_fields = ["instructor", "created_at", "lesson_id"]
+
+
+    #During post attempt
+    def create(self, validated_data):
+        request = self.context.get("request")
+        if not request:
+            raise serializers.ValidationError("Request missing from serializer context.")
+        try:
+            #Try to add in a nested instructor including the returned instructor
+            validated_data["instructor"] = request.user.instructor
+        except InstructorProfile.DoesNotExist:
+            raise serializers.ValidationError("This user is not an instructor.")
+
+        
+        day_of_week = validated_data.pop('day_of_week', None) 
+        time_start = validated_data.pop('time_start', None)
+        time_end = validated_data.pop('time_end', None)
+        classroom = Classroom.objects.create(
+            day_of_week = day_of_week,
+            time_start = time_start, 
+            time_end = time_end,
+            instructor = request.user.instructor,
+            **validated_data
+        )
+        return classroom 
+    
+

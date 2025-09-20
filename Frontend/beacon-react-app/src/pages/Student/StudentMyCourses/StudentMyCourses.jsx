@@ -6,6 +6,7 @@ import CourseCard from "../../../components/CourseCard/CourseCard";
 import s from "./StudentMyCourses.module.css";
 import Button from "../../../components/Button/Button";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
+import {api} from "../../../api" 
 
 export default function StudentEnrollmentPage() {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ export default function StudentEnrollmentPage() {
                 <CourseCard
                   key={c.course_id}
                   course={{
-                    code: c.course_code,
+                    code: c.course_id,
                     title: c.course_title,
                     credits: c.course_credits,
                     director: c.course_director,
