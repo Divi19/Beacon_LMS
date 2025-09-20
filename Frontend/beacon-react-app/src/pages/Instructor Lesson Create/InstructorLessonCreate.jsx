@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 
 export default function InstructorLessonCreate({ onLessonCreated }) {
-  const { course_id } = useParams();
+  const { courseId } = useParams();
   const navigate = useNavigate();
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +20,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
     lesson_description: "",
     lesson_objective: "",
     lesson_prerequisite: "",
+    courses: "",
   });
 
   const openModal = () => {
@@ -62,6 +63,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
         lesson_description: "",
         lesson_objective: "",
         lesson_prerequisite: "",
+        courses: "",
     });
   };
 
@@ -73,15 +75,16 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
       const lessonData = {
         lesson_title: formData.lesson_title,
         lesson_id: formData.lesson_id,
-        lesson_credits: formData.lesson_credits,
-        lesson_duration: formData.lesson_duration,
+        lesson_credits: parseInt(formData.lesson_credits),
+        lesson_duration: parseInt(formData.lesson_duration),
         lesson_description: formData.lesson_description,
         lesson_objective: formData.lesson_objective,
         lesson_prerequisite: formData.lesson_prerequisite,
+        courses: courseId,
       };
 
       // Send to Django backend
-      await axios.post('http://localhost:8000/courses/${courseId}/lessons/', lessonData);
+      await axios.post(`http://localhost:8000/courses/${courseId}/lessons/`, lessonData);
       
       console.log("Lesson created successfully:", lessonData);
       

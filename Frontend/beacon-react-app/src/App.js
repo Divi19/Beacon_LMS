@@ -8,7 +8,7 @@ import InstructorCourseCreation from "./pages/InstructorCourseCreation";
 import InstructorCourseCreate from "./pages/Instructor Course Create/InstructorCourseCreate";
 import InstructorCourseList from "./pages/Instructor Course List/InstructorCourseList";
 import InstructorCourseDescription from "./pages/InstructorCourseDescription/InstructorCourseDescription";
-import InstructorLessonCreation from "./pages/InstructorLessonCreation";
+// import InstructorLessonCreation from "./pages/InstructorLessonCreation";
 import InstructorLessonCreate from "./pages/Instructor Lesson Create/InstructorLessonCreate";
 import InstructorLessonList from "./pages/Instructor Lesson List/InstructorLessonList";
 import InstructorLessonCreation from "./pages/Instructor Lesson Creation/InstructorLessonCreation"
@@ -49,8 +49,10 @@ export default function App(){
       <Route path="/instructor/course/:courseId" element={<InstructorCourseDescription />} />
       <Route path="/instructor/course/:courseId/lessons" element={<InstructorLessonCreation />} />
       <Route path="/instructor/course/:courseId/lesson-list" element={<InstructorLessonList />} />
-      <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} />
-      <Route path="/instructor/lesson-creation" element={<InstructorLessonCreation />} />
+      {/* <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} /> */}
+      {/* Changed from Isabella version */}
+      <Route path="/instructor/course/:courseId/lesson-creation" element={<InstructorLessonCreate />} /> 
+      
     </Routes>
   </div>
   );
