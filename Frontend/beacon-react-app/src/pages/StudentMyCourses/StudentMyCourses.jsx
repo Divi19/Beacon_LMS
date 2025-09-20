@@ -69,7 +69,7 @@ export default function StudentEnrollmentPage() {
                 <CourseCard
                   key={c.id}
                   course={{
-                    code: c.course_id,
+                    code: c.course_code,
                     title: c.course_title,
                     credits: c.course_credits,
                     director: c.course_director,

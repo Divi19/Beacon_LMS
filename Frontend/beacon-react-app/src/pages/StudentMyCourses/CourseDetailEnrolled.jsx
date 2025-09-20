@@ -54,7 +54,7 @@ export default function CourseDetailEnrolled() {
 
           <div className={s.meta}>
             <span>
-              Code: <strong>{course.course_id}</strong>
+              Code: <strong>{course.course_code}</strong>
             </span>
             <span>{course.course_credits} Credits</span>
             <span>

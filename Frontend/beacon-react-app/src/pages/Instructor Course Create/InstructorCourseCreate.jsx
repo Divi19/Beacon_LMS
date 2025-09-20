@@ -3,6 +3,7 @@ import i from "./InstructorCourseCreate.module.css";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import {api} from "../../api" 
 
 export default function InstructorCourseCreate({ onCourseCreated }) {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
 
   const [formData, setFormData] = useState({
     courseName: "",
-    ID: "",
+    code: "",
     credits: "",
     director: "",
     description: "",
@@ -53,7 +54,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   const resetForm = () => {
     setFormData({
       courseName: "",
-      ID: "",
+      code: "",
       credits: "",
       director: "",
       description: "",
@@ -68,7 +69,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     try {
       // Prepare data for Django backend
       const courseData = {
-        course_id: formData.ID,
+        code: formData.code,
         course_title: formData.courseName,
         course_credits: formData.credits,
         course_director: formData.director,
@@ -76,7 +77,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
       };
 
       // Send to Django backend
-      await axios.post('http://localhost:8000/courses/frontend/', courseData);
+      await api.post('/courses/frontend/', courseData);
       
       console.log("Course created successfully:", courseData);
       
@@ -118,12 +119,12 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course ID:</label>
+              <label className={i.label}>Course Code:</label>
               <input
                 className={i.input}
                 type="text"
-                name="ID"
-                value={formData.ID}
+                name="code"
+                value={formData.code}
                 onChange={handleChange}
                 required
               />
