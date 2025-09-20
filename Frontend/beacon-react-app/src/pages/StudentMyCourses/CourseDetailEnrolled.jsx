@@ -79,7 +79,7 @@ export default function CourseDetailEnrolled() {
           </div>
 
           <div className={s.actions}>
-            <Button className={s.enrollBtn} onClick={() => navigate("/student/my-courses")}>
+            <Button className={s.enrollBtn} onClick={() => navigate(`/student/my-lessons/${courseId}`)}>
               Go to my course lessons
               <svg
                 xmlns="http://www.w3.org/2000/svg"
