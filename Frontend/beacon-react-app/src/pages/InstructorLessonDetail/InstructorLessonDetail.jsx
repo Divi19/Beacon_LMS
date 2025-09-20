@@ -35,11 +35,16 @@ export default function LessonDetail() {
     );
   }
 
-  async function loadClassrooms() {
-    // Later: GET /api/courses/:courseId/lessons/:lessonId/classrooms/
-    // Return [{ id, day, start_time, end_time, duration_minutes, capacity, enrolled_count }, ...]
-    return [];
-  }
+  // For backend integration
+  // async function loadClassrooms() {
+  //   // Later: GET /api/courses/:courseId/lessons/:lessonId/classrooms/
+  //   // Return [{ id, day, start_time, end_time, duration_minutes, capacity, enrolled_count }, ...]
+  //   return [];
+  // }
+
+  
+
+
 
   useEffect(() => {
     (async () => {

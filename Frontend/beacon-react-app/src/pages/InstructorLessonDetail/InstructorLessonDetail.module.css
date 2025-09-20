@@ -63,7 +63,7 @@
   margin-right: 6px;
 }
 .v {
-  color:#9c440c;
+  color: #9c440c;
 }
 
 .cta {
@@ -100,7 +100,7 @@
 .clsTitle {
   font-size: clamp(18px, 2.4vw, 24px);
   font-weight: 800;
-  color:#9c440c;
+  color: #9c440c;
   margin-bottom: clamp(10px, 2vw, 14px);
 }
 .clsBody {
@@ -121,16 +121,114 @@
   border: none;
 }
 
-.ghostCta:hover{
+.ghostCta:hover {
   filter: brightness(1.05);
   background-color: #71bfcd;
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-
 }
-
 
 .err {
   color: #b00020;
 }
 
+.clsHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.addBtn {
+  border: none;
+  border-radius: 999px;
+  height: 40px;
+  padding: 0 16px;
+  background: #ffb267;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.addBtn:hover {
+  filter: brightness(1.05);
+}
+
+.clsList {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+.clsCard {
+  display: grid;
+  grid-template-columns: 200px 1fr auto;
+  align-items: center;
+  gap: 18px;
+  background: #ffe9d3;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.clsDay {
+  font-size: 20px;
+  font-weight: 800;
+  color: #6a3a1f;
+}
+.clsDur {
+  color: #6a3a1f;
+  opacity: 0.9;
+}
+.clsTime {
+  font-size: 20px;
+  font-weight: 700;
+}
+.clsMetaRow {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+  margin-top: 4px;
+  color: #333;
+}
+.clsColActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.studentsBtn,
+.arrowBtn {
+  background: #e9c19b;
+  border: none;
+  border-radius: 999px;
+  height: 36px;
+  padding: 0 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.arrowBtn {
+  width: 36px;
+  padding: 0;
+}
+.clsFooter {
+  display: grid;
+  place-items: center;
+  margin-top: 16px;
+}
+.addBottomBtn {
+  border: none;
+  border-radius: 999px;
+  height: 44px;
+  padding: 0 20px;
+  background: #ffb267;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+@media (max-width: 860px) {
+  .clsCard {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .clsMetaRow {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
