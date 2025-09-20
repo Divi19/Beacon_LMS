@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import s from "./InstructorLessonDetail.module.css";
 
 export default function LessonDetail() {
