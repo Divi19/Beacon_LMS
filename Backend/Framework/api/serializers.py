@@ -105,3 +105,51 @@ class StudentSerializer(serializers.ModelSerializer):
         student = StudentProfile.objects.create(user=user, **validated_data)
         return student
 
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    course_id = serializers.PrimaryKeyRelatedField(
+        source='course', queryset=Course.objects.all(), write_only=True
+    )
+
+    class Meta:
+        model = Enrollment
+        fields = ['enrollment_id', 'course_id', 'enrolled_at']
+        read_only_fields = ['enrollment_id', 'enrolled_at']
+
+    def create(self, validated_data):
+        student = self.context.get('student')
+        if student is None:
+            raise serializers.ValidationError("Serializer context must include 'student'.")
+
+        course = validated_data.pop('course')
+
+        # Enforce UNIQUE(student, course)
+        if Enrollment.objects.filter(student=student, course=course).exists():
+            raise serializers.ValidationError("This student is already enrolled in this course.")
+
+        # treat active status case-insensitively
+        if (course.status or '').lower() != 'active':
+            raise serializers.ValidationError("This course is currently inactive.")
+
+        return Enrollment.objects.create(student=student, course=course, **validated_data)
+
+
+#  add serializers for Lesson/Classroom if you expose them via API later
+class LessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = [
+            'lesson_id', 'course', 'title', 'description', 'objectives',
+            'duration_weeks', 'status', 'is_active', 'created_by', 'created_at'
+        ]
+        read_only_fields = ['lesson_id', 'created_at']
+
+
+class ClassroomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Classroom
+        fields = [
+            'id', 'lesson', 'instructor', 'title', 'duration_weeks', 'is_active',
+            'capacity', 'day_of_week', 'time_start', 'time_end', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
