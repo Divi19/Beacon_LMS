@@ -148,9 +148,13 @@
   color: #fff;
   font-weight: 700;
   cursor: pointer;
+  font-size: 15px;
 }
 .addBtn:hover {
   filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 .clsList {
@@ -195,17 +199,25 @@
 }
 .studentsBtn,
 .arrowBtn {
-  background: #e9c19b;
+  background: #ffa959;
   border: none;
   border-radius: 999px;
   height: 36px;
   padding: 0 14px;
   font-weight: 700;
   cursor: pointer;
+  font-size: 15px;
 }
 .arrowBtn {
   width: 36px;
   padding: 0;
+}
+
+.studentsBtn:hover {
+  filter: brightness(1.05);
+  background-color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 .clsFooter {
   display: grid;
@@ -221,7 +233,16 @@
   color: #fff;
   font-weight: 700;
   cursor: pointer;
+  font-size: 15px;
 }
+
+.addBottomBtn:hover {
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
 @media (max-width: 860px) {
   .clsCard {
     grid-template-columns: 1fr;
