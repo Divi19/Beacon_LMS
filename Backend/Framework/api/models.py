@@ -124,3 +124,62 @@ class LessonPrerequisite(models.Model):
             raise ValidationError("A lesson cannot be a prerequisite of itself.")
 
 
+# -------------------- CLASSROOM --------------------
+class Classroom(models.Model):
+    id = models.AutoField(primary_key=True)                        
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)      
+    instructor = models.ForeignKey(InstructorProfile, on_delete=models.DO_NOTHING)
+    title = models.CharField(max_length=255)                         
+    duration_weeks = models.IntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)                     
+    capacity = models.IntegerField(null=True, blank=True)             
+    day_of_week = models.CharField(max_length=20, choices=DAY_CHOICES) 
+    time_start = models.TimeField()                                
+    time_end = models.TimeField()                                    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'classroom'
+        unique_together = (('lesson', 'day_of_week', 'time_start', 'time_end'),)
+
+    def clean(self):
+        if self.time_start and self.time_end and not (self.time_start < self.time_end):
+            raise ValidationError("time_start must be < time_end")
+
+
+# -------------------- ENROLLMENTS --------------------
+class LessonEnrollment(models.Model):
+    id = models.AutoField(primary_key=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.DO_NOTHING)
+    student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'lesson_enrollment'
+        unique_together = (('lesson', 'student'),)                   
+
+
+class ClassroomEnrollment(models.Model):
+    id = models.AutoField(primary_key=True)
+    classroom = models.ForeignKey(Classroom, on_delete=models.DO_NOTHING)
+    student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'classroom_enrollment'
+        unique_together = (('classroom', 'student'),)              
+
+
+class Enrollment(models.Model):
+    enrollment_id = models.AutoField(primary_key=True)
+    student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING, null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, null=True, blank=True)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'enrollment'
+        unique_together = (('student', 'course'),)
