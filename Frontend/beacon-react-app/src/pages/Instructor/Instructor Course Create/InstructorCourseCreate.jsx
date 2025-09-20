@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import i from "./InstructorCourseCreate.module.css";
-import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
-import {api} from "../../api" 
+import {api} from "../../../api" 
 
 export default function InstructorCourseCreate({ onCourseCreated }) {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
       };
 
       // Send to Django backend
-      await api.post('/courses/frontend/', courseData);
+      await api.post('/instructor/courses/', courseData);
       
       console.log("Course created successfully:", courseData);
       

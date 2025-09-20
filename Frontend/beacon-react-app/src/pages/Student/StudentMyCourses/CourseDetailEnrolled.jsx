@@ -1,50 +1,37 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
-import Button from "../../components/Button/Button";
-import courses from "../../data/courses";
-//import { useEnrollment } from "../../state/EnrollmentContext";
-import s from "./CourseDetail.module.css";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
+import Button from "../../../components/Button/Button";
+import s from "./CourseDetailEnrolled.module.css";
 import axios from "axios";
 
-export default function CourseDetail() {
+export default function CourseDetailEnrolled() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  //const { enroll, isEnrolled } = useEnrollment()
+
   const [course, setCourse] = useState(null);
-  const [submittingId, setSubmittingId] = useState(null);
-  const student_id = 1 
-
-
-  async function handleEnroll(courseId) {
-    try {
-      setSubmittingId(courseId);
-      await axios.post(
-        `http://localhost:8000/courses/frontend/${student_id}/student/enroll/`,
-        { course_id: courseId }
-      );
-      // success: go to "My Courses"
-      navigate("/student/my-courses");
-    } catch (err) {
-      const detail = err?.response?.data?.detail;
-      if (detail === "Student already enrolled") {
-        // optionally still navigate
-        navigate("/student/my-courses");
-      } else {
-        console.error("Enrollment failed", err);
-        alert(detail || "Failed to enroll in course.");
-      }
-    } finally {
-      setSubmittingId(null);
-    }
-  }
-
+  const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
-    axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
-    .then((res) => setCourse(res.data))
-    .catch(() => setCourse(null));
+    let cancelled = false;
+    axios
+      .get(`http://localhost:8000/courses/${courseId}/detail/`)
+      .then((res) => { if (!cancelled) setCourse(res.data); })
+      .catch(() => { if (!cancelled) setCourse(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [courseId]);
+
+  if (loading) {
+    return (
+      <>
+        <StudentTopBar />
+        <div style={{ padding: 24 }}>Loading…</div>
+      </>
+    );
+  }
 
   if (!course) {
     return (
@@ -52,17 +39,11 @@ export default function CourseDetail() {
         <StudentTopBar />
         <div style={{ padding: 24 }}>
           <p>Course not found.</p>
-          <Button onClick={() => navigate("/student/enrollment")}>Back</Button>
+          <Button onClick={() => navigate("/student/my-courses")}>Back</Button>
         </div>
       </>
     );
   }
-  /**
-  const handleEnroll = () => {
-    if (!isEnrolled(course.course_id)) enroll(course.course_id);
-    navigate("/student/my-courses");
-  };
-   */
 
   return (
     <>
@@ -98,10 +79,8 @@ export default function CourseDetail() {
           </div>
 
           <div className={s.actions}>
-            <Button className={s.enrollBtn} 
-            onClick={() =>  handleEnroll(course.course_id)} 
-            ctatext={submittingId === course.course_id ? "Enrolling…" : "Enroll"}>
-              Enrol
+            <Button className={s.enrollBtn} onClick={() => navigate("/student/my-courses")}>
+              Back to My Courses
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="22"
@@ -114,7 +93,7 @@ export default function CourseDetail() {
                 strokeLinejoin="round"
               >
                 <circle cx="12" cy="12" r="10" />
-                <polyline points="12 8 16 12 12 16" />
+                <polyline points="12 8 8 12 12 16" />
                 <line x1="8" y1="12" x2="16" y2="12" />
               </svg>
             </Button>

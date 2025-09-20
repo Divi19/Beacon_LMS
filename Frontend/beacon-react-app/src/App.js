@@ -1,16 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 import EntryPage from "./pages/EntryPage/EntryPage";
-import StudentMyCourses from "./pages/StudentMyCourses/StudentMyCourses";
-import CourseDetailEnrolled from "./pages/StudentMyCourses/CourseDetailEnrolled";
-import StudentEnrollment from "./pages/StudentEnrollment/StudentEnrollment";
-import CourseDetail from "./pages/StudentEnrollment/CourseDetail";
-import InstructorCourseCreation from "./pages/InstructorCourseCreation";
-import InstructorCourseCreate from "./pages/Instructor Course Create/InstructorCourseCreate";
-import InstructorCourseList from "./pages/Instructor Course List/InstructorCourseList";
-import InstructorCourseDescription from "./pages/InstructorCourseDescription/InstructorCourseDescription";
-import InstructorLogin from "./pages/InstructorLogin";
-import InstructorLessonDetail from "./pages/InstructorLessonDetail/InstructorLessonDetail";
-import InstructorClassCreation from "./pages/InstructorClassCreation/InstructorClassCreation";
+import StudentMyCourses from "./pages/Student/StudentMyCourses/StudentMyCourses";
+import CourseDetailEnrolled from "./pages/Student/StudentMyCourses/CourseDetailEnrolled";
+import StudentEnrollment from "./pages/Student/StudentEnrollment/StudentEnrollment";
+import CourseDetail from "./pages/Student/StudentEnrollment/CourseDetail";
+import InstructorCourseCreation from "./pages/Instructor/Instructor Course Creation/InstructorCourseCreation";
+import InstructorCourseCreate from "./pages/Instructor/Instructor Course Create/InstructorCourseCreate";
+import InstructorCourseList from "./pages/Instructor/Instructor Course List/InstructorCourseList";
+import InstructorCourseDescription from "./pages/Instructor/InstructorCourseDescription/InstructorCourseDescription";
+import InstructorLogin from "./pages/Instructor/Instructor Login/InstructorLogin";
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
   
