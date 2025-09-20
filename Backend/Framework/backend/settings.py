@@ -105,7 +105,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'my_lms_db',
         'USER': 'myuser',
-        'PASSWORD': 'Divi12345',
+        'PASSWORD': 'Bella021',
         'HOST': 'localhost',
         'PORT': '5432',
     }
