@@ -75,6 +75,7 @@ export default function StudentEnrollmentPage() {
                     director: c.course_director,
                     description: c.course_description,
                   }}
+                  isEnrolled={true}
                   ctaText="View"
                   onClick={() => navigate(`/student/course/${c.course_id}`)}
                   
