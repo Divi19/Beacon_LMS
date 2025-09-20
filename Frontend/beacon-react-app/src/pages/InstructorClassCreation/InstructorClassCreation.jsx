@@ -70,8 +70,29 @@ export default function InstructorClassroomCreate() {
       // POST /api/courses/:courseId/lessons/:lessonId/classrooms/
       // body: { classroom_id, day, start_time, end_time, duration_minutes, capacity }
       await new Promise((r) => setTimeout(r, 600)); // simulate latency
+
+      // Build the classroom record to save (shape matches LessonDetail renderer)
+      // local storage for frontend simulation to be replaced by backend. until setshowsuccess.
+      const newClassroom = {
+        id: form.classroom_id || Math.random().toString().slice(2, 8),
+        day: form.day,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        duration_minutes: durationMinutes,
+        capacity: Number(form.capacity),
+        enrolled_count: 0, // backend can overwrite later
+      };
+
+      const storageKey = `classrooms:${courseId}:${lessonId}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify([...existing, newClassroom])
+      );
+
       // Show successfull creation popup
       setShowSuccess(true);
+      
     } catch (err) {
       setError("Failed to create classroom. Please try again.");
     } finally {

@@ -42,9 +42,18 @@ export default function LessonDetail() {
   //   return [];
   // }
 
-  
-
-
+  // To replace by above for backend integration
+  async function loadClassrooms() {
+    // TEMP: read from localStorage until backend is ready
+    const storageKey = `classrooms:${courseId}:${lessonId}`;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
 
   useEffect(() => {
     (async () => {
