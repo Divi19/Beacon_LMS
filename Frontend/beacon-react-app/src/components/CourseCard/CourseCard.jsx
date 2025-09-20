@@ -5,6 +5,7 @@ export default function CourseCard({
   onClick,
   ctaText = "Enrol",
   onCta,
+  isEnrolled = false,
 }) {
   return (
     <article
@@ -30,10 +31,12 @@ export default function CourseCard({
         <div className={s.metaRow}>
           <span>Lessons: </span>
           </div>
+          {isEnrolled && (
           <button
           type="button"
           className={s.cta}
           onClick={(e) => { e.stopPropagation();
+            onClick?.();
           
           }}>Go to my course lesson<svg
             xmlns="http://www.w3.org/2000/svg"
@@ -51,6 +54,7 @@ export default function CourseCard({
             <line x1="8" y1="12" x2="16" y2="12" />
           </svg>
         </button>
+          )}
       </div>
 
       <div className={s.footer}>
@@ -59,7 +63,7 @@ export default function CourseCard({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onCta?.();
+            onClick?.();
           }}
         >
           {ctaText}
