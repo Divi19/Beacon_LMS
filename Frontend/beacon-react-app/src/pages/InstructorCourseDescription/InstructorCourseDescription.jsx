@@ -21,16 +21,18 @@ export default function InstructorCourseDescription() {
   const [lessons, setLessons] = useState([]);
 
   useEffect(() => {
-    axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
-    .then((res) => setCourse(res.data))
+  axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
+    .then((res) => {
+      setCourse(res.data);
 
-    if (res.data.course_id) {
-      axios.get(`http://localhost:8000/lessons/course/${res.data.course_id}/`)
-        .then((resLessons) => setLessons(resLessons.data))
-        .catch(() => setLessons([]));
-    }
-    // .catch(() => setCourse(null));
-  }, [courseId]);
+      if (res.data.course_id) {
+        axios.get(`http://localhost:8000/lessons/course/${res.data.course_id}/`)
+          .then((resLessons) => setLessons(resLessons.data))
+          .catch(() => setLessons([]));
+      }
+    })
+    .catch(() => setCourse(null));
+}, [courseId]);
 
   if (!course) {
     return (
