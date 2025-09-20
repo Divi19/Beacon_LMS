@@ -43,10 +43,10 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer", 
-    ]
+    ],
+    "TIME_FORMAT": "%H:%M",
 }
 
-APPEND_SLASH = False
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=700),
