@@ -10,7 +10,7 @@
 .pageTitle {
   letter-spacing: 0.25em;
   font-weight: 800;
-  color: #b05517; /* warm orange/brown */
+  color: #b05517; 
   font-size: clamp(24px, 4.4vw, 42px);
   margin: 18px 0 18px;
 }
@@ -25,7 +25,7 @@
 }
 
 .formTitle {
-  color: #0f6b76;
+  color: #6a3a1f;
   font-size: clamp(18px, 2.4vw, 26px);
   font-weight: 800;
   margin-bottom: clamp(12px, 2vw, 18px);
@@ -45,7 +45,7 @@
 
 .label {
   font-weight: 700;
-  color: #0f6b76;
+  color: #6a3a1f;
   font-size: clamp(14px, 1.6vw, 18px);
 }
 
@@ -122,7 +122,7 @@
   font-weight: 700;
 }
 
-/* Actions */
+
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -169,12 +169,12 @@
   cursor: not-allowed;
 }
 
-/* Errors */
+
 .error {
   color: #b00020;
 }
 
-/* Responsive */
+
 @media (max-width: 860px) {
   .row {
     grid-template-columns: 1fr;
