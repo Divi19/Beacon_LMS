@@ -17,11 +17,19 @@ export default function InstructorCourseDescription() {
   //   [courseId]
   // );
   const [course, setCourse] = useState(null);
+  const LESSON_SLOTS = 5;
+  const [lessons, setLessons] = useState([]);
 
   useEffect(() => {
     axios.get(`http://localhost:8000/courses/frontend/${courseId}/`)
     .then((res) => setCourse(res.data))
-    .catch(() => setCourse(null));
+
+    if (res.data.course_id) {
+      axios.get(`http://localhost:8000/lessons/course/${res.data.course_id}/`)
+        .then((resLessons) => setLessons(resLessons.data))
+        .catch(() => setLessons([]));
+    }
+    // .catch(() => setCourse(null));
   }, [courseId]);
 
   if (!course) {
@@ -136,6 +144,61 @@ export default function InstructorCourseDescription() {
     <h2 className={s.lessonsLabel}>Lessons</h2>
 
     <div className={s.container}>
+      {Array.from({ length: LESSON_SLOTS }).map((_, idx) => {
+        const lesson = lessons[idx];
+
+        return (
+          <div key={idx} className={s.card} style={{ cursor: "pointer" }}>
+            {lesson ? (
+              <>
+                <h2 className={s.cardTitle} >{lesson.lesson_title}</h2>
+                <div className={s.cardDesc1}>
+                  <div className={s.leftGroup}>
+                    <span>Code:</span>
+                    <span className={s.spacing}><strong>{lesson.lesson_id}</strong></span>
+                  </div>
+                </div>
+                <div className={s.cardDesc2}>
+                  <span>Course Director:</span>
+                  <span>{course.course_director}</span>
+                </div>
+                <div className={s.cardDesc3}>
+                  <span>Duration:</span>
+                  <span>{lesson.lesson_duration}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className={s.cardTitle}>Lesson {idx + 1}</h2>
+                <div className={s.cardDesc1}>
+                  <div className={s.leftGroup}>
+                    <span>Code:</span>
+                    {/* <span className={s.spacing}><strong>{lesson.lesson_id}</strong></span> */}
+                  </div>
+                </div>
+                <div className={s.cardDesc2}>
+                  <span>Course Director:</span>
+                  {/* <span>{course.course_director}</span> */}
+                </div>
+                <div className={s.cardDesc3}>
+                  <span>Duration:</span>
+                  {/* <span>{lesson.lesson_duration}</span> */}
+                </div>
+                <Button
+                  variant="orange"
+                  onClick={() =>
+                    navigate(`/instructor/course/${course.course_id}/lesson-creation`)
+                  }
+                >
+                  <span>Create</span>
+                </Button>
+              </>
+            )}
+            </div>
+        );
+      })}
+    </div>
+    {/* <div className={s.container}>
       {course.lessons && course.lessons.length > 0 ? (
         course.lessons.map((lesson, idx) => (
           <div key={idx} className={s.card} style={{ cursor: "pointer" }}>
@@ -177,7 +240,7 @@ export default function InstructorCourseDescription() {
           <br />
           <Button variant="orange"
                       className={s.enrollBtn}
-                      onClick={() => navigate("/instructor/lesson-creation")}
+                      onClick={() => navigate(`/instructor/course/${course.course_id}/lesson-creation`)}
                     >
                       <span>Create</span>
                       <svg
@@ -198,9 +261,9 @@ export default function InstructorCourseDescription() {
                     </Button>
         </div>
       )}
+    </div> */}
     </div>
-  </div>
 )}
-    </>
+</>
   );
 }

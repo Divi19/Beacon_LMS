@@ -138,7 +138,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <label className={i.label}>Lesson Credits:</label>
               <input
                 className={i.input}
-                type="text"
+                type="number"
                 name="credits"
                 value={formData.credits}
                 onChange={handleChange}
@@ -150,7 +150,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <label className={i.label}>Lesson Duration:</label>
               <input
                 className={i.input}
-                type="text"
+                type="number"
                 name="director"
                 value={formData.director}
                 onChange={handleChange}
