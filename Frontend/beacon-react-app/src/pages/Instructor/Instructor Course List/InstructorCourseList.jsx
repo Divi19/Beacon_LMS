@@ -102,7 +102,7 @@ export default function InstructorCourseList() {
                 <div className={s.leftGroup}>
                   <span>Code:</span>
                   <span className={s.spacing}>
-                    <strong>{course.course_code}</strong>
+                    <strong>{course.course_id}</strong>
                   </span>
                 </div>
                 <span>

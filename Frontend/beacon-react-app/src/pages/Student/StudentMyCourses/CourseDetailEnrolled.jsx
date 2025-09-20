@@ -5,6 +5,7 @@ import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 import Button from "../../../components/Button/Button";
 import s from "./CourseDetailEnrolled.module.css";
 import axios from "axios";
+import {api} from "../../../api" 
 
 export default function CourseDetailEnrolled() {
   const { courseId } = useParams();
@@ -54,7 +55,7 @@ export default function CourseDetailEnrolled() {
 
           <div className={s.meta}>
             <span>
-              Code: <strong>{course.course_code}</strong>
+              Code: <strong>{course.course_id}</strong>
             </span>
             <span>{course.course_credits} Credits</span>
             <span>
