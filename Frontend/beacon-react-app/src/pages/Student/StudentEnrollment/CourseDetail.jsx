@@ -37,10 +37,9 @@ export default function CourseDetail() {
       setSubmittingId(null);
     }
   }
-
-
+  
   useEffect(() => {
-    axios.get(`http://localhost:8000/courses/${courseId}/detail`)
+    axios.get(`http://localhost:8000/courses/${courseId}/detail/`)
     .then((res) => setCourse(res.data))
     .catch(() => setCourse(null));
   }, [courseId]);
@@ -66,7 +65,7 @@ export default function CourseDetail() {
 
           <div className={s.meta}>
             <span>
-              Code: <strong>{course.course_code}</strong>
+              Code: <strong>{course.course_id}</strong>
             </span>
             <span>{course.course_credits} Credits</span>
             <span>

@@ -18,11 +18,24 @@ export default function InstructorCourseDescription() {
   // );
   const [course, setCourse] = useState(null);
 
+  /**
+   * GET method to show course details according courseId routing 
+   */
   useEffect(() => {
-    api.get(`instructor/courses/${courseId}/detail/`)
-    .then((res) => setCourse(res.data))
-    .catch(() => setCourse(null));
+    axios //TODO: change to api
+      .get(`http://localhost:8000/courses/${courseId}/detail/`)
+      .then((res) => setCourse(res.data))
+      .catch(() => setCourse(null));
   }, [courseId]);
+
+
+  /**
+   * Placeholder for lesson rerouting 
+   * @param {*} lessonId 
+   */
+  const handleGoToLesson = (lessonId = "AH0476") => {
+    navigate(`/instructor/course/${courseId}/lesson/${lessonId}`);
+  };
 
   if (!course) {
     return (
@@ -45,7 +58,7 @@ export default function InstructorCourseDescription() {
 
           <div className={s.meta}>
             <span>
-              Code: <strong>{course.course_code}</strong>
+              Code: <strong>{course.course_id}</strong>
             </span>
             <span>{course.course_credits} Credits</span>
             <span>
@@ -68,8 +81,17 @@ export default function InstructorCourseDescription() {
               <span className={s.noLessons}>No lessons</span>
             )}
           </div>
-          </div>
         </div>
+
+  
+        <button  // Button to go to lesson detail from course detail placeholder for testing purposes
+          className="goLessonsCta" 
+          onClick={() => handleGoToLesson()}
+          type="button"
+        >
+          Go to my course lessons detail
+        </button>
+      </div>
     </>
   );
 }
