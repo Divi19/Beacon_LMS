@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import i from "./InstructorCourseCreate.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
-import {api} from "../../../api" 
+import axios from "axios";
+import { api } from "../../../api";
 
 export default function InstructorCourseCreate({ onCourseCreated }) {
   const navigate = useNavigate();
@@ -15,9 +15,9 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   const [formData, setFormData] = useState({
     courseName: "",
     code: "",
-    credits: "",
     director: "",
     description: "",
+    status: "Active",
   });
 
   const openModal = () => {
@@ -42,8 +42,8 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   };
 
   const goToCoursePage = () => {
-    setShowOptionalModal(false); 
-    navigate("/instructor/course-list"); 
+    setShowOptionalModal(false);
+    navigate("/instructor/course-list");
   };
 
   const handleChange = (e) => {
@@ -55,43 +55,43 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     setFormData({
       courseName: "",
       code: "",
-      credits: "",
       director: "",
       description: "",
+      status: "Active",
     });
-    setLessons([]);      
-    setLessonInput("");  
+    setLessons([]);
+    setLessonInput("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Prepare data for Django backend
       const courseData = {
         code: formData.code,
         course_title: formData.courseName,
-        course_credits: formData.credits,
+        course_credits: 30,
         course_director: formData.director,
         course_description: formData.description,
+        status: formData.status
       };
 
       // Send to Django backend
-      await api.post('/instructor/courses/', courseData);
-      
+      await api.post("/instructor/courses/", courseData);
+
       console.log("Course created successfully:", courseData);
-      
+
       // Refresh the course list in parent component
       if (onCourseCreated) {
         onCourseCreated();
       }
-      
+
       // Show success modal
       setShowOptionalModal(true);
-      
     } catch (error) {
-      console.error('Error creating course:', error);
-      alert('Error creating course. Please try again.');
+      console.error("Error creating course:", error);
+      alert("Error creating course. Please try again.");
     }
   };
 
@@ -131,15 +131,9 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course Credits:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="credits"
-                value={formData.credits}
-                onChange={handleChange}
-                required
-              />
+              <span className={i.label}>Course Credits:</span>
+              <div className={i.creditsDisplay}>30 Credits</div>
+              <input type="hidden" name="credits" value={30} />
             </div>
 
             <div className={i.row}>
@@ -165,6 +159,28 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
               />
             </div>
 
+            <div className={i.row}>
+              <label className={i.label} htmlFor="status">
+                Course Status:
+              </label>
+              <div className={i.selectWrap}>
+                <select
+                  id="status"
+                  name="status"
+                  className={i.select}
+                  value={formData.status}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+                <span className={i.selectCaret} aria-hidden="true">
+                  ▾
+                </span>
+              </div>
+            </div>
+
             <div className={i.rowBlock}>
               <div className={i.lessonHeader}>
                 <span className={i.label}>Course Core Lessons:</span>
@@ -177,7 +193,11 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
                   ))}
                 </div>
 
-                <button type="button" className={i.addButton} onClick={openModal}>
+                <button
+                  type="button"
+                  className={i.addButton}
+                  onClick={openModal}
+                >
                   +
                 </button>
                 <span className={i.addText}>Add Lessons</span>
@@ -221,7 +241,11 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             )}
 
             <div className={i.buttonRow}>
-              <button className={i.discardbutton} type="button" onClick={resetForm}>
+              <button
+                className={i.discardbutton}
+                type="button"
+                onClick={resetForm}
+              >
                 Discard
               </button>
               <button className={i.createbutton} type="submit">
