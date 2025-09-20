@@ -53,3 +53,55 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
 
+class InstructorSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = InstructorProfile
+        fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    # Allow POST with owner_instructor_id while keeping the FK read-only
+    owner_instructor_id = serializers.PrimaryKeyRelatedField(
+        source='owner_instructor',
+        queryset=InstructorProfile.objects.all(),
+        write_only=True
+    )
+
+    class Meta:
+        model = Course
+        fields = [
+            "course_id", "code", "title", "status",
+            "owner_instructor", "owner_instructor_id",
+            "credits", "director", "description"
+        ]
+        read_only_fields = ["owner_instructor", "course_id"]
+
+    def create(self, validated_data):
+        # owner_instructor is already set by owner_instructor_id via 'source'
+        return Course.objects.create(**validated_data)
+
+
+class StudentSerializer(serializers.ModelSerializer):
+    # Flat email/password inputs; a User will be created
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = StudentProfile
+        fields = ['student_profile_id', 'full_name', 'student_no', 'locked_at', 'email', 'password']
+        read_only_fields = ['student_profile_id', 'student_no']
+
+    def create(self, validated_data):
+        email = validated_data.pop('email')
+        raw_pwd = validated_data.pop('password')
+
+        user = User.objects.create(
+            email=email,
+            password_hash=make_password(raw_pwd),
+            role='student',
+        )
+        student = StudentProfile.objects.create(user=user, **validated_data)
+        return student
+
