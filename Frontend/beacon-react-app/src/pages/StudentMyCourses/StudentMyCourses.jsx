@@ -14,7 +14,7 @@ export default function StudentEnrollmentPage() {
   const navigate = useNavigate();
   const [enrolled, setEnrolled] = useState([])
   //Dummy value
-  const student_id = 1 
+  const student_id = 5 
   
   useEffect( () => {
   axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/my_courses/`)
