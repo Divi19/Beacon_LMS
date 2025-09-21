@@ -86,7 +86,7 @@ export default function StudentLessonEnroll() {
             className={i.viewBtn}
             onClick={(e) => {
     e.stopPropagation();
-    navigate("/student/classroom-1");
+    navigate("/student/lesson-detail");
   }}
           >
             View
@@ -102,7 +102,7 @@ export default function StudentLessonEnroll() {
             className={i.viewBtn}
             onClick={(e) => {
     e.stopPropagation();
-    navigate("/student/classroom-1");
+    navigate("/student/lesson-detail");
   }}
           >
             View
@@ -118,7 +118,7 @@ export default function StudentLessonEnroll() {
             className={i.viewBtn}
             onClick={(e) => {
     e.stopPropagation();
-    navigate("/student/classroom-1");
+    navigate("/student/lesson-detail");
   }}
           >
             View
@@ -134,7 +134,7 @@ export default function StudentLessonEnroll() {
             className={i.viewBtn}
             onClick={(e) => {
     e.stopPropagation();
-    navigate("/student/classroom-1");
+    navigate("/student/lesson-detail");
   }}
           >
             View
@@ -145,7 +145,7 @@ export default function StudentLessonEnroll() {
     </>
   ) : (
     lessons.map((c) => (
-      <div key={c.id} className={i.cardBox} onClick={() => navigate("/student/classroom-1")}>
+      <div key={c.id} className={i.cardBox} onClick={() => navigate("/student/lesson-detail")}>
         <h3>{c.lesson_title}</h3>
         <p>Code: {c.lesson_id} | Credits: {c.lesson_credits}</p>
         <p>Course Director: {c.course_director}</p>

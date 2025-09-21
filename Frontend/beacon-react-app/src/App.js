@@ -16,7 +16,7 @@ import StudentMyLessonsPage from "./pages/StudentMyLessonsPage/StudentMyLessonsP
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
 import StudentLessonEnroll from "./pages/StudentLessonEnroll/StudentLessonEnroll";
-import StudentClassroom1 from "./pages/StudentClassroom1/StudentClassroom1";
+import StudentLessonDetail from "./pages/StudentLessonDetail/StudentLessonDetail";
   
 export default function App(){
   const [details, setDetails] = useState([]);
@@ -57,7 +57,7 @@ export default function App(){
       <Route path="/instructor/course/:courseId/lesson-creation" element={<InstructorLessonCreate />} /> 
       <Route path="/student/my-lesson" element={<StudentMyLessonsPage />} /> 
       <Route path="/student/lesson-enrollment" element={<StudentLessonEnroll />} /> 
-      <Route path="/student/classroom-1" element={<StudentClassroom1 />} /> 
+      <Route path="/student/lesson-detail" element={<StudentLessonDetail />} /> 
       
     </Routes>
   </div>
