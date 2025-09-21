@@ -11,6 +11,7 @@ import InstructorCourseDescription from "./pages/Instructor/InstructorCourseDesc
 import InstructorLogin from "./pages/Instructor/Instructor Login/InstructorLogin";
 import InstructorLessonDetail from "./pages/Instructor/Instructor Lesson Detail/InstructorLessonDetail";
 import InstructorClassCreation from "./pages/Instructor/Instructor Class Creation/InstructorClassCreation"; 
+import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLessonDetail"
 
 
 import axios from 'axios';
@@ -51,6 +52,7 @@ export default function App(){
       <Route path="/instructor/login" element={<InstructorLogin/>} />
       <Route path="/instructor/course/:courseId/lesson/:lessonId" element={<InstructorLessonDetail />}/>
       <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassCreation />}/>
+      <Route path="/student/course/:courseId/lesson/:lessonId" element={<StudentLessonDetail />}/>
     </Routes>
   </div>
   );
