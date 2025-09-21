@@ -48,7 +48,7 @@ export default function StudentMyLessonsPage() {
         <Button
             variant="blue"
             className={i.enrollBtn}
-            onClick={() => navigate("/instructor/course-create")}
+            onClick={() => navigate("/student/lesson-enrollment")}
           >
             <span>Enrollment</span>
             <svg
@@ -81,7 +81,7 @@ export default function StudentMyLessonsPage() {
           <Button
             variant="blue"
             className={i.enrollBtn}
-            onClick={() => navigate("/instructor/course-create")}
+            onClick={() => navigate("/student/lesson-enrollment")}
           >
             <span>First time enrollment</span>
             <svg
