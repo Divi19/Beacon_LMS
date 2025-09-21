@@ -71,7 +71,7 @@ class Course(models.Model):
     title = models.CharField(max_length=255,null=True, blank=True)
     status = models.CharField(max_length=50, choices=CourseStatus.choices, default=CourseStatus.ACTIVE)
     owner_instructor = models.ForeignKey('InstructorProfile', models.DO_NOTHING,  null=True, blank=True,)
-    credits = models.PositiveIntegerField(blank=False, null=True, default=30,  validators=[MinValueValidator(1), MaxValueValidator(30)],)
+    credits = models.PositiveIntegerField(blank=False, null=True, default=30,  editable=False,)
     description = models.TextField(blank=True, null=True)
 
     class Meta:

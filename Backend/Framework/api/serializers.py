@@ -223,7 +223,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ["enrolled_count", "code", "title", "status", "owner_instructor", "owner_instructor_id", "credits", "description"]
+        fields = ["enrolled_count", "code", "title", "status", "owner_instructor", "owner_instructor_id", "description"]
         read_only_fields = ["owner_instructor"]  
 
     #Creating a course from a form, fields in validated_data.

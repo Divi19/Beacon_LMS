@@ -189,10 +189,8 @@ class StudentsEnrolledView(APIView):
     GET /api/students/enrolled?course_id=...&lesson_id=...&classroom_id=...&q=...&ordering=full_name
     - Provide any combination of course_id, lesson_id, classroom_id.
     - If multiple are provided, the result is the INTERSECTION (i.e., students satisfying all filters).
-    - Optional 'q' searches name/student_no/email.
     - Optional 'ordering' (e.g., 'full_name', '-full_name', 'student_no').
     - Uses simple page params: page (1-based), page_size (default 25).
-
 
     use this: 
     const { data } = await api.get('/api/students/enrolled?course_id=AB1234');
@@ -203,10 +201,10 @@ class StudentsEnrolledView(APIView):
     authentication_classes = [CustomJWTAuthentication] 
 
     def get(self, request):
-        course_id = request.query_params.get("course_id")
+        course_id = request.query_params.get("course_id") #query_params = accessing parameters within the url. 
         lesson_id = request.query_params.get("lesson_id")
         classroom_id = request.query_params.get("classroom_id")
-        q = request.query_params.get("q", "").strip()
+        #q = request.query_params.get("q", "").strip()
         ordering = request.query_params.get("ordering", "full_name")
         page = max(int(request.query_params.get("page", 1) or 1), 1)
         page_size = min(max(int(request.query_params.get("page_size", 25) or 25), 1), 200)
@@ -235,13 +233,7 @@ class StudentsEnrolledView(APIView):
             qs = qs.filter(lessonenrollment__lesson=lesson)
         if classroom:
             qs = qs.filter(classroomenrollment__classroom=classroom)
-        qs = qs.distinct()
-
-        # Ordering (whitelist)
-        allowed_order = {"full_name", "-full_name", "student_no", "-student_no", "enrolled_at", "-enrolled_at"}
-        if ordering not in allowed_order:
-            ordering = "full_name"
-        qs = qs.order_by(ordering)
+        qs = qs.order_by('full_name').distinct()
 
         # Pagination
         total = qs.count() #the number of students
