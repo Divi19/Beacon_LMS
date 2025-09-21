@@ -2,10 +2,10 @@ import React, {useEffect, useState} from 'react';
 
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
-import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
-import { useEnrollment } from "../../state/EnrollmentContext";
-import allCourses from "../../data/courses";
-import CourseCard from "../../components/CourseCard/CourseCard";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
+import { useEnrollment } from "../../../state/EnrollmentContext";
+import allCourses from "../../../data/courses";
+import CourseCard from "../../../components/CourseCard/CourseCard";
 import s from "./StudentEnrollment.module.css";
 
 export default function StudentEnrollment() {

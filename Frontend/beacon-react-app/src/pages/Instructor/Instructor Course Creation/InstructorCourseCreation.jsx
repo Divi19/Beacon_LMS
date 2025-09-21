@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Button from "../components/Button/Button";
+import Button from "../../../components/Button/Button";
 import i from "./InstructorCourseCreation.module.css";
-import InstructorTopBar from "../components/InstructorTopBar/InstructorTopBar";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 
 export default function InstructorCourseCreation() {
   const navigate = useNavigate();

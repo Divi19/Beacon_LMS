@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Button from "../../components/Button/Button";
-import { useEnrollment } from "../../state/EnrollmentContext";
+import Button from "../../../components/Button/Button";
+import { useEnrollment } from "../../../state/EnrollmentContext";
 import s from "./InstructorCourseDescription.module.css";
 import axios from "axios";
-import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 
 export default function InstructorCourseDescription() {
   const { courseId } = useParams();

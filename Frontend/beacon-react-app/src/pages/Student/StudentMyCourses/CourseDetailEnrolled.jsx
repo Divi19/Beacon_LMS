@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
-import Button from "../../components/Button/Button";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
+import Button from "../../../components/Button/Button";
 import s from "./CourseDetailEnrolled.module.css";
 import axios from "axios";
 

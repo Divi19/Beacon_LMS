@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
-import Button from "../../components/Button/Button";
-import courses from "../../data/courses";
-import { useEnrollment } from "../../state/EnrollmentContext";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
+import Button from "../../../components/Button/Button";
+import courses from "../../../data/courses";
+import { useEnrollment } from "../../../state/EnrollmentContext";
 import s from "./CourseDetail.module.css";
 import axios from "axios";
 

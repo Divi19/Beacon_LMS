@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import i from "./InstructorLessonCreate.module.css";
-import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 
