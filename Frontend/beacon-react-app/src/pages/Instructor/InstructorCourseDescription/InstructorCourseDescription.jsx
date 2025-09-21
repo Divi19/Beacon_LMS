@@ -11,6 +11,9 @@ export default function InstructorCourseDescription() {
   const navigate = useNavigate();
   const { enroll, isEnrolled } = useEnrollment();
   const [showLessons, setShowLessons] = useState(false);
+  const [showStudents, setShowStudents] = useState(false);
+  const [students, setStudents] = useState([{ id: "1", name: "Amina Hassan", email: "amina.hassan13@beaccon.edu" },
+  { id: "2", name: "Kenji Sato", email: "kenji21sato@beacon.edu" },]); //mock data
 
   // const course = useMemo(
   //   () => courses.find((c) => c.id === courseId),
@@ -126,9 +129,13 @@ export default function InstructorCourseDescription() {
         </div>
     <div className={s.wrap}>
   <div className={s.row1}>
-    <div className={s.panel1}>
-      <h2 className={s.label}>Enrolled Students</h2>
-    </div>
+    <div
+  className={s.panel1}
+  onClick={() => setShowStudents(!showStudents)}
+  style={{ cursor: "pointer" }}
+>
+  <h2 className={s.label}>Enrolled Students</h2>
+</div>
 
     <div className={s.panel1}
       onClick={() => setShowLessons(!showLessons)} 
@@ -200,6 +207,7 @@ export default function InstructorCourseDescription() {
         );
       })}
     </div>
+
     {/* <div className={s.container}>
       {course.lessons && course.lessons.length > 0 ? (
         course.lessons.map((lesson, idx) => (
@@ -265,6 +273,32 @@ export default function InstructorCourseDescription() {
       )}
     </div> */}
     </div>
+)}
+
+{showStudents && (
+  <div className={s.lessonsCard}>
+    <h2 className={s.lessonsLabel}>Enrolled Students</h2>
+    <h2 className={s.studentListLabel}>Number: 2</h2>
+
+    <div className={s.tableWrapper}>
+      <table className={s.studentTable}>
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Student Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          {students.map((student) => (
+            <tr key={student.id}>
+              <td>{student.name}</td>
+              <td>{student.email}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
 )}
 </>
   );
