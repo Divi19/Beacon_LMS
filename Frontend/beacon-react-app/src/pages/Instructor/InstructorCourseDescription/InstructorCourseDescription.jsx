@@ -13,7 +13,7 @@ export default function InstructorCourseDescription() {
   const { enroll, isEnrolled } = useEnrollment();
 
   // const course = useMemo(
-  //   () => courses.find((c) => c.id === courseId),
+  //   () => courses.find((c) => c.id === courseId), Ahh db problem.
   //   [courseId]
   // );
   const [course, setCourse] = useState(null);
@@ -33,7 +33,7 @@ export default function InstructorCourseDescription() {
    * Placeholder for lesson rerouting 
    * @param {*} lessonId 
    */
-  const handleGoToLesson = (lessonId = "AH0476") => {
+  const handleGoToLesson = (lessonId = "SH0676") => {
     navigate(`/instructor/course/${courseId}/lesson/${lessonId}`);
   };
 
