@@ -71,7 +71,7 @@ class Course(models.Model):
     title = models.CharField(max_length=255,null=True, blank=True)
     status = models.CharField(max_length=50, choices=CourseStatus.choices, default=CourseStatus.ACTIVE)
     owner_instructor = models.ForeignKey('InstructorProfile', models.DO_NOTHING,  null=True, blank=True,)
-    credits = models.PositiveIntegerField(blank=False, null=True, default=30,  validators=[MinValueValidator(1), MaxValueValidator(10)],)
+    credits = models.PositiveIntegerField(blank=False, null=True, default=30,  validators=[MinValueValidator(1), MaxValueValidator(30)],)
     description = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -187,10 +187,12 @@ class LessonPrerequisite(models.Model):
 Classroom
 """
 class Classroom(models.Model):
+    
     classroom_id = models.CharField(
         primary_key=True, max_length=6, unique=True,
         default=generate_custom_id, editable=False
     )
+ 
     lesson = models.ForeignKey("Lesson", models.DO_NOTHING, blank=True, null=True)
     instructor = models.ForeignKey("InstructorProfile", models.DO_NOTHING, blank=True, null=True)
 
@@ -211,11 +213,11 @@ class Classroom(models.Model):
         unique_together = (("lesson", "day_of_week", "time_start", "time_end"),)
 
     def save(self, *args, **kwargs):
-        if not self.id:
+        if not self.classroom_id:
             new_id = generate_custom_id()
-            while Classroom.objects.filter(id=new_id).exists():
+            while Classroom.objects.filter(classroom_id=new_id).exists():
                 new_id = generate_custom_id()
-            self.id = new_id
+            self.classroom_id = new_id #weirdass why not reflected??
         super().save(*args, **kwargs)
 
 class ClassroomEnrollment(models.Model):
