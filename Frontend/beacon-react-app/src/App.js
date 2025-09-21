@@ -15,6 +15,8 @@ import InstructorLessonCreation from "./pages/Instructor Lesson Creation/Instruc
 import StudentMyLessonsPage from "./pages/StudentMyLessonsPage/StudentMyLessonsPage";
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
+import StudentLessonEnroll from "./pages/StudentLessonEnroll/StudentLessonEnroll";
+import StudentClassroom1 from "./pages/StudentClassroom1/StudemtClassroom1";
   
 export default function App(){
   const [details, setDetails] = useState([]);
@@ -54,6 +56,8 @@ export default function App(){
       {/* Changed from Isabella version */}
       <Route path="/instructor/course/:courseId/lesson-creation" element={<InstructorLessonCreate />} /> 
       <Route path="/student/my-lesson" element={<StudentMyLessonsPage />} /> 
+      <Route path="/student/lesson-enrollment" element={<StudentLessonEnroll />} /> 
+      <Route path="/student/classroom-1" element={<StudentClassroom1 />} /> 
       
     </Routes>
   </div>
