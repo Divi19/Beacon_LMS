@@ -239,6 +239,13 @@
   color: brown;
 }
 
+  .studentListLabel {
+  font-size: 24px;
+  font-weight: 700;
+  color: brown;
+  margin-top: 1px;
+}
+
 .container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -246,4 +253,46 @@
   width: 100%;
   padding: 20px 50px;
   box-sizing: border-box;
+}
+
+.tableWrapper {
+  width: 100%;
+  margin-top: 16px;
+  overflow-x: auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.studentTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 400px;
+  font-size: 16px;
+  margin: auto;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.studentTable th,
+.studentTable td {
+  padding: 16px 20px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+.studentTable th {
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.studentTable tbody tr td {
+  background-color: #f5e8be;
+}
+
+.studentTable tbody tr:hover td {
+  background-color: #c1f3f4;
+  cursor: pointer;
 }
