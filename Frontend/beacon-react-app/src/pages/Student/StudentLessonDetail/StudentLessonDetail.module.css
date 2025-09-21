@@ -20,7 +20,7 @@
 .rect3,
 .rect4 {
   border-radius: 18px;
-  background: linear-gradient(180deg, #f5c79d 0%, #8ac9cf 100%);
+  background: linear-gradient(to bottom, #71bfcd 0%, #b6c2ae 70%, #f1cea8 100%);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
 }
 
@@ -237,6 +237,19 @@
   border-radius: 999px !important;
 }
 
+.enrolClassBtn:hover {
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.leaveBtn:hover{
+    filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
 .readingAndProgress {
   margin-top: 20px;
   display: grid;
@@ -289,13 +302,9 @@
   border-radius: 999px !important;
 }
 
-.rectBtn,
-.enrollBtn,
-.enrolClassBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: auto !important;
-  min-width: unset !important;
+.modalCta:hover {
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
