@@ -452,7 +452,6 @@ export default function StudentLessonDetail() {
 
               <div className={i.clsColActions}>
                 <Button
-                  variant="orange"
                   className={i.leaveBtn}
                   onClick={handleLeaveClassroom}
                 >
