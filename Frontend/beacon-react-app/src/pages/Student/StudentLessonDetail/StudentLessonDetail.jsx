@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Button from "../../components/Button/Button";
+import Button from "../../../components/Button/Button";
 import i from "./StudentLessonDetail.module.css";
-import StudentTopBar from "../../components/StudentTopBar/StudentTopBar";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 
 export default function StudentLessonDetail() {
   const navigate = useNavigate();
