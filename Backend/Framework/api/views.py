@@ -172,7 +172,6 @@ class ClassroomView(APIView):
             raise serializers.ValidationError("This user is not an instructor.")
         ser = ClassroomSerializer(data=request.data, context={"request": request, "lesson": lesson})
         ser.is_valid(raise_exception=True)
-        ser.is_valid(raise_exception=True)
         try:
             classroom = ser.save(lesson=lesson, instructor=instructor)
         except IntegrityError:
@@ -182,6 +181,37 @@ class ClassroomView(APIView):
             )
         return Response(ClassroomSerializer(classroom, context={"request": request}).data, status=201)
 
+@method_decorator(csrf_exempt, name='dispatch')
+class LessonsView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, course_id):
+        """
+        GET method. Retrieving Lessons
+        """
+        course = get_object_or_404(Course, course_id=course_id)
+        # lessons = course.lessons.all().order_by("slot_index")
+        lessons = course.lessons.all()
+        data = LessonSerializer(lessons, many=True).data
+        return Response(data)
+    
+    def post(self, request, course_id):
+        course = get_object_or_404(Course, course_id=course_id)
+        #data = request.data.copy()
+        #data["courses"] = course.course_id
+        #serializer = LessonSerializer(data=data)
+        user = self.request.user #Grabbing current auth user 
+        try:
+            instructor = InstructorProfile.objects.get(user=request.user)
+        except InstructorProfile.DoesNotExist:
+            raise serializers.ValidationError("This user is not an instructor.")
+        ser = ClassroomSerializer(data=request.data, context={"request": request, "course_id": course.course_id})
+        ser.is_valid(raise_exception=True)
+        ser.save() 
+        return Response(ser.data)
+        
+        #if serializer.is_valid(raise_exception=True):
+        #    serializer.save()
+        #    return Response(serializer.data)
 
 
 class StudentsEnrolledView(APIView):
@@ -319,34 +349,42 @@ class StudentUnenrolledClassrooms(APIView):
     authentication_classes = [CustomJWTAuthentication] 
     """
     permission_classes = [AllowAny]
-    def get(self, request, student_profile_id, pk):
+    def get(self, request, student_profile_id, lesson_id, **kwargs):
+        """
+        GET method to retrieve unenrolled classrooms
+        """
         student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
-        lesson = Lesson.objects.get(lesson_id = pk)
+        lesson = Lesson.objects.get(lesson_id = lesson_id)
         unenrolled_classrooms = Classroom.objects.filter(lesson=lesson, is_active=True).exclude(classroomenrollment__student=student).distinct()
-        output =[{
-                "day_of_week": classroom.day_of_week,
-                "time_start": classroom.time_start,
-                "time_end": classroom.time_end,
-                "instructor": classroom.instructor.full_name,
-                    } for classroom in unenrolled_classrooms]
-        return Response(output,  status=status.HTTP_200_OK)
+        serializer = ClassroomSerializer(unenrolled_classrooms, many=True, context={"request": request})
+        return Response(serializer.data,  status=status.HTTP_200_OK)
     
-    def post(self, request, student_profile_id):
-        """
-        Enroll a student
-        - Look for the student 
-        -Ensure not exceed capacity 
-        - Create new object
-        """
-        student = get_object_or_404(StudentProfile, pk=student_profile_id)
-        serializer = ClassroomEnrollmentSerializer(
-            data=request.data,
-            context={"student": student},
-        )
-        serializer.is_valid(raise_exception=True)
-        enrollment = serializer.save()#Creating a new enrollment object
-        return Response(ClassroomEnrollmentSerializer(enrollment).data, status=201)
+    def post(self, request, student_profile_id, lesson_id, classroom_id):
+        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        # sanity: ensure the classroom belongs to the lesson in the URL
+        classroom = get_object_or_404(Classroom, classroom_id=classroom_id, lesson__lesson_id=lesson_id)
 
+        ser = ClassroomEnrollmentSerializer(
+            data={"classroom_id": classroom.pk},
+            context={"request": request, "student": student},
+        )
+        ser.is_valid(raise_exception=True)
+        enrollment = ser.save()
+        return Response(ClassroomEnrollmentSerializer(enrollment).data, status=201)
+    
+    def delete(self, request, student_profile_id, lesson_id, classroom_id, **kwargs):
+        """
+        Idempotent: delete if exists; 204 even if nothing to delete.
+        """
+        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        # Optional: ensure the classroom belongs to the lesson in the URL
+        classroom = get_object_or_404(Classroom, classroom_id=classroom_id, lesson__lesson_id=lesson_id)
+
+        # Hard delete the link; returns (count, _)
+        ClassroomEnrollment.objects.filter(student=student, classroom=classroom).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+"""
+#Redundant
 class StudentEnrolledClassrooms(APIView): 
     permission_classes = [AllowAny]
     def get(self, request, student_profile_id, pk):
@@ -360,7 +398,7 @@ class StudentEnrolledClassrooms(APIView):
                 "instructor": classroom.instructor.full_name,
                     } for classroom in enrolled_classrooms]
         return Response(output,  status=status.HTTP_200_OK)
-    
+"""
 """
 Shared
 """

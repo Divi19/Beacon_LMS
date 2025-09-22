@@ -38,8 +38,7 @@ urlpatterns = [
     path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
     #Instructors Classrooms
     path("instructor/<str:lesson_id>/classrooms/", ClassroomView.as_view(), name="classrooms"),
-    #Show number of students
-
+    #Instructor Lessons 
     
     #Students login TODO
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
@@ -48,9 +47,8 @@ urlpatterns = [
     path("student/<int:student_profile_id>/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
     path("student/<int:student_profile_id>/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
     #Students Classrooms
-    path("student/<int:student_profile_id>/classooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
-    path("student/<int:student_profile_id>/classooms/enrolled/", StudentEnrolledClassrooms.as_view(), name="enrolled-classrooms"),
-    path("student/<int:student_profile_id>/classooms/enroll/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    path("student/<int:student_profile_id>/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    path("student/<int:student_profile_id>/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")
     

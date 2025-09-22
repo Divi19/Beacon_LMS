@@ -66,7 +66,6 @@ class Course(models.Model):
         ACTIVE = "Active", "ACTIVE"
         INACTIVE = "Inactive", "INACTIVE"
         DRAFT = "Draft", "DRAFT"
-
     course_id = models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=False)
     title = models.CharField(max_length=255,null=True, blank=True)
     status = models.CharField(max_length=50, choices=CourseStatus.choices, default=CourseStatus.ACTIVE)

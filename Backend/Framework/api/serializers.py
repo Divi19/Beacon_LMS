@@ -155,56 +155,36 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         return enrollment 
 
 class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
-    """
-    TODO: Change self.context.get('student') to request = self.context.get("request")
-    Use auth later on 
-    """
+    # accept classroom id in the request body
     classroom_id = serializers.PrimaryKeyRelatedField(
-        source='classroom', queryset=Classroom.objects.all(), write_only=True
-    ) #Receive an id which get translated to real Classroom object
-
+        source="classroom", queryset=Classroom.objects.all(), write_only=True
+    )
+    
     class Meta:
         model = ClassroomEnrollment
-        fields = ['id', 'classroom_id', 'student_id', 'enrolled_at']
-    
+        fields = ["id", "classroom_id", "classroom", "student_id", "enrolled_at"]
+        read_only_fields = ["classroom", "student_id", "enrolled_at"]
+
     def create(self, validated_data):
-        student = self.context.get('student')
+        student = self.context.get("student")
         if student is None:
             raise serializers.ValidationError("Serializer context must include 'student'.")
-        classroom_id = validated_data.pop('classroom_id') #Receiving only a classroom id
-        classroom = Classroom.objects.get(classroom_id = classroom_id)
+        # DRF already converted classroom_id -> Classroom instance
+        classroom = validated_data.pop("classroom")
+        lesson = classroom.lesson  # derive lesson from classroom
 
-        #see if object already exists and if the classroom is active 
-        if ClassroomEnrollment.objects.filter(student=student, classroom=classroom).exists():
-            raise serializers.ValidationError(
-                "This student is already enrolled in this course."
-            )
+        # business rules
         if not classroom.is_active:
-            raise serializers.ValidationError(
-                "This course is current inactive."
-            )
-        if classroom.capacity >= 10:
-            raise serializers.ValidationError(
-                "This classroom is currently full."
-            )
-            
-        
-        #see if the student has enrolled into the lessons by 
-        # - Take classroom's lesson, take id 
-        # - Find if student present in lesson_enrollment using lesson_id 
-        # checking lessons_id and student_id pair in lesson enrollment
-        classroom_lesson = classroom.lesson 
-        if not LessonEnrollment.objects.filter(lesson=classroom_lesson, student=student).exists(): 
-            raise serializers.ValidationError(
-                "This student is not enrolled in related lessons."
-            )
-
-        classroomEnrollment = ClassroomEnrollment.objects.create(
-            student = student,
-            classroom = classroom,
-            **validated_data #unpack the rest of the validated data
-        )
-        return classroomEnrollment 
+            raise serializers.ValidationError("This classroom is currently inactive.")
+        if ClassroomEnrollment.objects.filter(student=student, classroom=classroom).exists():
+            raise serializers.ValidationError("This student is already enrolled in this classroom.")
+        if not LessonEnrollment.objects.filter(lesson=lesson, student=student).exists():
+            raise serializers.ValidationError("This student is not enrolled in the related lesson.")
+        if ClassroomEnrollment.objects.filter(classroom=classroom).count() >= classroom.capacity:
+            raise serializers.ValidationError("This classroom is currently full.")
+        if ClassroomEnrollment.objects.filter(classroom__lesson=lesson).exists():
+            raise serializers.ValidationError("This student is already in a related classroom.")
+        return ClassroomEnrollment.objects.create(student=student, classroom=classroom, **validated_data)
 
 """
 Shared serializers
@@ -246,20 +226,26 @@ class CourseSerializer(serializers.ModelSerializer):
 class ClassroomSerializer(serializers.ModelSerializer):
     enrolled_count = serializers.IntegerField(read_only=True)
     lesson = serializers.PrimaryKeyRelatedField(read_only=True)
-    # API-facing names mapped to model fields
-    day = serializers.CharField(source="day_of_week")
-    start_time = serializers.TimeField(source="time_start")
-    end_time = serializers.TimeField(source="time_end")
+    #Request
+    day = serializers.CharField(source="day_of_week",write_only=True,)
+    start_time = serializers.TimeField(source="time_start", write_only=True,)
+    end_time = serializers.TimeField(source="time_end", write_only=True,)
     capacity = serializers.IntegerField(min_value=1, max_value=10)
-    # you compute duration on the FE if missing; keeping write_only is okay
     duration_minutes = serializers.IntegerField(write_only=True, required=False)
-
+    
+    
+    #Responses 
+    duration_minutes = serializers.IntegerField(read_only=True)
+    day_of_week = serializers.CharField(read_only=True)
+    time_start  = serializers.TimeField(read_only=True)
+    time_end    = serializers.TimeField(read_only=True)
     class Meta:
         model = Classroom
         fields = [
             "classroom_id",
-            "lesson",
+            "lesson", 
             "day", "start_time", "end_time",
+            "day_of_week", "time_start", "time_end",
             "duration_minutes", "capacity",
             "is_active", "instructor", "created_at",
             "enrolled_count",
@@ -315,3 +301,34 @@ class ClassroomSerializer(serializers.ModelSerializer):
                 {"non_field_errors": ["This time overlaps an existing classroom. Pick a different slot."]}
             )
         return attrs
+
+
+class LessonSerializer(serializers.ModelSerializer):
+    created_by = serializers.PrimaryKeyRelatedField(
+        source='created_by', queryset=InstructorProfile.objects.all(), write_only=True
+    )
+    course = serializers.PrimaryKeyRelatedField(source='course_id', queryset=Course.objects.all(), write_only=True
+    )
+
+    enrolled_count = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Course
+        fields = ["enrolled_count", "course", "title", "description", "objectives", "duration_weeks", "status", "created_by", "owner_instructor"]
+        read_only_fields = ["created_by", "owner_instructor"] 
+
+    def create(self, validated_data): 
+        """
+        POST function for course creation. Due to no nested fields, no need for external serializers
+        """
+        request = self.context.get("request") #read the current request (who is requesting?)
+        if "owner_instructor" not in validated_data and request and hasattr(request, "user"):
+            #In case validated data isn't storing owner_instructor, but user instead
+            #Grab instructor based on user field and add it into the validated data 
+            try:
+                owner = InstructorProfile.objects.get(user=request.user)
+                validated_data["owner_instructor"] = owner
+            except InstructorProfile.DoesNotExist:
+                pass
+        return Course.objects.create(**validated_data) 
+
+
