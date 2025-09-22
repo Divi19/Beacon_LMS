@@ -32,7 +32,7 @@ urlpatterns = [
     path("courses/frontend/<int:student_profile_id>/student/enrollment/", StudentUnenrolledCourses.as_view(), name="my-courses"),
     path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentEnroll.as_view(), name="my-courses"),
     # urls.py
-    path('lessons/<int:lesson_id>/', LessonDetailView.as_view(), name="lesson-detail"),
+    path('lessons/<str:lesson_id>/', LessonDetailView.as_view(), name="lesson-detail"),
 
    
 ]

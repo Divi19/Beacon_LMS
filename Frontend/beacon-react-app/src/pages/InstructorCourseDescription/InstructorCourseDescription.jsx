@@ -225,7 +225,7 @@ useEffect(() => {
                     lesson_duration: lessons[idx]?.lesson_duration || "",
                     lesson_description: lessons[idx]?.lesson_description || "",
                     lesson_objective: lessons[idx]?.lesson_objective || "",
-                    lesson_prerequisite: lessons[idx]?.lesson_prerequisite || "",
+                    lesson_credits: lessons[idx]?.lesson_prerequisite || "",
                   } }
                   )
                 }

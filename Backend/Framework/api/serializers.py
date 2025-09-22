@@ -17,7 +17,7 @@ class LessonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ["lesson_title", "lesson_credits", "lesson_duration", "lesson_description", "lesson_objective", "lesson_prerequisite", "courses"]
+        fields = ["lesson_id", "lesson_title", "lesson_credits", "lesson_duration", "lesson_description", "lesson_objective", "lesson_prerequisite", "courses"]
         # read_only_fields = ["courses"]
 
 class StudentSerializer(serializers.ModelSerializer):

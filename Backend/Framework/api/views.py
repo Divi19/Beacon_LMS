@@ -84,7 +84,7 @@ class LessonsView(APIView):
     permission_classes = [AllowAny]
     def get(self, request, course_id):
         """
-        G
+        GET method
         """
         course = get_object_or_404(Course, course_id=course_id)
         # lessons = course.lessons.all().order_by("slot_index")

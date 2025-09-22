@@ -12,6 +12,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
   const location = useLocation();
+  const isEditing = !!location.state?.lesson_id;
 
   const [formData, setFormData] = useState({
     lesson_title: "",
@@ -29,8 +30,8 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
   if (location.state) {
     setFormData((prev) => ({
       ...prev,
-      slot_index: location.state.slot_index,
-      lesson_id: location.state.lesson_id || "",
+      // slot_index: location.state.slot_index,
+      lesson_id: location.state.lesson_id,
       lesson_title: location.state.lesson_title || "",
       lesson_credits: location.state.lesson_credits || "",
       lesson_duration: location.state.lesson_duration || "",
@@ -92,7 +93,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
   try {
     const lessonData = {
       lesson_title: formData.lesson_title,
-      // lesson_id: formData.lesson_id || `${courseId}_L${Date.now()}`,
+      lesson_id: formData.lesson_id,
       lesson_credits: formData.lesson_credits ? parseInt(formData.lesson_credits) : null,
       lesson_duration: formData.lesson_duration ? parseInt(formData.lesson_duration) : null,
       lesson_description: formData.lesson_description,
@@ -108,12 +109,14 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
     console.log("Submitting lessonData:", lessonData);
 
     let res;
-    if (formData.lesson_id && Number(formData.lesson_id) > 0) {
-  // only PUT if lesson exists in DB
+if (isEditing) {
+  // Existing lesson → update
   res = await axios.put(`http://localhost:8000/lessons/${formData.lesson_id}/`, lessonData);
 } else {
+  // New lesson → create
   res = await axios.post(`http://localhost:8000/courses/${courseId}/lessons/`, lessonData);
 }
+
 
     console.log("Lesson saved successfully:", res.data);
 
