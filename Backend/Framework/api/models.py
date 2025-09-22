@@ -56,22 +56,35 @@ class Course(models.Model):
     course_credits = models.IntegerField()
     course_director = models.CharField(max_length=50)
     course_description = models.TextField(max_length=1000)
+    course_number_of_lessons = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.course_id}: {self.course_title}"
     
 class Lesson(models.Model):
-    lesson_title = models.CharField(max_length=250)
-    lesson_id = models.CharField(primary_key=True, max_length=500, unique=True)
-    lesson_credits = models.IntegerField()
-    lesson_duration = models.IntegerField(default=0)
-    lesson_description = models.TextField(max_length=1000)
-    lesson_objective = models.TextField(max_length=1000)
-    lesson_prerequisite = models.TextField(max_length=500)
+    lesson_title = models.CharField(blank=True, null=True, max_length=250)
+    lesson_id = models.CharField(primary_key=True, max_length = 100, unique=True, editable=True)
+    lesson_credits = models.IntegerField(blank=True, null=True,)
+    lesson_duration = models.IntegerField(blank=True, null=True, default=0)
+    lesson_description = models.TextField(blank=True, null=True, max_length=1000)
+    lesson_objective = models.TextField(blank=True, null=True, max_length=1000)
+    lesson_prerequisite = models.TextField(blank=True, null=True, max_length=500)
     courses = models.ForeignKey(Course, related_name="lessons", on_delete=models.CASCADE)
+    # slot_index = models.IntegerField(blank=True, null=True)
+
+    # class Meta:
+    #     unique_together = ("courses", "slot_index")
     
     def __str__(self):
         return f"{self.lesson_id} : {self.lesson_title}"
+
+    # def save(self, *args, **kwargs):
+    #     if self.slot_index is None:  # only assign if not manually provided
+    #         last_index = Lesson.objects.filter(courses=self.courses).aggregate(
+    #             models.Max("slot_index")
+    #         )["slot_index__max"]
+    #         self.slot_index = 0 if last_index is None else last_index + 1
+    #     super().save(*args, **kwargs)
 
 class Student(models.Model):
     student_profile_id = models.AutoField(primary_key=True)
