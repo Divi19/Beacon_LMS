@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import i from "./InstructorLessonCreate.module.css";
 import InstructorTopBar from "../../components/InstructorTopBar/InstructorTopBar";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from 'axios';
 
 export default function InstructorLessonCreate({ onLessonCreated }) {
@@ -11,6 +11,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     lesson_title: "",
@@ -20,8 +21,25 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
     lesson_description: "",
     lesson_objective: "",
     lesson_prerequisite: "",
-    courses: "",
+    courses: courseId,
+    slot_index: null,
   });
+
+  useEffect(() => {
+  if (location.state) {
+    setFormData((prev) => ({
+      ...prev,
+      slot_index: location.state.slot_index,
+      lesson_id: location.state.lesson_id || "",
+      lesson_title: location.state.lesson_title || "",
+      lesson_credits: location.state.lesson_credits || "",
+      lesson_duration: location.state.lesson_duration || "",
+      lesson_description: location.state.lesson_description || "",
+      lesson_objective: location.state.lesson_objective || "",
+      lesson_prerequisite: location.state.lesson_prerequisite || ""
+    }));
+  }
+}, [location.state]);
 
   const openModal = () => {
     setShowModal(true);
@@ -44,10 +62,10 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
     }
   };
 
-  const goToLessonPage = () => {
-    setShowOptionalModal(false); 
-    navigate("/instructor/lesson-list"); 
-  };
+  // const goToLessonPage = () => {
+  //   setShowOptionalModal(false); 
+  //   navigate("/instructor/lesson-list"); 
+  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,43 +82,55 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
         lesson_objective: "",
         lesson_prerequisite: "",
         courses: "",
+        slot_index: ""
     });
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      // Prepare data for Django backend
-      const lessonData = {
-        lesson_title: formData.lesson_title,
-        lesson_id: formData.lesson_id,
-        lesson_credits: parseInt(formData.lesson_credits),
-        lesson_duration: parseInt(formData.lesson_duration),
-        lesson_description: formData.lesson_description,
-        lesson_objective: formData.lesson_objective,
-        lesson_prerequisite: formData.lesson_prerequisite,
-        courses: courseId,
-      };
+  e.preventDefault();
 
-      // Send to Django backend
-      await axios.post(`http://localhost:8000/courses/${courseId}/lessons/`, lessonData);
-      
-      console.log("Lesson created successfully:", lessonData);
-      
-      // Refresh the course list in parent component
-      if (onLessonCreated) {
-        onLessonCreated(lessonData);
-      }
-      
-      // Show success modal
-      setShowOptionalModal(true);
-      
-    } catch (error) {
-      console.error('Error creating course:', error);
-      alert('Error creating course. Please try again.');
+  try {
+    const lessonData = {
+      lesson_title: formData.lesson_title,
+      // lesson_id: formData.lesson_id || `${courseId}_L${Date.now()}`,
+      lesson_credits: formData.lesson_credits ? parseInt(formData.lesson_credits) : null,
+      lesson_duration: formData.lesson_duration ? parseInt(formData.lesson_duration) : null,
+      lesson_description: formData.lesson_description,
+      lesson_objective: formData.lesson_objective,
+      lesson_prerequisite: formData.lesson_prerequisite,
+      courses: courseId,
+    };
+
+    if (formData.lesson_id) {
+      lessonData.lesson_id = formData.lesson_id;
     }
-  };
+
+    console.log("Submitting lessonData:", lessonData);
+
+    let res;
+    if (formData.lesson_id && Number(formData.lesson_id) > 0) {
+  // only PUT if lesson exists in DB
+  res = await axios.put(`http://localhost:8000/lessons/${formData.lesson_id}/`, lessonData);
+} else {
+  res = await axios.post(`http://localhost:8000/courses/${courseId}/lessons/`, lessonData);
+}
+
+    console.log("Lesson saved successfully:", res.data);
+
+    navigate(`/instructor/course/${courseId}`, {
+      state: { createdLesson: res.data, slot_index: formData.slot_index },
+    });
+
+    setShowOptionalModal(true);
+
+  } catch (error) {
+    console.error('Error saving lesson:', error);
+    alert('Error saving lesson. Please try again.');
+  }
+};
+
+
+
 
   return (
     <div className={i.wrap}>
@@ -121,7 +151,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 name="lesson_title"
                 value={formData.lesson_title}
                 onChange={handleChange}
-                required
+                placeholder="Auto-generated if left empty"
               />
             </div>
 
@@ -133,7 +163,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 name="lesson_id"
                 value={formData.lesson_id}
                 onChange={handleChange}
-                required
+                placeholder="Auto-generated if left empty"
               />
             </div>
 
@@ -145,7 +175,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 name="lesson_credits"
                 value={formData.lesson_credits}
                 onChange={handleChange}
-                required
+                placeholder="Auto-generated if left empty"
               />
             </div>
 
@@ -157,7 +187,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 name="lesson_duration"
                 value={formData.lesson_duration}
                 onChange={handleChange}
-                required
+                placeholder="Auto-generated if left empty"
               />
             </div>
 
@@ -169,7 +199,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 name="lesson_description"
                 value={formData.lesson_description}
                 onChange={handleChange}
-                required
+                placeholder="Auto-generated if left empty"
               />
             </div>
 
@@ -181,7 +211,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 name="lesson_objective"
                 value={formData.lesson_objective}
                 onChange={handleChange}
-                required
+                placeholder="Auto-generated if left empty"
               />
             </div>
 
@@ -193,9 +223,23 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 name="lesson_prerequisite"
                 value={formData.lesson_prerequisite}
                 onChange={handleChange}
-                required
+                placeholder="Auto-generated if left empty"
               />
             </div>
+            {/* {location.state?.slot_index === undefined && (
+            <div className={i.row}>
+              <label className={i.label}>Slot Index:</label>
+              <input
+                className={i.input}
+                type="number"
+                name="slot_index"
+                value={formData.slot_index}
+                onChange={handleChange}
+                placeholder="Auto-generated if left empty"
+              />
+            </div>
+          )} */}
+
 
             {/* <div className={i.row}>
               <label className={i.label}>Description:</label>
@@ -250,7 +294,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
               )}
             </div> */}
 
-            {showOptionalModal && (
+            {/* {showOptionalModal && (
               <div className={i.modalOverlay}>
                 <div className={i.modalContent}>
                   <h3>Lesson Created Successfully!</h3>
@@ -261,7 +305,7 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
 
             <div className={i.buttonRow}>
               <button className={i.discardbutton} type="button" onClick={resetForm}>
