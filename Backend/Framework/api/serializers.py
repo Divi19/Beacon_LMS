@@ -4,7 +4,7 @@ from .models import Course, Student, Lesson
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ["course_title", "course_id", "course_credits", "course_director", "course_description"]
+        fields = ["course_title", "course_id", "course_credits", "course_director", "course_description", "course_number_of_lessons"]
 
 class LessonSerializer(serializers.ModelSerializer):
     # course_id = serializers.PrimaryKeyRelatedField(
@@ -12,12 +12,13 @@ class LessonSerializer(serializers.ModelSerializer):
     #     write_only=True, required=False
     # )
     # courses = CourseSerializer(read_only=True)
-    courses = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    # courses = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    courses = serializers.SlugRelatedField(slug_field = "course_id", queryset = Course.objects.all())
 
     class Meta:
         model = Lesson
-        fields = ["lesson_id", "lesson_title", "lesson_credits", "lesson_duration", "lesson_description", "lesson_objective", "lesson_prerequisite", "courses"]
-        # read_only_fields = ["lesson_title"]
+        fields = ["lesson_title", "lesson_credits", "lesson_duration", "lesson_description", "lesson_objective", "lesson_prerequisite", "courses"]
+        # read_only_fields = ["courses"]
 
 class StudentSerializer(serializers.ModelSerializer):
     course_ids = serializers.PrimaryKeyRelatedField(
