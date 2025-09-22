@@ -29,8 +29,7 @@ const handleToggleLessons = async () => {
     try {
       const res = await api.get(`/instructor/courses/${courseId}/lessons/`);
       console.log("Lessons API response", res.data);
-      // const padded = [...res.data];
-      // while (padded.length < LESSON_SLOTS) padded.push(null);
+
       setLessons(res.data);
     } catch (err) {
       console.error("Error fetching lessons", err);
@@ -98,6 +97,9 @@ const handleToggleLessons = async () => {
             <span>{course.course_credits} Credits</span>
             <span>
               Course Director: <strong>{course.course_director}</strong>
+            </span>
+            <span>
+              Enrolled Student: <strong>{course.enrolled_count}</strong>
             </span>
           </div>
 
@@ -182,6 +184,10 @@ const handleToggleLessons = async () => {
                 <div className={s.cardDesc3}>
                   <span>Duration:</span>
                   <span>{lesson.duration_weeks}</span>
+                </div>
+                <div className={s.cardDesc3}>
+                  <span>Enrolled Students:</span>
+                  <span>{lesson.enrolled_count}</span>
                 </div>
               <Button
                 variant="orange"

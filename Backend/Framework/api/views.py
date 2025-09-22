@@ -50,20 +50,6 @@ class CurrentUser(RetrieveAPIView):#Receiving a single object, read-only
     serializer_class = CurrentUserSerializer
     def get_object(self):
         return self.request.user #According to the json upon logged in, the user nested content
-
-
-# Create your views here.
-def course_creation(request):
-    if request.method == 'POST':
-        form = CoursesForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('create_courses')
-    else:
-        form = CoursesForm()
-
-    return render(request, 'course.html', {'form' : form})
-
 """
 Instructor Part
 """
@@ -127,13 +113,16 @@ class InstructorCoursesView(APIView):
         instr = InstructorProfile.objects.filter(user=user).first()
         if not instr:
             return Response({"detail": "Not an instructor."}, status=403)
-        courses =( Course.objects.filter(owner_instructor=instr).select_related("owner_instructor").annotate(enrolled_count=Count("enrollment", distinct=True)) if instr else Course.objects.none())
+        courses =( Course.objects.filter(owner_instructor=instr).select_related("owner_instructor").annotate(enrolled_count=Count("enrollment__student", distinct=True)) if instr else Course.objects.none())
         output = [{
                 "course_id": course.course_id,
                 "course_title": course.title,
                 "course_credits": course.credits,
                 "course_director": course.owner_instructor.full_name,
-                "course_description": course.description}
+                "course_description": course.description,
+                "status": course.status,
+                "enrolled_count": course.enrolled_count
+                }
                    for course in courses]
         return Response(output, status=status.HTTP_200_OK)
     
@@ -447,7 +436,8 @@ class StudentEnrolledCourses(APIView):
                 "course_title": course.title,
                 "course_credits": course.credits,
                 "course_director": course.owner_instructor.full_name,
-                "course_description": course.description}
+                "course_description": course.description
+                }
                 for course in courses]
         return Response(output, status=status.HTTP_200_OK)
 
@@ -629,21 +619,21 @@ Shared
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
 class CourseDetailView(APIView):
-    """"
-    Uncomment permission and authentication_classes after implementing auth for student
-    """
-    #permission_classes = [IsAuthenticated]
-    #authentication_classes = [CustomJWTAuthentication] 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
     def get(self, request, course_id):
-        """
-        GET method. Fetching course and returning a customised json response
-        """
-        course = Course.objects.get(course_id=course_id)
+        course = get_object_or_404(
+            Course.objects.select_related('owner_instructor')
+                          .annotate(enrolled_count=Count('enrollment__student', distinct=True)),  
+            course_id=course_id
+        )
         output = {
             "course_id": course.course_id,
             "course_title": course.title,
             "course_credits": course.credits,
-            "course_director": course.owner_instructor.full_name,
-            "course_description": course.description}
+            "course_director": course.owner_instructor.full_name if course.owner_instructor else None,
+            "course_description": course.description,
+            "status": course.status,
+            "enrolled_count": course.enrolled_count,  
+        }
         return Response(output, status=status.HTTP_200_OK)
-    
