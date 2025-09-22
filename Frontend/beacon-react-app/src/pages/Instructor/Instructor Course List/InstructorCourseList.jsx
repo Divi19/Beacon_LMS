@@ -89,34 +89,56 @@ export default function InstructorCourseList() {
             </Button>
           </div>
         </header>
-        <div className={s.container}>
-          {courses.map((course, idx) => (
-            <div
-              key={idx}
-              className={s.card}
-              onClick={() => navigate(`/instructor/course/${course.course_id}`)}
-              style={{ cursor: "pointer" }}
-            >
-              <h2 className={s.cardTitle}>{course.course_title}</h2>
-              <div className={s.cardDesc1}>
-                <div className={s.leftGroup}>
-                  <span>Code:</span>
-                  <span className={s.spacing}>
-                    <strong>{course.course_id}</strong>
+               <div className={s.container}>
+          {courses.map((course, idx) => {
+            const raw =
+              course.status ??
+              course.course_status ??
+              course.is_active ??
+              course.active;
+
+            const statusText =
+              typeof raw === "boolean"
+                ? raw
+                  ? "Active"
+                  : "Inactive"
+                : raw
+                ? String(raw)
+                : "—";
+
+            return (
+              <div
+                key={idx}
+                className={s.card}
+                onClick={() =>
+                  navigate(`/instructor/course/${course.course_id}`)
+                }
+                style={{ cursor: "pointer" }}
+              >
+                <h2 className={s.cardTitle}>{course.course_title}</h2>
+
+                <div className={s.cardDesc1}>
+                  <div className={s.leftGroup}>
+                    <span>Code:</span>
+                    <span className={s.spacing}>
+                      <strong>{course.course_id}</strong>
+                    </span>
+                  </div>
+                  <span>
+                    <strong>{course.course_credits}</strong> Credits —{" "}
+                    {statusText}
                   </span>
                 </div>
-                <span>
-                  <strong>{course.course_credits}</strong> Credits
-                </span>
+
+                <div className={s.cardDesc2}>
+                  <span>Course Director:</span>
+                  <span>
+                    <strong>{course.course_director}</strong>
+                  </span>
+                </div>
               </div>
-              <div className={s.cardDesc2}>
-                <span>Course Director:</span>
-                <span>
-                  <strong>{course.course_director}</strong>
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

@@ -244,8 +244,8 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
-.leaveBtn:hover{
-    filter: brightness(1.05);
+.leaveBtn:hover {
+  filter: brightness(1.05);
   background-color: #71bfcd;
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
