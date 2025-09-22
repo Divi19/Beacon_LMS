@@ -83,7 +83,7 @@ export default function InstructorCourseDescription() {
           {/* can delete button if not needed here */}
           </div>
           <div className={s.lessonActions}>
-            <Button
+            {/* <Button
             className={s.addLessonBtn}
             // style={{ backgroundColor: "orange", padding: "8px", marginTop: "12px" }}
               // className={s.addLessonBtn}
@@ -100,11 +100,11 @@ export default function InstructorCourseDescription() {
                 }
               >
                 View Lessons
-              </Button>
+              </Button> */}
           </div>
           <br />
           <br />
-          <Button variant="orange"
+          {/* <Button variant="orange"
                       className={s.enrollBtn}
                       onClick={() => navigate("/instructor/course-list")}
                     >
@@ -124,7 +124,7 @@ export default function InstructorCourseDescription() {
                     <polyline points="12 8 16 12 12 16" />
                     <line x1="8" y1="12" x2="16" y2="12" />
                   </svg>
-                    </Button>
+                    </Button> */}
           </div>
         </div>
     <div className={s.wrap}>
