@@ -35,15 +35,33 @@ class FrontendView(APIView):
                    "course_id": course.course_id,
                    "course_credits": course.course_credits,
                    "course_director": course.course_director,
-                   "course_description": course.course_description}
+                   "course_description": course.course_description,
+                   "course_number_of_lessons": course.course_number_of_lessons}
                    for course in courses]
         return Response(output)
     
     def post(self, request):
         serializer = CourseSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data)
+        if serializer.is_valid():
+            course = serializer.save()
+
+            num_lessons = getattr(course, "course_number_of_lessons", 0) or 0
+
+            for i in range(num_lessons):
+                Lesson.objects.create(
+                    lesson_id=f"{course.course_id}_L{i+1}",
+                    lesson_title=f"Lesson {i+1}",     # default title
+                    lesson_credits=0,                 # default numeric
+                    lesson_duration=0,                # default numeric
+                    lesson_description="",            # blank text
+                    lesson_objective="",              # blank text
+                    lesson_prerequisite="",           # blank text
+                    courses=course                    # FK
+                )
+
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
 
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
@@ -65,20 +83,26 @@ Lesson part
 class LessonsView(APIView):
     permission_classes = [AllowAny]
     def get(self, request, course_id):
-        course = get_object_or_404(Course, pk=course_id)
+        """
+        G
+        """
+        course = get_object_or_404(Course, course_id=course_id)
+        # lessons = course.lessons.all().order_by("slot_index")
         lessons = course.lessons.all()
         data = LessonSerializer(lessons, many=True).data
         return Response(data)
     
     def post(self, request, course_id):
-        course = get_object_or_404(Course, pk=course_id)
+        course = get_object_or_404(Course, course_id=course_id)
         data = request.data.copy()
-        data["courses"] = course.pk
+        data["courses"] = course.course_id
         serializer = LessonSerializer(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status= 400)
+        else:
+            print(serializer.errors)
+            return Response(serializer.errors, status= 400)
         
 @method_decorator(csrf_exempt, name='dispatch')
 class LessonDetailView(APIView):
@@ -87,6 +111,15 @@ class LessonDetailView(APIView):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
         data = LessonSerializer(lesson).data
         return Response(data)
+
+    def put(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        serializer = LessonSerializer(lesson, data=request.data, partial=False)  # full update
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+    
 
 """
 Student Part
