@@ -79,6 +79,10 @@ export default function LessonDetail() {
                 <span className={s.k}>Description:</span>{" "}
                 {lesson.description || ""}
               </p>
+              <p className={s.kv}>
+                <span className={s.k}>Enrolled student:</span>{" "}
+                {lesson.enrolled_count || "0"}
+              </p>
 
               <button className={s.cta} 
                       type="button"
