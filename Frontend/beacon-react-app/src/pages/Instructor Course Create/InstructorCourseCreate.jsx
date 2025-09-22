@@ -17,6 +17,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     credits: "",
     director: "",
     description: "",
+    number_of_lessons: "",
   });
 
   const openModal = () => {
@@ -72,6 +73,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         course_credits: formData.credits,
         course_director: formData.director,
         course_description: formData.description,
+        course_number_of_lessons: formData.number_of_lessons,
       };
 
       // Send to Django backend
@@ -161,6 +163,19 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
                 className={i.input}
                 name="description"
                 value={formData.description}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Number of Lessons:</label>
+              <input
+                className={i.input}
+                type="number"
+                name="number_of_lessons"
+                min="1"
+                value={formData.number_of_lessons}
                 onChange={handleChange}
                 required
               />
