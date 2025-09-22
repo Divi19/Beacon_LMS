@@ -1,0 +1,279 @@
+import React, { useState } from "react";
+import i from "./InstructorCourseCreate.module.css";
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { api } from "../../../api";
+
+export default function InstructorCourseCreate({ onCourseCreated }) {
+  const navigate = useNavigate();
+  const [lessons, setLessons] = useState(["Lesson 1"]);
+  const [showModal, setShowModal] = useState(false);
+  const [lessonInput, setLessonInput] = useState("");
+  const [showOptionalModal, setShowOptionalModal] = useState(false);
+
+  const [formData, setFormData] = useState({
+    courseName: "",
+    code: "",
+    director: "",
+    description: "",
+    number_of_lessons: "",
+    status: "Active", //Newly added here, check serializer again
+  });
+
+  const openModal = () => {
+    setShowModal(true);
+  };
+
+  const openModal1 = (e) => {
+    e.preventDefault();
+    setShowOptionalModal(true);
+  };
+
+  const closeModal = () => {
+    setLessonInput("");
+    setShowModal(false);
+  };
+
+  const addLesson = () => {
+  const newLessonNumber = lessons.length + 1;
+  const newLessonName = `Lesson ${newLessonNumber}`;
+  setLessons([...lessons, newLessonName]);
+};
+
+  const goToCoursePage = () => {
+    setShowOptionalModal(false);
+    navigate("/instructor/course-list");
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      courseName: "",
+      code: "",
+      director: "",
+      description: "",
+      status: "Active",
+    });
+    setLessons([]);
+    setLessonInput("");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      // Prepare data for Django backend
+      const courseData = {
+        code: formData.code,
+        course_title: formData.courseName,
+        course_credits: 30,
+        course_director: formData.director,
+        course_description: formData.description,
+        course_number_of_lessons: formData.number_of_lessons,
+        status: formData.status //Newly added here, check serializer again
+      };
+
+      // Send to Django backend
+      await api.post("/instructor/courses/", courseData);
+
+      console.log("Course created successfully:", courseData);
+
+      // Refresh the course list in parent component
+      if (onCourseCreated) {
+        onCourseCreated();
+      }
+
+      // Show success modal
+      setShowOptionalModal(true);
+    } catch (error) {
+      console.error("Error creating course:", error);
+      alert("Error creating course. Please try again.");
+    }
+  };
+
+  return (
+    <div className={i.wrap}>
+      <div className={i.topBar}>
+        <InstructorTopBar />
+      </div>
+      <header className={i.header}>
+        <h1 className={i.title}>COURSE CREATION</h1>
+      </header>
+      <div>
+        <form className={i.form} onSubmit={handleSubmit}>
+          <div className={i.formContainer}>
+            <div className={i.row}>
+              <label className={i.label}>Course Details</label>
+            </div>
+            <div className={i.row}>
+              <label className={i.label}>Course Title:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="courseName"
+                value={formData.courseName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Course Code:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="code"
+                value={formData.code}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className={i.row}>
+              <span className={i.label}>Course Credits:</span>
+              <div className={i.creditsDisplay}>30 Credits</div>
+              <input type="hidden" name="credits" value={30} />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Course Director:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="director"
+                value={formData.director}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Description:</label>
+              <textarea
+                className={i.input}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Number of Lessons:</label>
+              <input
+                className={i.input}
+                type="number"
+                name="number_of_lessons"
+                min="1"
+                value={formData.number_of_lessons}
+                onChange={handleChange}
+                required
+              />
+              <label className={i.label} htmlFor="status"> 
+                Course Status:
+              </label>
+              <div className={i.selectWrap}>
+                <select
+                  id="status"
+                  name="status"
+                  className={i.select}
+                  value={formData.status}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+                <span className={i.selectCaret} aria-hidden="true">
+                  ▾
+                </span>
+              </div>
+            </div>
+
+            <div className={i.rowBlock}>
+              <div className={i.lessonHeader}>
+    <span className={i.label}>Course Core Lessons:</span>
+
+    <div className={i.lessonList}>
+      {lessons.map((lesson, index) => (
+        <div key={index} className={i.lessonItem}>
+          {lesson}
+        </div>
+      ))}
+    </div>
+
+    {/* <button type="button" className={i.addButton} onClick={addLesson}>
+      +
+    </button>
+    <span className={i.addText}>Add Lessons</span>
+  </div> */}
+                <button
+                  type="button"
+                  className={i.addButton}
+                  onClick={openModal}
+                >
+                  +
+                </button>
+                <span className={i.addText}>Add Lessons</span>
+              </div>
+
+              {showModal && (
+                <div className={i.modalOverlay}>
+                  <div className={i.modalContent}>
+                    <h3>Add Core Lesson</h3>
+                    <input
+                      type="text"
+                      value={lessonInput}
+                      onChange={(e) => setLessonInput(e.target.value)}
+                      className={i.input}
+                      placeholder="Enter lesson name"
+                    />
+                    <div className={i.modalButtons}>
+                      <button className={i.selectButton} onClick={addLesson}>
+                        Select
+                      </button>
+                      <button className={i.cancelButton} onClick={closeModal}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {showOptionalModal && (
+              <div className={i.modalOverlay}>
+                <div className={i.modalContent}>
+                  <h3>Course Created Successfully!</h3>
+                  <div className={i.modalButtons}>
+                    <button className={i.selectButton} onClick={goToCoursePage}>
+                      Go to course page
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className={i.buttonRow}>
+              <button
+                className={i.discardbutton}
+                type="button"
+                onClick={resetForm}
+              >
+                Discard
+              </button>
+              <button className={i.createbutton} type="submit">
+                Create
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
