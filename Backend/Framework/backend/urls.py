@@ -20,7 +20,7 @@ from api.views import *
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
     # path('api/', include('api.urls')),
     # path('courses/frontend/', FrontendView.as_view(), name="frontend"),
     # path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
@@ -41,7 +41,7 @@ urlpatterns = [
     path("user/", CurrentUser.as_view(), name="current-user"),
 
     #Course details
-    path('courses/<str:pk>/detail/', CourseDetailView.as_view(), name="courses-detail"),
+    path('courses/frontend/<str:pk>/', CourseDetailView.as_view(), name="courses-detail"),
     #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
     path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
 
