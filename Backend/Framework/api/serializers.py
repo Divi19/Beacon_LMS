@@ -42,7 +42,6 @@ class LoginSerializer(serializers.Serializer):
 class CurrentUserSerializer(serializers.ModelSerializer):
     instructor_profile_id = serializers.SerializerMethodField() #An added field
     instructor_full_name = serializers.SerializerMethodField()
-from .models import Course, Student, Lesson
 
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:

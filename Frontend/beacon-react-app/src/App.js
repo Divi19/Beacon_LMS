@@ -21,7 +21,7 @@ import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMy
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
 import StudentLessonEnroll from "./pages/Student/StudentLessonEnroll/StudentLessonEnroll";
-import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLessonDetail";
+
   
 export default function App(){
   const [details, setDetails] = useState([]);

@@ -18,20 +18,20 @@ from django.contrib import admin
 from django.urls import path, include
 from api.views import *
 from rest_framework_simplejwt.views import TokenRefreshView
+from api.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     #Fetch current logged in user
-    path("user/", CurrentUser.as_view(), name="current-user"),
+    #path("user/", CurrentUser.as_view(), name="current-user"),
 
     #Course details
     path('courses/<str:pk>/detail/', CourseDetailView.as_view(), name="courses-detail"),
     #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
     path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
 
-    
     #Instructors
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #Instructors Courses
@@ -56,6 +56,6 @@ urlpatterns = [
     path("student/<int:student_profile_id>/classooms/enrolled/", StudentEnrolledClassrooms.as_view(), name="enrolled-classrooms"),
     path("student/<int:student_profile_id>/classooms/enroll/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     #logout 
-    path("user/logout/", UserLogout.as_view(), name="logout")
+    #path("user/logout/", UserLogout.as_view(), name="logout")
     
 ]

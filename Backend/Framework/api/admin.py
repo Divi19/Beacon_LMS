@@ -16,7 +16,6 @@ admin.site.register(Lesson)
 admin.site.register(LessonEnrollment)
 admin.site.register(LessonPrerequisite)
 
-from .models import Course, Student, Lesson
 # Register your models here.
 class LessonInLine(admin.TabularInline):
     model = Lesson
