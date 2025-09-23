@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import i from "./InstructorCourseCreate.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate } from "react-router-dom";
@@ -13,11 +13,10 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   const [showOptionalModal, setShowOptionalModal] = useState(false);
 
   const [formData, setFormData] = useState({
-    courseName: "",
-    code: "",
+    title: "",
     director: "",
     description: "",
-    status: "Active",
+    status: "",
   });
 
   const openModal = () => {
@@ -53,8 +52,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
 
   const resetForm = () => {
     setFormData({
-      courseName: "",
-      code: "",
+      title: "",
       director: "",
       description: "",
       status: "Active",
@@ -69,8 +67,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     try {
       // Prepare data for Django backend
       const courseData = {
-        code: formData.code,
-        course_title: formData.courseName,
+        course_title: formData.title,
         course_credits: 30,
         course_director: formData.director,
         course_description: formData.description,
@@ -79,7 +76,6 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
 
       // Send to Django backend
       await api.post("/instructor/courses/", courseData);
-
       console.log("Course created successfully:", courseData);
 
       // Refresh the course list in parent component
@@ -111,13 +107,15 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
               <input
                 className={i.input}
                 type="text"
-                name="courseName"
-                value={formData.courseName}
+                name="title"
+                value={formData.title}
                 onChange={handleChange}
                 required
               />
             </div>
 
+
+            {/*
             <div className={i.row}>
               <label className={i.label}>Course Code:</label>
               <input
@@ -129,6 +127,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
                 required
               />
             </div>
+            */}
 
             <div className={i.row}>
               <span className={i.label}>Course Credits:</span>
@@ -144,7 +143,6 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
                 name="director"
                 value={formData.director}
                 onChange={handleChange}
-                required
               />
             </div>
 
