@@ -198,19 +198,21 @@ class CourseSerializer(serializers.ModelSerializer):
     enrolled_count = serializers.IntegerField(read_only=True)
     #This is used during POST, when clicking on a course posts the id only
     owner_instructor_id = serializers.PrimaryKeyRelatedField(
-        source='owner_instructor', queryset=InstructorProfile.objects.all(), write_only=True
-    )
+        source='owner_instructor', queryset=InstructorProfile.objects.all(), write_only=True, required=False
+    ) 
+    course_id = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Course
-        fields = ["enrolled_count", "code", "title", "status", "owner_instructor", "owner_instructor_id", "description"]
-        read_only_fields = ["owner_instructor"]  
+        fields = ["enrolled_count", "course_id", "title", "status", "owner_instructor", "owner_instructor_id", "description", "credits"]
+        read_only_fields = ["owner_instructor", "credits"]  
 
     #Creating a course from a form, fields in validated_data.
     def create(self, validated_data): 
         """
         POST function for course creation. Due to no nested fields, no need for external serializers
         """
+        # normalize / auto-generate course_id
         request = self.context.get("request") #read the current request (who is requesting?)
         if "owner_instructor" not in validated_data and request and hasattr(request, "user"):
             #In case validated data isn't storing owner_instructor, but user instead
@@ -221,13 +223,18 @@ class CourseSerializer(serializers.ModelSerializer):
             except InstructorProfile.DoesNotExist:
                 pass
         return Course.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        # Lock course_id after creation
+        validated_data.pop("course_id", None)
+        return super().update(instance, validated_data)
 
 
 class ClassroomSerializer(serializers.ModelSerializer):
     enrolled_count = serializers.IntegerField(read_only=True)
     lesson = serializers.PrimaryKeyRelatedField(read_only=True)
     #Request
-    day = serializers.CharField(source="day_of_week",write_only=True,)
+    day = serializers.CharField(source="day_of_week", write_only=True)
     start_time = serializers.TimeField(source="time_start", write_only=True,)
     end_time = serializers.TimeField(source="time_end", write_only=True,)
     capacity = serializers.IntegerField(min_value=1, max_value=10)
@@ -302,23 +309,20 @@ class ClassroomSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-
 class LessonSerializer(serializers.ModelSerializer):
-    created_by = serializers.PrimaryKeyRelatedField(
-        source='created_by', queryset=InstructorProfile.objects.all(), write_only=True
+    course = serializers.PrimaryKeyRelatedField(
+        source='created_by', queryset=Course.objects.all(), write_only=True
     )
-    course = serializers.PrimaryKeyRelatedField(source='course_id', queryset=Course.objects.all(), write_only=True
-    )
-
     enrolled_count = serializers.IntegerField(read_only=True)
+
     class Meta:
-        model = Course
-        fields = ["enrolled_count", "course", "title", "description", "objectives", "duration_weeks", "status", "created_by", "owner_instructor"]
+        model = Lesson
+        fields = ["enrolled_count", "course", "title", "description", "objectives", "duration_weeks", "status", "created_by"]
         read_only_fields = ["created_by", "owner_instructor"] 
 
     def create(self, validated_data): 
         """
-        POST function for course creation. Due to no nested fields, no need for external serializers
+        POST function for lesson creation. Due to no nested fields, no need for external serializers
         """
         request = self.context.get("request") #read the current request (who is requesting?)
         if "owner_instructor" not in validated_data and request and hasattr(request, "user"):
@@ -329,6 +333,28 @@ class LessonSerializer(serializers.ModelSerializer):
                 validated_data["owner_instructor"] = owner
             except InstructorProfile.DoesNotExist:
                 pass
+
         return Course.objects.create(**validated_data) 
+    
+    def update(self, instance, validated_data):
+        validated_data.pop("created_by", None)
+        return super().update(instance, validated_data)
 
 
+class LessonBulkCreateInSerializer(serializers.Serializer):
+    count = serializers.IntegerField(min_value=1, max_value=50)  # cap to prevent abuse
+    base_title = serializers.CharField(required=False, allow_blank=True, default="Lesson")
+    starting_number = serializers.IntegerField(min_value=1, required=False, default=1)
+    duration_weeks = serializers.ChoiceField(choices=Lesson.DurationWeeks.choices, required=False, default=Lesson.DurationWeeks.FOUR)
+    status = serializers.ChoiceField(choices=Lesson.LessonStatus.choices, required=False, default=Lesson.LessonStatus.ACTIVE)
+    description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    objectives = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+class LessonOutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = [
+            "lesson_id", "course", "title", "description",
+            "objectives", "duration_weeks", "status", "created_by", "created_at"
+        ]
+        read_only_fields = fields

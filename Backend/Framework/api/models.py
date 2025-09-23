@@ -66,7 +66,8 @@ class Course(models.Model):
         ACTIVE = "Active", "ACTIVE"
         INACTIVE = "Inactive", "INACTIVE"
         DRAFT = "Draft", "DRAFT"
-    course_id = models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=False)
+    
+    course_id = models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=True)
     title = models.CharField(max_length=255,null=True, blank=True)
     status = models.CharField(max_length=50, choices=CourseStatus.choices, default=CourseStatus.ACTIVE)
     owner_instructor = models.ForeignKey('InstructorProfile', models.DO_NOTHING,  null=True, blank=True,)
@@ -138,6 +139,7 @@ class Lesson(models.Model):
     course = models.ForeignKey(Course, models.DO_NOTHING, null=True, blank=True,)
     title = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
+    credit = models.PositiveIntegerField(blank=True, null=True, default=0)
     objectives = models.TextField(blank=True, null=True)
     duration_weeks = models.PositiveIntegerField(blank=True, null=True, choices=DurationWeeks.choices, default=DurationWeeks.FOUR)
     status = models.CharField(max_length=50, choices=LessonStatus.choices, default=LessonStatus.ACTIVE)

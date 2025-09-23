@@ -27,10 +27,9 @@ urlpatterns = [
     path("user/", CurrentUser.as_view(), name="current-user"),
 
     #Course details
-    path('courses/<str:pk>/detail/', CourseDetailView.as_view(), name="courses-detail"),
+    path('courses/<str:course_id>/detail/', CourseDetailView.as_view(), name="courses-detail"),
     #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
     path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
-
     
     #Instructors
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
@@ -39,6 +38,10 @@ urlpatterns = [
     #Instructors Classrooms
     path("instructor/<str:lesson_id>/classrooms/", ClassroomView.as_view(), name="classrooms"),
     #Instructor Lessons 
+    path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
+    path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
+    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
+    path("instructor/lessons/<str:lesson_id>/detail/", LessonsView.as_view(), name="get-lessons"),
     
     #Students login TODO
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),

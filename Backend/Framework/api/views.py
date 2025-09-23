@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login, logout 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import OuterRef, Subquery, Q
 from django.db.models import Count
 
@@ -129,10 +129,10 @@ class InstructorCoursesView(APIView):
         """
         POST method. Creating a new course
         """
-        serializer = CourseSerializer(data=request.data)
+        serializer = CourseSerializer(data=request.data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             serializer.save() 
-            return Response(serializer.data,  status=status.HTTP_201_OK)
+            return Response(serializer.data,  status=status.HTTP_200_OK)
 
 
 class ClassroomView(APIView):
@@ -183,22 +183,22 @@ class ClassroomView(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LessonsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
     def get(self, request, course_id):
         """
         GET method. Retrieving Lessons
         """
         course = get_object_or_404(Course, course_id=course_id)
-        # lessons = course.lessons.all().order_by("slot_index")
-        lessons = course.lessons.all()
+        lessons = Lesson.objects.filter(course = course) 
         data = LessonSerializer(lessons, many=True).data
         return Response(data)
     
     def post(self, request, course_id):
+        """
+        POST Method: Creating lessons?  TODO: might be redundant 
+        """
         course = get_object_or_404(Course, course_id=course_id)
-        #data = request.data.copy()
-        #data["courses"] = course.course_id
-        #serializer = LessonSerializer(data=data)
         user = self.request.user #Grabbing current auth user 
         try:
             instructor = InstructorProfile.objects.get(user=request.user)
@@ -208,11 +208,102 @@ class LessonsView(APIView):
         ser.is_valid(raise_exception=True)
         ser.save() 
         return Response(ser.data)
-        
-        #if serializer.is_valid(raise_exception=True):
-        #    serializer.save()
-        #    return Response(serializer.data)
+    
+    def patch(self, request, lesson_id):
+        """
+        Update only changed parts
+        """
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        ser = LessonSerializer(lesson, data=request.data, partial=True, context={"request": request})
+        ser.is_valid(raise_exception=True)
+        ser.save()
+        return Response(ser.data, status=status.HTTP_200_OK)
+    
+class LessonDetails: 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request, lesson_id):
+        """
+        GET method. Retrieving Lessons
+        """
+        lesson= Lesson.objects.filter(lesson_id = lesson_id) 
+        data = LessonSerializer(lesson).data
+        return Response(data)
 
+
+class LessonBulkCreateView(APIView):
+    """
+    POST /api/courses/<course_id>/lessons/bulk-create/
+    Body:
+    {
+      "count": 10,
+      "base_title": "Lesson",
+      "starting_number": 1,
+      "duration_weeks": 4,
+      "status": "Active",
+      "description": "...",
+      "objectives": "..."
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+
+    def _get_instructor(self, user):
+        return InstructorProfile.objects.filter(user=user).first()
+
+    def post(self, request, course_id):
+        # 1) validate course
+        try:
+            course = Course.objects.get(course_id=course_id)
+        except Course.DoesNotExist:
+            return Response({"detail": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # 2) validate payload
+        ser = LessonBulkCreateInSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = ser.validated_data
+
+        count           = data["count"]
+        base_title      = data["base_title"]
+        starting_number = data["starting_number"]
+        duration_weeks  = data["duration_weeks"]
+        status_str      = data["status"]
+        description     = data.get("description")
+        objectives      = data.get("objectives")
+
+        inst = self._get_instructor(request.user)
+        now = timezone.now()
+
+        # 3) bulk-create safely (note: bulk_create doesn't call save())
+        new_lessons = []
+        with transaction.atomic():
+            used_ids = set(Lesson.objects.values_list("lesson_id", flat=True))
+            for i in range(count):
+                lid = generate_custom_id()
+                # very low chance, but ensure uniqueness anyway
+                while lid in used_ids or Lesson.objects.filter(lesson_id=lid).exists():
+                    lid = generate_custom_id()
+                used_ids.add(lid)
+
+                n = starting_number + i
+                title = f"{base_title} {n}".strip()
+
+                new_lessons.append(Lesson(
+                    lesson_id=lid,
+                    course=course,
+                    title=title,                       # "Lesson 1", "Lesson 2", ...
+                    description=description,
+                    objectives=objectives,
+                    duration_weeks=duration_weeks,
+                    status=status_str,
+                    created_by=inst,
+                    created_at=now,                    # bulk_create won’t set auto_now_add
+                ))
+
+            Lesson.objects.bulk_create(new_lessons, batch_size=100)
+
+        out = LessonOutSerializer(new_lessons, many=True).data
+        return Response({"created": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
 class StudentsEnrolledView(APIView):
     """
@@ -405,13 +496,13 @@ Shared
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
 class CourseDetailView(APIView):
-    #permission_classes = [IsAuthenticated]
-    #authentication_classes = [CustomJWTAuthentication] 
-    def get(self, request, pk):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request, course_id):
         """
         GET method. Fetching course and returning a customised json response
         """
-        course = Course.objects.get(course_id=pk)
+        course = Course.objects.get(course_id=course_id)
         output = {
             "course_id": course.course_id,
             "course_title": course.title,
