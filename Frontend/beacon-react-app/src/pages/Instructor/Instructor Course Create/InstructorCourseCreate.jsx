@@ -57,6 +57,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
       code: "",
       director: "",
       description: "",
+      number_of_lessons: "",
       status: "Active",
     });
     setLessons([]);
@@ -75,7 +76,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         course_director: formData.director,
         course_description: formData.description,
         course_number_of_lessons: formData.number_of_lessons,
-        status: formData.status //Newly added here, check serializer again
+        course_status: formData.status //Newly added here, check serializer again
       };
 
       // Send to Django backend

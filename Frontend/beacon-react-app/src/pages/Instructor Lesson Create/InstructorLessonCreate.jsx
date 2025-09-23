@@ -16,28 +16,29 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
 
   const [formData, setFormData] = useState({
     lesson_title: "",
-    lesson_id: "",
-    lesson_credits: "",
-    lesson_duration: "",
     lesson_description: "",
-    lesson_objective: "",
+    lesson_objectives: "",
+    lesson_duration_weeks: "",
+    lesson_status: "",
     lesson_prerequisite: "",
     courses: courseId,
-    slot_index: null,
   });
+
+  // const isEditing = !!formData.state?.lesson_id;
 
   useEffect(() => {
   if (location.state) {
     setFormData((prev) => ({
       ...prev,
       // slot_index: location.state.slot_index,
-      lesson_id: location.state.lesson_id,
+      lesson_id:location.state.lesson_id || null,
       lesson_title: location.state.lesson_title || "",
-      lesson_credits: location.state.lesson_credits || "",
-      lesson_duration: location.state.lesson_duration || "",
       lesson_description: location.state.lesson_description || "",
-      lesson_objective: location.state.lesson_objective || "",
-      lesson_prerequisite: location.state.lesson_prerequisite || ""
+      lesson_objectives: location.state.lesson_objectives || "",
+      lesson_duration_weeks: location.state.lesson_duration || "",
+      lesson_status: location.state.lesson_status || "",
+      lesson_prerequisite: location.state.lesson_prerequisite || "",
+      courses: courseId,
     }));
   }
 }, [location.state]);
@@ -76,14 +77,12 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
   const resetForm = () => {
     setFormData({
         lesson_title: "",
-        lesson_id: "",
-        lesson_credits: "",
-        lesson_duration: "",
         lesson_description: "",
-        lesson_objective: "",
+        lesson_objectives: "",
+        lesson_duration_weeks: "",
+        lesson_status: "",
         lesson_prerequisite: "",
-        courses: "",
-        slot_index: ""
+        courses: courseId,
     });
   };
 
@@ -92,33 +91,35 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
 
   try {
     const lessonData = {
-      lesson_title: formData.lesson_title,
-      lesson_id: formData.lesson_id,
-      lesson_credits: formData.lesson_credits ? parseInt(formData.lesson_credits) : null,
-      lesson_duration: formData.lesson_duration ? parseInt(formData.lesson_duration) : null,
-      lesson_description: formData.lesson_description,
-      lesson_objective: formData.lesson_objective,
-      lesson_prerequisite: formData.lesson_prerequisite,
-      courses: courseId,
-    };
+  lesson_title: formData.lesson_title,
+  lesson_description: formData.lesson_description,
+  lesson_objectives: formData.lesson_objectives,
+  lesson_duration_weeks: formData.lesson_duration_weeks,
+  lesson_status: formData.lesson_status,
+  lesson_prerequisite: formData.lesson_prerequisite,
+  courses: courseId,
+};
 
-    if (formData.lesson_id) {
-      lessonData.lesson_id = formData.lesson_id;
-    }
+
+    // if (formData.lesson_id) {
+    //   lessonData.lesson_id = formData.lesson_id;
+    // }
 
     console.log("Submitting lessonData:", lessonData);
 
     let res;
-if (isEditing) {
-  // Existing lesson → update
+if (isEditing && formData.lesson_id) {
   res = await axios.put(`http://localhost:8000/lessons/${formData.lesson_id}/`, lessonData);
 } else {
-  // New lesson → create
   res = await axios.post(`http://localhost:8000/courses/${courseId}/lessons/`, lessonData);
 }
 
 
     console.log("Lesson saved successfully:", res.data);
+
+    if (!isEditing) {
+      setFormData((prev) => ({ ...prev, lesson_id: res.data.lesson_id }));
+    }
 
     navigate(`/instructor/course/${courseId}`, {
       state: { createdLesson: res.data, slot_index: formData.slot_index },
@@ -143,6 +144,17 @@ if (isEditing) {
       <header className={i.header}>
         <h1 className={i.title}>LESSON CREATION</h1>
       </header>
+      {/* <div className={i.row}>
+              <label className={i.label}>Lesson ID:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="lesson_id"
+                value={formData.lesson_id}
+                onChange={handleChange}
+                placeholder="Auto-generated if left empty"
+              />
+            </div> */}
       <div>
         <form className={i.form} onSubmit={handleSubmit}>
           <div className={i.formContainer}>
@@ -153,42 +165,6 @@ if (isEditing) {
                 type="text"
                 name="lesson_title"
                 value={formData.lesson_title}
-                onChange={handleChange}
-                placeholder="Auto-generated if left empty"
-              />
-            </div>
-
-            <div className={i.row}>
-              <label className={i.label}>Lesson ID:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="lesson_id"
-                value={formData.lesson_id}
-                onChange={handleChange}
-                placeholder="Auto-generated if left empty"
-              />
-            </div>
-
-            <div className={i.row}>
-              <label className={i.label}>Lesson Credits:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="lesson_credits"
-                value={formData.lesson_credits}
-                onChange={handleChange}
-                placeholder="Auto-generated if left empty"
-              />
-            </div>
-
-            <div className={i.row}>
-              <label className={i.label}>Lesson Duration:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="lesson_duration"
-                value={formData.lesson_duration}
                 onChange={handleChange}
                 placeholder="Auto-generated if left empty"
               />
@@ -211,12 +187,64 @@ if (isEditing) {
               <input
                 className={i.input}
                 type="text"
-                name="lesson_objective"
-                value={formData.lesson_objective}
+                name="lesson_objectives"
+                value={formData.lesson_objectives}
                 onChange={handleChange}
                 placeholder="Auto-generated if left empty"
               />
             </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Lesson Duration Weeks:</label>
+              <input
+                className={i.input}
+                type="number"
+                name="lesson_duration_weeks"
+                value={formData.lesson_duration_weeks}
+                onChange={handleChange}
+                placeholder="Auto-generated if left empty"
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Lesson Status:</label>
+              <select
+                className={i.input}
+                name="lesson_status"
+                value={formData.lesson_status}
+                onChange={handleChange}
+                // placeholder="Auto-generated if left empty"
+              >
+                <option value=""> Select Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Archived">Archived</option>
+                </select>
+            </div>
+
+            {/* <div className={i.row}>
+              <label className={i.label}>Lesson Created At:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="lesson_created_at"
+                value={formData.lesson_objective}
+                onChange={handleChange}
+                placeholder="Auto-generated if left empty"
+              />
+            </div> */}
+
+            {/* <div className={i.row}>
+              <label className={i.label}>Lesson Created By:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="lesson_created_by"
+                value={formData.lesson_objective}
+                onChange={handleChange}
+                placeholder="Auto-generated if left empty"
+              />
+            </div> */}
 
             <div className={i.row}>
               <label className={i.label}>Lesson Prerequisite:</label>

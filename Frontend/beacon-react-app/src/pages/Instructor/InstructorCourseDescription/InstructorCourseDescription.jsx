@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import Button from "../../components/Button/Button";
-import { useEnrollment } from "../../state/EnrollmentContext";
+import Button from "../../../components/Button/Button";
+import { useEnrollment } from "../../../state/EnrollmentContext";
 import s from "./InstructorCourseDescription.module.css";
 import axios from "axios";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
@@ -209,7 +209,7 @@ useEffect(() => {
 
     <div className={s.container}>
       {lessons.length > 0 ? (lessons.map((lesson, idx) => (
-          <div key={idx} className={s.card} style={{ cursor: "pointer" }}>
+          <div key={idx} className={s.card} style={{ cursor: "pointer" }} onClick={() => navigate(`/instructor/course/${course.course_id}/lesson/${lesson.lesson_id}`)}>
                 <h2 className={s.cardTitle} >{lesson.lesson_title}</h2>
                 <div className={s.cardDesc1}>
                   <div className={s.leftGroup}>
@@ -235,10 +235,13 @@ useEffect(() => {
                     lesson_id: lessons[idx]?.lesson_id || "",
                     lesson_title: lessons[idx]?.lesson_title || "",
                     lesson_credits: lessons[idx]?.lesson_credits || "",
-                    lesson_duration: lessons[idx]?.lesson_duration || "",
+                    lesson_duration_weeks: lessons[idx]?.lesson_duration || "",
                     lesson_description: lessons[idx]?.lesson_description || "",
                     lesson_objective: lessons[idx]?.lesson_objective || "",
-                    lesson_credits: lessons[idx]?.lesson_prerequisite || "",
+                    lesson_status: lessons[idx]?.lesson_status || "",
+                    lesson_created_at: lessons[idx]?.lesson_created_at || "",
+                    lesson_created_by: lessons[idx]?.lesson_created_by || "",
+                    lesson_prerequisite: lessons[idx]?.lesson_prerequisite || "",
                   } }
                   )
                 }
