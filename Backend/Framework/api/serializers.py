@@ -45,7 +45,7 @@ class CourseSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["owner_instructor", "enrolled_count"]
 
-    # def create(self, validated_data):
+    #def create(self, validated_data):
     #     """
     #     Assign the owner_instructor automatically if not provided.
     #     """
@@ -59,6 +59,7 @@ class CourseSerializer(serializers.ModelSerializer):
     #     return super().create(validated_data)
 
     #Creating a course from a form, fields in validated_data.
+    
     def create(self, validated_data): 
         """
         POST function for course creation. Due to no nested fields, no need for external serializers
@@ -74,6 +75,7 @@ class CourseSerializer(serializers.ModelSerializer):
                 pass
         return Course.objects.create(**validated_data)
 
+
 class LessonSerializer(serializers.ModelSerializer):
     # course_id = serializers.PrimaryKeyRelatedField(
     #     source="courses", queryset=Course.objects.all(),
@@ -86,7 +88,7 @@ class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = ["lesson_id", "lesson_title", "lesson_description", "lesson_objectives", "lesson_duration_weeks", "lesson_status", "lesson_created_at", "lesson_created_by", "lesson_prerequisite", "courses"]
-        # read_only_fields = ["courses"]
+        #read_only_fields = ["courses"]
 
 """
 Auth-related serializers

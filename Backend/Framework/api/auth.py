@@ -20,6 +20,6 @@ class CustomJWTAuthentication(JWTAuthentication):
             raise AuthenticationFailed("Token contained no recognizable user identification", code="token_no_user")
         try:
             #PK field is user_id
-            return User.objects.get(user_id=user_id, is_active=True)
+            return User.objects.get(pk=user_id, is_active=True)
         except User.DoesNotExist:
             raise AuthenticationFailed("User not found", code="user_not_found")
