@@ -182,6 +182,20 @@ class ClassroomView(APIView):
             )
         return Response(ClassroomSerializer(classroom, context={"request": request}).data, status=201)
 
+class ActiveClassroom(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request, course_id):
+        # have a Course instance
+        course = get_object_or_404(Course, course_id=course_id)
+        # all classrooms for that course
+        qs = (Classroom.objects
+            .filter(lesson__course=course)           # join via Lesson
+            .select_related('lesson', 'instructor')  # avoid N+1
+            .order_by('day_of_week', 'time_start'))
+        return Response(ClassroomSerializer(qs, many=True).data)
+        
+
 @method_decorator(csrf_exempt, name='dispatch')
 class LessonsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -352,6 +366,7 @@ class LessonPrereqBulkCreateView(APIView):
         created = LessonPrerequisite.objects.filter(lesson=lesson).select_related("prereq_lesson")
         out = LessonPrereqOutSerializer(created, many=True).data
         return Response({"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)}, status=status.HTTP_201_CREATED)
+
 
 class StudentsEnrolledView(APIView):
     """

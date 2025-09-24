@@ -35,6 +35,7 @@ urlpatterns = [
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #Instructors Courses
     path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
+    path("instructor/courses/<str:course_id>/", ActiveClassroom.as_view()),
     #Instructors Classrooms
     path("instructor/<str:lesson_id>/classrooms/", ClassroomView.as_view(), name="classrooms"),
     #Instructor Lessons 
