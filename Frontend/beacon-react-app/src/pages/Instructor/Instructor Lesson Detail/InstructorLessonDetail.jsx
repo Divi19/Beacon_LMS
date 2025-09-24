@@ -80,9 +80,16 @@ export default function LessonDetail() {
                 {lesson.description || ""}
               </p>
 
-              <button className={s.cta} type="button">
+              <button className={s.cta} 
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/instructor/course/${courseId}`
+                        )
+                      }
+              >
                 Go to my course lessons →
-              </button>
+              </button> {/*Needs navigation*/}
             </article>
 
             <aside className={`${s.cardBase} ${s.objectiveCard}`}>

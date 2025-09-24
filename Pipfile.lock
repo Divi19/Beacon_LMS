@@ -2,10 +2,14 @@
     "_meta": {
         "hash": {
 <<<<<<< HEAD
+<<<<<<< HEAD
             "sha256": "b14cccfcc2709f817c186bc3d269839a368ef8fc2d9529d5aefd7dc0ff770160"
 =======
             "sha256": "291d54495903e52b8808203e2b3f623f16bf1012cf5ae166e1889a456c184bce"
 >>>>>>> origin/Frontend_Isabella
+=======
+            "sha256": "291d54495903e52b8808203e2b3f623f16bf1012cf5ae166e1889a456c184bce"
+>>>>>>> origin/backend_divieleisch
         },
         "pipfile-spec": 6,
         "requires": {
@@ -193,6 +197,7 @@
             "version": "==5.5.1"
         },
 <<<<<<< HEAD
+<<<<<<< HEAD
         "dotenv": {
             "hashes": [
                 "sha256:29cf74a087b31dafdb5a446b6d7e11cbce8ed2741540e2339c69fbef92c94ce9"
@@ -213,6 +218,8 @@
                 "sha256:9d5b3b94b79a844a986d029eee38998232451119ad653aea42bb9220a8c5066b",
                 "sha256:c6f7b8561225f9e711a9c47087388a97fdc948211c10a4bccbf0ba68ab7b3b5a"
 =======
+=======
+>>>>>>> origin/backend_divieleisch
         "idna": {
             "hashes": [
                 "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9",
@@ -429,12 +436,16 @@
                 "sha256:f758ed67cab30b9a8d2833609513ce4d3bd027641673d4ebc9c067e4d208eec1",
                 "sha256:f8157bed2f51db683f31306aa497311b560f2265998122abe1dce6428bd86567",
                 "sha256:ffe8ed017e4ed70f68b7b371d84b7d4a790368db9203dfc2d222febd3a9c8863"
+<<<<<<< HEAD
 >>>>>>> origin/Frontend_Isabella
+=======
+>>>>>>> origin/backend_divieleisch
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==2.9.10"
         },
+<<<<<<< HEAD
 <<<<<<< HEAD
         "psycopg2-binary": {
             "hashes": [
@@ -515,6 +526,8 @@
             "markers": "python_version >= '3.7'",
             "version": "==2.9.9"
 =======
+=======
+>>>>>>> origin/backend_divieleisch
         "pygments": {
             "hashes": [
                 "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887",
@@ -522,7 +535,10 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2.19.2"
+<<<<<<< HEAD
 >>>>>>> origin/Frontend_Isabella
+=======
+>>>>>>> origin/backend_divieleisch
         },
         "pyjwt": {
             "hashes": [
@@ -551,7 +567,10 @@
             "version": "==2025.2"
         },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> origin/backend_divieleisch
         "requests": {
             "hashes": [
                 "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6",
@@ -568,7 +587,10 @@
             "markers": "python_full_version >= '3.8.0'",
             "version": "==14.1.0"
         },
+<<<<<<< HEAD
 >>>>>>> origin/Frontend_Isabella
+=======
+>>>>>>> origin/backend_divieleisch
         "sqlparse": {
             "hashes": [
                 "sha256:09f67787f56a0b16ecdbde1bfc7f5d9c3371ca683cfeaa8e6ff60b4807ec9272",
@@ -586,7 +608,10 @@
             "markers": "python_version >= '2'",
             "version": "==2025.2"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> origin/backend_divieleisch
         },
         "urllib3": {
             "hashes": [
@@ -595,7 +620,10 @@
             ],
             "markers": "python_version >= '3.9'",
             "version": "==2.5.0"
+<<<<<<< HEAD
 >>>>>>> origin/Frontend_Isabella
+=======
+>>>>>>> origin/backend_divieleisch
         }
     },
     "develop": {}
