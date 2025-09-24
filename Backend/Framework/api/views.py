@@ -318,6 +318,9 @@ class LessonBulkCreateView(APIView):
         out = LessonOutSerializer(new_lessons, many=True).data
         return Response({"created": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
+class LessonPrereqView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
 
 class LessonPrereqBulkCreateView(APIView):
     permission_classes = [IsAuthenticated]
