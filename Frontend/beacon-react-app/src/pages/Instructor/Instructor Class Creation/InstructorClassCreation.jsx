@@ -15,6 +15,7 @@ export default function InstructorClassroomCreate() {
    */
   const { courseId, lessonId } = useParams();
   const [form, setForm] = useState({
+    classroom_id:"",
     day: "", //day_of_week
     start_time: "", //time_start
     end_time: "", //time_end
@@ -84,6 +85,7 @@ export default function InstructorClassroomCreate() {
 
       // Build the classroom record to save (shape matches LessonDetail renderer)
       // local storage for frontend simulation to be replaced by backend. until setshowsuccess.
+      const code = (form.classroom_id || "").trim();
       const newClassroom = {
         //id: form.classroom_id || Math.random().toString().slice(2, 8),
         day: form.day,
@@ -91,6 +93,7 @@ export default function InstructorClassroomCreate() {
         end_time: form.end_time,
         duration_minutes: Number(durationMinutes),
         capacity: Number(form.capacity),
+        ...(code ? { classroom_id: code } : {}),
       };
       console.log("payload", newClassroom);
       await api.post(`/instructor/${lessonId}/classrooms/`, newClassroom);

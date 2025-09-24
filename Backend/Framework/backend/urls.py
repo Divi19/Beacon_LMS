@@ -41,7 +41,10 @@ urlpatterns = [
     path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
     path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
     path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
-    path("instructor/lessons/<str:lesson_id>/detail/", LessonsView.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/create/", LessonsView.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/prerequisites/bulk-create/", LessonPrereqBulkCreateView.as_view()),
+    
     
     #Students login TODO
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),

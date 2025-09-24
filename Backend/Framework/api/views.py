@@ -219,17 +219,26 @@ class LessonsView(APIView):
         ser.save()
         return Response(ser.data, status=status.HTTP_200_OK)
     
-class LessonDetails: 
+class LessonDetails(APIView): 
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication] 
     def get(self, request, lesson_id):
         """
         GET method. Retrieving Lessons
         """
-        lesson= Lesson.objects.filter(lesson_id = lesson_id) 
-        data = LessonSerializer(lesson).data
-        return Response(data)
-
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        lesson_id =  models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=False)
+        output = {
+            "lesson_id": lesson.lesson_id,
+            "title": lesson.title,
+            "credits": lesson.credits,
+            "description": lesson.description,
+            "objectives": lesson.objectives, 
+            "duration_weeks":lesson.duration_weeks,
+            "status": lesson.status,
+            "created_by": lesson.created_by.full_name
+        }
+        return Response(output, status=status.HTTP_200_OK)
 
 class LessonBulkCreateView(APIView):
     """
@@ -237,6 +246,7 @@ class LessonBulkCreateView(APIView):
     Body:
     {
       "count": 10,
+      "credits": 10,
       "base_title": "Lesson",
       "starting_number": 1,
       "duration_weeks": 4,
@@ -264,6 +274,7 @@ class LessonBulkCreateView(APIView):
         data = ser.validated_data
 
         count           = data["count"]
+        credits         = data["credits"]
         base_title      = data["base_title"]
         starting_number = data["starting_number"]
         duration_weeks  = data["duration_weeks"]
@@ -291,6 +302,7 @@ class LessonBulkCreateView(APIView):
                 new_lessons.append(Lesson(
                     lesson_id=lid,
                     course=course,
+                    credits=credits,
                     title=title,                       # "Lesson 1", "Lesson 2", ...
                     description=description,
                     objectives=objectives,
@@ -304,6 +316,38 @@ class LessonBulkCreateView(APIView):
 
         out = LessonOutSerializer(new_lessons, many=True).data
         return Response({"created": out, "count": len(out)}, status=status.HTTP_201_CREATED)
+
+
+class LessonPrereqBulkCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def post(self, request, lesson_id):
+        ser = LessonPrereqBulkInSerializer(data=request.data, context={"request": request, "lesson_id": lesson_id})
+        ser.is_valid(raise_exception=True)
+        lesson = ser.validated_data["lesson"]
+        prereq_list = ser.validated_data["prereq_list"]
+        mode = ser.validated_data["mode"]
+
+        with transaction.atomic():
+            if mode == "replace":
+                LessonPrerequisite.objects.filter(lesson=lesson).delete()
+
+            existing_ids = set(
+                LessonPrerequisite.objects
+                .filter(lesson=lesson)
+                .values_list("prereq_lesson_id", flat=True)   # <-- use prereq_lesson_id
+            )
+
+            to_create = [
+                LessonPrerequisite(lesson=lesson, prereq_lesson=p)  # <-- use prereq_lesson
+                for p in prereq_list
+                if p.pk not in existing_ids
+            ]
+            LessonPrerequisite.objects.bulk_create(to_create, batch_size=100)
+        created = LessonPrerequisite.objects.filter(lesson=lesson).select_related("prereq_lesson")
+        out = LessonPrereqOutSerializer(created, many=True).data
+        return Response({"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
 class StudentsEnrolledView(APIView):
     """
