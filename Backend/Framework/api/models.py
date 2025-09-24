@@ -139,7 +139,7 @@ class Lesson(models.Model):
     course = models.ForeignKey(Course, models.DO_NOTHING, null=True, blank=True,)
     title = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
-    credit = models.PositiveIntegerField(blank=True, null=True, default=0)
+    credits = models.PositiveIntegerField(blank=True, null=True, default=0)
     objectives = models.TextField(blank=True, null=True)
     duration_weeks = models.PositiveIntegerField(blank=True, null=True, choices=DurationWeeks.choices, default=DurationWeeks.FOUR)
     status = models.CharField(max_length=50, choices=LessonStatus.choices, default=LessonStatus.ACTIVE)
@@ -183,6 +183,11 @@ class LessonPrerequisite(models.Model):
     class Meta:
         managed = True
         db_table = 'lesson_prerequisite'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lesson", "prereq_lesson"], name="uq_lesson_prereq"
+            )
+        ]
 
 """
 Classroom
