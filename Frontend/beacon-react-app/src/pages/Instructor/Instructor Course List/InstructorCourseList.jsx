@@ -4,7 +4,7 @@ import Button from "../../../components/Button/Button";
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import {api} from "../../../api" 
+import { api } from "../../../api";
 
 export default function InstructorCourseList() {
   const navigate = useNavigate();
@@ -16,10 +16,10 @@ export default function InstructorCourseList() {
    * --Warning: ignore first 401, possibly due to rogue axios call on student's side
    */
   useEffect(() => {
-    //grab item first 
+    //grab item first
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      //If no token, go back to login 
+      //If no token, go back to login
       navigate("/instructor/login", { replace: true });
       return;
     }
@@ -28,7 +28,7 @@ export default function InstructorCourseList() {
       try {
         // hydrate user first; ensures backend sees a valid token
         await api.get("/user/");
-        setReady(true);      
+        setReady(true);
         // then fetch courses
         const { data } = await api.get("/instructor/courses/");
         setCourses(data);
@@ -45,7 +45,7 @@ export default function InstructorCourseList() {
     })();
   }, [navigate]);
 
-  if (!ready) return null
+  if (!ready) return null;
 
   return (
     <div>
@@ -89,7 +89,7 @@ export default function InstructorCourseList() {
             </Button>
           </div>
         </header>
-               <div className={s.container}>
+        <div className={s.container}>
           {courses.map((course, idx) => {
             const raw =
               course.status ??
@@ -115,8 +115,7 @@ export default function InstructorCourseList() {
                 }
                 style={{ cursor: "pointer" }}
               >
-                <h2 className={s.cardTitle}>{course.course_title}  {" "}
-                {"["}{statusText}{"]"}</h2>
+                <h2 className={s.cardTitle}>{course.course_title} </h2>
 
                 <div className={s.cardDesc1}>
                   <div className={s.leftGroup}>
@@ -126,7 +125,7 @@ export default function InstructorCourseList() {
                     </span>
                   </div>
                   <span>
-                    <strong>{course.course_credits}</strong> Credits 
+                    <strong>{course.course_credits}</strong> Credits
                   </span>
                 </div>
 
@@ -134,6 +133,13 @@ export default function InstructorCourseList() {
                   <span>Course Director:</span>
                   <span>
                     <strong>{course.course_director}</strong>
+                  </span>
+                </div>
+
+                <div className={s.cardDesc3}>
+                  <span>Status:</span>
+                  <span className={s.spacing}>
+                    <strong>{statusText}</strong>
                   </span>
                 </div>
               </div>
