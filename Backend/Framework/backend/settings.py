@@ -116,9 +116,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases - pwd superuser: 123
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'lms_db',
+        'USER': 'myuser',
+        'PASSWORD': 'mypassword',
+        'HOST': "127.0.0.1",
+        'PORT': '5432',
+        "DISABLE_SERVER_SIDE_CURSORS": True
+}
 }
 
 # Password validation
@@ -171,3 +176,5 @@ CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:3000"]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ["authorization", "content-type", "x-csrftoken"]
 #CORS_ALLOW_ORIGINS = True
+
+
