@@ -12,14 +12,14 @@ export default function StudentEnrollment() {
   const { isEnrolled } = useEnrollment();
   const navigate = useNavigate();
   //Dummy value
-  const student_id = 5
+  const student_id = 1
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [unenrolled, setUnenrolled] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
 
   const fetchCourses = async () => {
     try {
-      await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/enrollment/`).then(
+      await axios.get(`http://localhost:8000/student/${student_id}/courses/unenrolled/`).then(
         res => {
           setUnenrolled(res.data);
         }
@@ -33,10 +33,10 @@ export default function StudentEnrollment() {
   const handleEnroll = async (courseId) => {
     try {
       setSubmittingId(courseId);
-      await axios.post( `http://localhost:8000/courses/frontend/${student_id}/student/enroll/`, {
+      await axios.post( `http://localhost:8000/student/${student_id}/courses/enroll/`, {
         course_id: courseId,
       });
-      await fetchCourses(); // refresh after write so UI stays correct
+      fetchCourses(); // refresh after write so UI stays correct (the number of unenrolled)
     } catch (err) {
       const detail = err?.response?.data?.detail;
       if (detail === "Student already enrolled") {

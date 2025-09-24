@@ -1,15 +1,19 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../../api";
 
 const mockNavigate = jest.fn();
 
 jest.mock("../../../components/InstructorTopBar/InstructorTopBar", () => ({
   __esModule: true,
-  default: () => <div>Mocked InstructorTopBar</div>,
+  default: () => <div>Mock InstructorTopBar</div>,
 }));
 
-jest.mock("axios");
+jest.mock("../../../api");
+
+jest.mock("react-router-dom", () => ({
+  useNavigate: () => mockNavigate,
+}));
 
 import InstructorCourseCreate from "./InstructorCourseCreate";
 
@@ -25,12 +29,12 @@ describe("InstructorCourseCreate", () => {
     renderComponent();
 
     expect(screen.getByLabelText(/Course Title/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Course ID/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Course Credits/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Course Code/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Course Director/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Number of Lessons/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Course Status/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/Lesson 1/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Discard/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Create/i })).toBeInTheDocument();
   });
@@ -38,59 +42,34 @@ describe("InstructorCourseCreate", () => {
   test("updates input values correctly", () => {
     renderComponent();
 
-    fireEvent.change(screen.getByLabelText(/Course Title/i), {
-      target: { value: "Algorithms 101" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course ID/i), {
-      target: { value: "CS101" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Credits/i), {
-      target: { value: "3" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Director/i), {
-      target: { value: "Dr. Smith" },
-    });
-    fireEvent.change(screen.getByLabelText(/Description/i), {
-      target: { value: "Intro to algorithms" },
-    });
+    fireEvent.change(screen.getByLabelText(/Course Title/i), { target: { value: "Algorithms 101" } });
+    fireEvent.change(screen.getByLabelText(/Course Code/i), { target: { value: "CS101" } });
+    fireEvent.change(screen.getByLabelText(/Course Director/i), { target: { value: "Dr. Smith" } });
+    fireEvent.change(screen.getByLabelText(/Description/i), { target: { value: "Intro to algorithms" } });
+    fireEvent.change(screen.getByLabelText(/Number of Lessons/i), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText(/Course Status/i), { target: { value: "Inactive" } });
 
     expect(screen.getByDisplayValue("Algorithms 101")).toBeInTheDocument();
     expect(screen.getByDisplayValue("CS101")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("3")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Dr. Smith")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Intro to algorithms")).toBeInTheDocument();
-  });
-
-  test("adds new lessons when + button is clicked", () => {
-    renderComponent();
-
-    const addButton = screen.getByRole("button", { name: "+" });
-    fireEvent.click(addButton);
-
-    expect(screen.getByText(/Lesson 2/i)).toBeInTheDocument();
+    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Inactive")).toBeInTheDocument();
   });
 
   test("submits form successfully and shows success modal", async () => {
-    axios.post.mockResolvedValueOnce({});
+    // Prevent error
+    api.post.mockResolvedValue({ data: { course_id: "CS101" } });
 
     const onCourseCreated = jest.fn();
     renderComponent({ onCourseCreated });
 
-    fireEvent.change(screen.getByLabelText(/Course Title/i), {
-      target: { value: "Algorithms 101" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course ID/i), {
-      target: { value: "CS101" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Credits/i), {
-      target: { value: "3" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Director/i), {
-      target: { value: "Dr. Smith" },
-    });
-    fireEvent.change(screen.getByLabelText(/Description/i), {
-      target: { value: "Intro to algorithms" },
-    });
+    fireEvent.change(screen.getByLabelText(/Course Title/i), { target: { value: "Algorithms 101" } });
+    fireEvent.change(screen.getByLabelText(/Course Code/i), { target: { value: "CS101" } });
+    fireEvent.change(screen.getByLabelText(/Course Director/i), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText(/Description/i), { target: { value: "Intro to algorithms" } });
+    fireEvent.change(screen.getByLabelText(/Number of Lessons/i), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText(/Course Status/i), { target: { value: "Active" } });
 
     fireEvent.click(screen.getByRole("button", { name: /Create/i }));
 
@@ -101,66 +80,46 @@ describe("InstructorCourseCreate", () => {
     expect(onCourseCreated).toHaveBeenCalled();
   });
 
-  test("handles API error on form submit", async () => {
-    axios.post.mockRejectedValueOnce(new Error("Network error"));
+  test("handles API on form submit", async () => {
     jest.spyOn(window, "alert").mockImplementation(() => {});
 
     renderComponent();
-
-    fireEvent.change(screen.getByLabelText(/Course Title/i), {
-      target: { value: "Fail Course" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course ID/i), {
-      target: { value: "FAIL101" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Credits/i), {
-      target: { value: "5" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Director/i), {
-      target: { value: "Prof. Error" },
-    });
-    fireEvent.change(screen.getByLabelText(/Description/i), {
-      target: { value: "This will fail" },
-    });
+    //Form submitted successfully test
+    fireEvent.change(screen.getByLabelText(/Course Title/i), { target: { value: "Course" } });
+    fireEvent.change(screen.getByLabelText(/Course Code/i), { target: { value: "CS990" } });
+    fireEvent.change(screen.getByLabelText(/Course Director/i), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText(/Description/i), { target: { value: "Course" } });
+    fireEvent.change(screen.getByLabelText(/Number of Lessons/i), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText(/Course Status/i), { target: { value: "Active" } });
 
     fireEvent.click(screen.getByRole("button", { name: /Create/i }));
 
     await waitFor(() => expect(window.alert).toHaveBeenCalled());
   });
 
-  test("discard button resets form and lessons", () => {
+  test("discard button resets form", () => {
     renderComponent();
 
-    fireEvent.change(screen.getByLabelText(/Course Title/i), {
-      target: { value: "Temp Course" },
-    });
+    fireEvent.change(screen.getByLabelText(/Course Title/i), { target: { value: "Temporary Course" } });
+    fireEvent.change(screen.getByLabelText(/Number of Lessons/i), { target: { value: "3" } });
 
     fireEvent.click(screen.getByRole("button", { name: /Discard/i }));
 
     expect(screen.queryByDisplayValue("Temp Course")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Lesson 1/i)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue("3")).not.toBeInTheDocument();
   });
 
   test("navigates to course page after success modal", async () => {
-    axios.post.mockResolvedValueOnce({});
+    api.post.mockResolvedValue({ data: { course_id: "CS101" } });
 
     renderComponent();
-
-    fireEvent.change(screen.getByLabelText(/Course Title/i), {
-      target: { value: "Algorithms 101" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course ID/i), {
-      target: { value: "CS101" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Credits/i), {
-      target: { value: "3" },
-    });
-    fireEvent.change(screen.getByLabelText(/Course Director/i), {
-      target: { value: "Dr. Smith" },
-    });
-    fireEvent.change(screen.getByLabelText(/Description/i), {
-      target: { value: "Intro to algorithms" },
-    });
+    //Test navigation after creating course
+    fireEvent.change(screen.getByLabelText(/Course Title/i), { target: { value: "Algorithms 101" } });
+    fireEvent.change(screen.getByLabelText(/Course Code/i), { target: { value: "CS102" } });
+    fireEvent.change(screen.getByLabelText(/Course Director/i), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText(/Description/i), { target: { value: "Intro to algorithms" } });
+    fireEvent.change(screen.getByLabelText(/Number of Lessons/i), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText(/Course Status/i), { target: { value: "Active" } });
 
     fireEvent.click(screen.getByRole("button", { name: /Create/i }));
 

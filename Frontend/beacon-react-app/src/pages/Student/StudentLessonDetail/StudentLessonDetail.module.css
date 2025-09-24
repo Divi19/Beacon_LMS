@@ -207,5 +207,140 @@ border-radius: 6px;
 .centerRow {
   display: flex;
   justify-content: center;
+}
+
+.rectBtn,
+.enrollBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+  width: auto !important;
+  min-width: unset !important;
+  max-width: fit-content;
+  font-size: 15px;
+}
+
+.enrollBtn:hover {
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.rectBtn:hover {
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 1024px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+  .courseMeta {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .wrap {
+    padding: 12px 14px 28px;
+  }
+  .rect,
+  .rect3,
+  .rect4 {
+    padding: 18px;
+  }
+  .courseCode {
+    font-size: 24px;
+  }
+  .rectBtn,
+  .enrollBtn {
+    padding: 12px 20px !important;
+  }
+}
+
+.noChosenText {
+  text-align: center;
+  color: #1a2e35;
+  font-weight: 600;
+  margin: 6px 0 14px;
+}
+
+.clsList {
+  display: grid;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.clsCard {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  align-items: center;
+  padding: 16px 18px;
+}
+
+.clsColDay {
+  display: grid;
+  gap: 4px;
+}
+.clsDay {
+  color: #0a415e;
+  font-weight: 800;
+  font-size: 20px;
+}
+.clsDur {
+  color: #0a415e;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+
+.clsTime {
+  font-weight: 800;
+  font-size: 20px;
+  color: #0a415e;
+}
+.clsMetaRow {
+  display: flex;
+  gap: 24px;
+  margin-top: 6px;
+  color: #0a415e;
+}
+
+.clsColActions {
+  display: flex;
+  gap: 8px;
+}
+.enrolClassBtn,
+.leaveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px !important;
+  border-radius: 999px !important;
+}
+
+.enrolClassBtn:hover {
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.leaveBtn:hover {
+  filter: brightness(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+.readingAndProgress {
   margin-top: 20px;
 }

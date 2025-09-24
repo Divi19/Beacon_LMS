@@ -3,24 +3,47 @@ import i from "./InstructorLessonCreate.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
+import {api} from "../../../api" 
 
-export default function InstructorLessonCreate({ onLessonCreated }) {
-  const { courseId } = useParams();
+export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
+  const { lessonId } = useParams();
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
+  const [prereqInput, setPrereqInput] = useState("");
+
+  const submitPrereqs = async () => {
+    /**Handle prerequisites submission */
+    // split by commas / whitespace / newlines
+    
+    const prereqIds = prereqInput
+      .split(/[\s,]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  
+    if (prereqIds.length === 0) { return; } //Nothing entered --> Just leave
+  
+    try {
+      const res = await api.post(
+        `instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
+        { prerequisites: prereqIds, mode: "merge" } // or "replace"
+      );
+      console.log("Created:", res.data);
+    } catch (err) {
+      console.error("Server error:", err?.response?.data || err);
+      alert("Failed to set prerequisites.");
+    }
+  };
 
   const [formData, setFormData] = useState({
-    lesson_title: "",
-    lesson_id: "",
-    lesson_credits: "",
-    lesson_duration: "",
-    lesson_description: "",
-    lesson_objective: "",
-    lesson_prerequisite: "",
-    courses: "",
+    title: "",
+    credits: "",
+    duration_weeks:"",
+    director: "",
+    description: "",
+    objectives: "", 
   });
 
   const openModal = () => {
@@ -44,9 +67,9 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
     }
   };
 
-  const goToLessonPage = () => {
+  const goToCoursePage = () => {
     setShowOptionalModal(false); 
-    navigate("/instructor/lesson-list"); 
+    navigate("/instructor/course-list"); 
   };
 
   const handleChange = (e) => {
@@ -56,49 +79,45 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
 
   const resetForm = () => {
     setFormData({
-        lesson_title: "",
-        lesson_id: "",
-        lesson_credits: "",
-        lesson_duration: "",
-        lesson_description: "",
-        lesson_objective: "",
-        lesson_prerequisite: "",
-        courses: "",
+      title: "",
+      duration_weeks:"",
+      credits: "",
+      director: "",
+      description: "",
+      objectives: ""
     });
+    setLessons([]);      
+    setLessonInput("");  
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       // Prepare data for Django backend
       const lessonData = {
-        lesson_title: formData.lesson_title,
-        lesson_id: formData.lesson_id,
-        lesson_credits: parseInt(formData.lesson_credits),
-        lesson_duration: parseInt(formData.lesson_duration),
-        lesson_description: formData.lesson_description,
-        lesson_objective: formData.lesson_objective,
-        lesson_prerequisite: formData.lesson_prerequisite,
-        courses: courseId,
+        title: formData.title,
+        duration_weeks: formData.duration_weeks,
+        credits: formData.credits,
+        description: formData.description,
+        objectives: formData.description
       };
 
       // Send to Django backend
-      await axios.post(`http://localhost:8000/courses/${courseId}/lessons/`, lessonData);
-      
-      console.log("Lesson created successfully:", lessonData);
+      submitPrereqs()  //creating prereqs
+      await api.patch( `/instructor/lessons/${lessonId}/create/`, lessonData);
+      console.log("Course created successfully:", lessonData);
       
       // Refresh the course list in parent component
-      if (onLessonCreated) {
-        onLessonCreated(lessonData);
+      if (onCourseCreated) {
+        onCourseCreated();
       }
       
       // Show success modal
       setShowOptionalModal(true);
       
     } catch (error) {
-      console.error('Error creating course:', error);
-      alert('Error creating course. Please try again.');
+      console.error('Error creating lesson:', error);
+      alert('Error creating lesson. Please try again.');
     }
   };
 
@@ -114,24 +133,15 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
         <form className={i.form} onSubmit={handleSubmit}>
           <div className={i.formContainer}>
             <div className={i.row}>
+              <label className={i.label}>Lesson Details</label>
+            </div>
+            <div className={i.row}>
               <label className={i.label}>Lesson Title:</label>
               <input
                 className={i.input}
                 type="text"
-                name="lesson_title"
-                value={formData.lesson_title}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className={i.row}>
-              <label className={i.label}>Lesson ID:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="lesson_id"
-                value={formData.lesson_id}
+                name="title"
+                value={formData.title}
                 onChange={handleChange}
                 required
               />
@@ -141,9 +151,9 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
               <label className={i.label}>Lesson Credits:</label>
               <input
                 className={i.input}
-                type="text"
-                name="lesson_credits"
-                value={formData.lesson_credits}
+                type="number"
+                name="credits"
+                value={formData.credits}
                 onChange={handleChange}
                 required
               />
@@ -153,9 +163,9 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
               <label className={i.label}>Lesson Duration:</label>
               <input
                 className={i.input}
-                type="text"
-                name="lesson_duration"
-                value={formData.lesson_duration}
+                type="number"
+                name="duration_weeks"
+                value={formData.duration_weeks}
                 onChange={handleChange}
                 required
               />
@@ -163,42 +173,6 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
 
             <div className={i.row}>
               <label className={i.label}>Lesson Description:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="lesson_description"
-                value={formData.lesson_description}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className={i.row}>
-              <label className={i.label}>Lesson Objective:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="lesson_objective"
-                value={formData.lesson_objective}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className={i.row}>
-              <label className={i.label}>Lesson Prerequisite:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="lesson_prerequisite"
-                value={formData.lesson_prerequisite}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* <div className={i.row}>
-              <label className={i.label}>Description:</label>
               <textarea
                 className={i.input}
                 name="description"
@@ -206,56 +180,36 @@ export default function InstructorLessonCreate({ onLessonCreated }) {
                 onChange={handleChange}
                 required
               />
-            </div> */}
+            </div>
 
-            {/* <div className={i.rowBlock}>
-              <div className={i.lessonHeader}>
-                <span className={i.label}>Course Core Lessons:</span>
+            <div className={i.row}>
+              <label className={i.label}>Lesson Objective:</label>
+              <textarea
+                className={i.input}
+                name="objectives"
+                value={formData.objectives}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-                <div className={i.lessonList}>
-                  {lessons.map((lesson, index) => (
-                    <div key={index} className={i.lessonItem}>
-                      {lesson}
-                    </div>
-                  ))}
-                </div>
-
-                <button type="button" className={i.addButton} onClick={openModal}>
-                  +
-                </button>
-                <span className={i.addText}>Add Lessons</span>
-              </div>
-
-              {showModal && (
-                <div className={i.modalOverlay}>
-                  <div className={i.modalContent}>
-                    <h3>Add Core Lesson</h3>
-                    <input
-                      type="text"
-                      value={lessonInput}
-                      onChange={(e) => setLessonInput(e.target.value)}
-                      className={i.input}
-                      placeholder="Enter lesson name"
-                    />
-                    <div className={i.modalButtons}>
-                      <button className={i.selectButton} onClick={addLesson}>
-                        Select
-                      </button>
-                      <button className={i.cancelButton} onClick={closeModal}>
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div> */}
+            <div className={i.row}>
+              <label className={i.label}>Prerequisite Lesson:</label>
+              <textarea
+                className={i.input}
+                name="prerequisite"
+                value={prereqInput}
+                onChange={(e) => setPrereqInput(e.target.value)}
+                
+              />
+            </div>
 
             {showOptionalModal && (
               <div className={i.modalOverlay}>
                 <div className={i.modalContent}>
                   <h3>Lesson Created Successfully!</h3>
                   <div className={i.modalButtons}>
-                    <button className={i.selectButton} onClick={goToLessonPage}>
+                    <button className={i.selectButton} onClick={goToCoursePage}>
                       Go to lesson page
                     </button>
                   </div>
