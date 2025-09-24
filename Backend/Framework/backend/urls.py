@@ -25,14 +25,37 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     #Fetch current logged in user
     path("user/", CurrentUser.as_view(), name="current-user"),
+
+    #Course details
+    path('courses/<str:course_id>/detail/', CourseDetailView.as_view(), name="courses-detail"),
+    #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
+    path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
     
     #Instructors
-    path('courses/frontend/', InstructorCoursesView.as_view(), name="frontend"),
-    path('courses/frontend/<str:pk>/', CourseDetailView.as_view(), name="frontend-detail"),
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
-    #students
-    path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
-    path("courses/frontend/<int:student_profile_id>/student/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
-    path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
+    #Instructors Courses
+    path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
+    #Instructors Classrooms
+    path("instructor/<str:lesson_id>/classrooms/", ClassroomView.as_view(), name="classrooms"),
+    #Instructor Lessons 
+    path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
+    path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
+    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
+    path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/create/", LessonsView.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/prerequisites/bulk-create/", LessonPrereqBulkCreateView.as_view()),
+    
+    
+    #Students login TODO
+    path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
+    #Student Courses
+    path("student/<int:student_profile_id>/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
+    path("student/<int:student_profile_id>/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
+    path("student/<int:student_profile_id>/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
+    #Students Classrooms
+    path("student/<int:student_profile_id>/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    path("student/<int:student_profile_id>/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")
+    
 ]
