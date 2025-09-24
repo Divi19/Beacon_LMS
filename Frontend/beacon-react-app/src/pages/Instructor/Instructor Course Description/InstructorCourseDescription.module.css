@@ -4,8 +4,12 @@
 }
 
 .wraprow{
+  position: relative;
   padding: clamp(16px, 4vw, 40px);
   padding-top: 0vh;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
 .panel {
   position: relative;
@@ -275,4 +279,23 @@ box-sizing: border-box;
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   background-color: #9b3e08;
+}
+
+.tabActive {
+  box-shadow: inset 0 0 0 3px rgba(233, 109, 31, 0.35);
+}
+
+
+.empty {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #ffe6d3;
+  color: #b04a1a;
+  font-weight: 700;
+}
+
+.lessonsCard{
+  margin-bottom: 12px;
 }
