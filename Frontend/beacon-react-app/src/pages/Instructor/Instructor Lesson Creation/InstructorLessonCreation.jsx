@@ -1,22 +1,48 @@
 import React, { useState } from "react";
 import i from "./InstructorLessonCreation.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
+import {api} from "../../../api" 
 
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
+  const { lessonId } = useParams();
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
+  const [prereqInput, setPrereqInput] = useState("");
+
+  const submitPrereqs = async () => {
+    /**Handle prerequisites submission */
+    // split by commas / whitespace / newlines
+    
+    const prereqIds = prereqInput
+      .split(/[\s,]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  
+    if (prereqIds.length === 0) { alert("Enter at least one prerequisite lesson_id."); return; }
+  
+    try {
+      const res = await api.post(
+        `instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
+        { prerequisites: prereqIds, mode: "merge" } // or "replace"
+      );
+      console.log("Created:", res.data);
+    } catch (err) {
+      console.error("Server error:", err?.response?.data || err);
+      alert("Failed to set prerequisites.");
+    }
+  };
 
   const [formData, setFormData] = useState({
-    courseName: "",
-    ID: "",
+    title: "",
     credits: "",
     director: "",
     description: "",
+    objectives: "", 
   });
 
   const openModal = () => {
@@ -52,13 +78,11 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
   const resetForm = () => {
     setFormData({
-      courseName: "",
-      ID: "",
+      title: "",
       credits: "",
       director: "",
       description: "",
-      objective: "",
-      prerequisite: "",
+      objectives: ""
     });
     setLessons([]);      
     setLessonInput("");  
@@ -66,21 +90,19 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       // Prepare data for Django backend
-      const courseData = {
-        course_id: formData.ID,
-        course_title: formData.courseName,
-        course_credits: formData.credits,
-        course_director: formData.director,
-        course_description: formData.description,
+      const lessonData = {
+        title: formData.title,
+        credits: formData.credits,
+        created_by: formData.director,
+        description: formData.description,
+        objectives: formData.description
       };
 
       // Send to Django backend
-      await axios.post('http://localhost:8000/courses/frontend/', courseData);
-      
-      console.log("Course created successfully:", courseData);
+      await api.patch( `/instructor/lessons/${lessonId}>/create/`, lessonData);
+      console.log("Course created successfully:", lessonData);
       
       // Refresh the course list in parent component
       if (onCourseCreated) {
@@ -115,20 +137,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <input
                 className={i.input}
                 type="text"
-                name="courseName"
-                value={formData.courseName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className={i.row}>
-              <label className={i.label}>Lesson ID:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="ID"
-                value={formData.ID}
+                name="title"
+                value={formData.title}
                 onChange={handleChange}
                 required
               />
@@ -173,8 +183,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <label className={i.label}>Lesson Objective:</label>
               <textarea
                 className={i.input}
-                name="objective"
-                value={formData.description}
+                name="objectives"
+                value={formData.objectives}
                 onChange={handleChange}
                 required
               />
@@ -185,8 +195,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <textarea
                 className={i.input}
                 name="prerequisite"
-                value={formData.description}
-                onChange={handleChange}
+                value={prereqInput}
+                onChange={setPrereqInput}
                 required
               />
             </div>

@@ -4,6 +4,8 @@ import Button from "../../../components/Button/Button";
 import { useNavigate, useParams } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {api} from "../../../api" 
+
 
 export default function InstructorLessonList() {
     const { courseId } = useParams();
@@ -11,7 +13,7 @@ export default function InstructorLessonList() {
     const [lessons, setLessons] = useState([]);
 
   useEffect( () => {
-    axios.get(`http://localhost:8000/courses/${courseId}/lessons/`)
+    api.get(`/courses/${courseId}/lessons/`)
       .then(res => {
         console.log("API response", res.data);
         setLessons(res.data);
@@ -56,16 +58,16 @@ export default function InstructorLessonList() {
     <span>Code:</span>
     <span className={s.spacing}><strong>{lesson.lesson_id}</strong></span>
   </div>
-  <span><strong>{lesson.lesson_credits}</strong> Credits</span>
-  <span>Duration:<strong>{lesson.lesson_duration}hours</strong></span>
+  <span><strong>{lesson.credits}</strong> Credits</span>
+  <span>Duration:<strong>{lesson.duration_weeks}hours</strong></span>
 </div>
   <div className={s.cardDesc2}>
   <span>Description:</span>
-  <span>{lesson.lesson_description}</span>
+  <span>{lesson.description}</span>
 </div>
   <div className={s.cardDesc2}>
     <span>Objective:</span>
-    <span>{lesson.lesson_objective}</span>
+    <span>{lesson.objective}</span>
   </div>
   <div className={s.cardDesc2}>
     <span>Prerequisite:</span>

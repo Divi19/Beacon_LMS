@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import i from "./InstructorStudentProgress.module.css";
-import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
+import InstructorTopBar from "../../../../components/InstructorTopBar/InstructorTopBar";
 import Button from "../../../components/Button/Button";
 import { useNavigate } from "react-router-dom";
 

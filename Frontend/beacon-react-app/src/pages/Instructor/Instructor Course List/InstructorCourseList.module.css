@@ -31,6 +31,13 @@
   transform: scale(1.05);
 }
 
+.enrollBtn:hover{
+  transform: scale(1.05);
+  background-color: #71bfcd;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
 .title {
   margin: 0;
   padding-top: 10px;
@@ -59,6 +66,8 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  padding-top: 18vh;
+  
 }
 
 .card {
@@ -67,7 +76,7 @@
   justify-content: flex-start;
   align-items: flex-start;
   padding: 20px;
-  padding-bottom: 80px; 
+  padding-bottom: 50px; 
   border-radius: 20px;
   background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
   color: brown;
@@ -96,7 +105,7 @@
 }
 
 .cardDesc1 span:last-child {
-  margin-right: 10px;
+  margin-right: 30px;
 }
 
 .cardDesc2 {
@@ -108,7 +117,7 @@
 }
 
 .cardDesc2 span:last-child {
-  margin-right: 10px;
+  margin-left: 10px;
 }
 
 .leftGroup {

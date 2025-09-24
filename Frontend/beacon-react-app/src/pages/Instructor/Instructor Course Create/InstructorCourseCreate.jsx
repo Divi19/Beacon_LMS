@@ -1,23 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import i from "./InstructorCourseCreate.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
+import { api } from "../../../api";
 
 export default function InstructorCourseCreate({ onCourseCreated }) {
   const navigate = useNavigate();
-  const [lessons, setLessons] = useState(["Lesson 1"]);
+  const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
-
+  const [lessonsNumber, setLessonsNumber] = useState(0)
+  const [submitting, setSubmitting] = useState(false); //Guarding number of course submission 
+  
   const [formData, setFormData] = useState({
-    courseName: "",
-    ID: "",
-    credits: "",
+    title: "",
+    course_id: "",
     director: "",
     description: "",
+    status: "Active", //Newly added here, check serializer again
   });
+
 
   const openModal = () => {
     setShowModal(true);
@@ -34,14 +38,15 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
   };
 
   const addLesson = () => {
-  const newLessonNumber = lessons.length + 1;
-  const newLessonName = `Lesson ${newLessonNumber}`;
-  setLessons([...lessons, newLessonName]);
-};
+    if (lessonInput.trim() !== "") {
+      setLessons([...lessons, lessonInput.trim()]);
+      closeModal();
+    }
+  };
 
   const goToCoursePage = () => {
-    setShowOptionalModal(false); 
-    navigate("/instructor/course-list"); 
+    setShowOptionalModal(false);
+    navigate("/instructor/course-list");
   };
 
   const handleChange = (e) => {
@@ -51,48 +56,73 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
 
   const resetForm = () => {
     setFormData({
-      courseName: "",
-      ID: "",
-      credits: "",
+      title: "",
+      course_id: "",
       director: "",
       description: "",
+      status: "Active",
     });
-    setLessons([]);      
-    setLessonInput("");  
+    setLessons([]);
+    setLessonInput("");
+    setLessonsNumber(0);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    try {
-      // Prepare data for Django backend
-      const courseData = {
-        course_id: formData.ID,
-        course_title: formData.courseName,
-        course_credits: formData.credits,
-        course_director: formData.director,
-        course_description: formData.description,
-      };
+    if (submitting) return;           // guard
+    setSubmitting(true);
 
+    const code = (formData.course_id || "").trim();
+
+      // Prepare data for Django backend
+      try {
+        // Prepare data for Django backend
+        const courseData = {
+          title: formData.title,
+          credits: 30,
+          owner_instructor_id: Number(formData.director) || undefined,
+          description: formData.description,
+          status: formData.status, //Newly added here, check serializer again
+          ...(code ? { course_id: code } : {}),
+        };
+
+  
       // Send to Django backend
-      await axios.post('http://localhost:8000/courses/frontend/', courseData);
-      
+      const createRes = await api.post("/instructor/courses/", courseData);
       console.log("Course created successfully:", courseData);
-      
+      const cid = createRes.data?.course_id; // use server’s generated/normalized id
+
+      const n = parseInt(lessonsNumber, 10);
+      if (!Number.isInteger(n) || n < 1) {
+        alert("Enter a valid number of lessons (>=1).");
+        return;
+      } //Validate lessons number
+
+      //Send lessons number here 
+      await api.post(`/instructor/courses/${cid}/lessons/bulk-create/`, {
+        count: Number(lessonsNumber),
+        credits: 0,
+        base_title: "Lesson",
+        starting_number: 1,
+        duration_weeks: 4,
+        status: "Active",
+        description: "",
+        objectives: ""
+      });
+
       // Refresh the course list in parent component
       if (onCourseCreated) {
         onCourseCreated();
       }
-      
+
       // Show success modal
       setShowOptionalModal(true);
-      
     } catch (error) {
-      console.error('Error creating course:', error);
-      alert('Error creating course. Please try again.');
+      console.error("Error creating course:", error);
+      alert("Error creating course. Please try again.");
     }
   };
-
+ 
   return (
     <div className={i.wrap}>
       <div className={i.topBar}>
@@ -102,94 +132,113 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         <h1 className={i.title}>COURSE CREATION</h1>
       </header>
       <div>
-  <form className={i.form} onSubmit={handleSubmit}>
-    <div className={i.formContainer}>
-      <div className={i.row}>
-        <label className={i.label}>Course Details</label>
-      </div>
+        <form className={i.form} onSubmit={handleSubmit}>
+          <div className={i.formContainer}>
+            <div className={i.row}>
+              <label className={i.label}>Course Details</label>
+            </div>
+            <div className={i.row}>
+              <label className={i.label} htmlFor="title">
+                Course Title:
+              </label>
+              <input
+                id="title"
+                className={i.input}
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-      <div className={i.row}>
-        <label className={i.label} htmlFor="courseName">Course Title:</label>
-        <input
-          id="courseName"
-          className={i.input}
-          type="text"
-          name="courseName"
-          value={formData.courseName}
-          onChange={handleChange}
-          required
-        />
-      </div>
+            <div className={i.row}>
+              <label className={i.label} htmlFor="course_id">
+                Course Code:
+              </label>
+              <input
+                id="course_id"
+                placeholder="Autogenerated if empty"
+                className={i.input}
+                type="text"
+                name="course_id"
+                value={formData.course_id}
+                onChange={handleChange}
+              />
+            </div>
 
-      <div className={i.row}>
-        <label className={i.label} htmlFor="ID">Course ID:</label>
-        <input
-          id="ID"
-          className={i.input}
-          type="text"
-          name="ID"
-          value={formData.ID}
-          onChange={handleChange}
-          required
-        />
-      </div>
+            <div className={i.row}>
+              <span className={i.label}>Course Credits:</span>
+              <div className={i.creditsDisplay}>30 Credits</div>
+              <input id="credits" type="hidden" name="credits" value={30} />
+            </div>
 
-      <div className={i.row}>
-        <label className={i.label} htmlFor="credits">Course Credits:</label>
-        <input
-          id="credits"
-          className={i.input}
-          type="text"
-          name="credits"
-          value={formData.credits}
-          onChange={handleChange}
-          required
-        />
-      </div>
+            <div className={i.row}>
+              <label className={i.label} htmlFor="director">
+                Course Director:
+              </label>
+              <input
+                id="director"
+                className={i.input}
+                placeholder="Default to current instructor if empty"
+                type="text"
+                name="director"
+                value={formData.director}
+                onChange={handleChange}
+              />
+            </div>
 
-      <div className={i.row}>
-        <label className={i.label} htmlFor="director">Course Director:</label>
-        <input
-          id="director"
-          className={i.input}
-          type="text"
-          name="director"
-          value={formData.director}
-          onChange={handleChange}
-          required
-        />
-      </div>
+            <div className={i.row}>
+              <label className={i.label} htmlFor="description">
+                Description:
+              </label>
+              <textarea
+                id="description"
+                className={i.input}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-      <div className={i.row}>
-        <label className={i.label} htmlFor="description">Description:</label>
-        <textarea
-          id="description"
-          className={i.input}
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-        />
-      </div>
+            <div className={i.row}>
+              <label className={i.label} htmlFor="number_of_lessons">
+                Number of Lessons:
+              </label>
+              <input
+                id="number_of_lessons"
+                className={i.input}
+                type="number"
+                name="number_of_lessons"
+                min="1"
+                value={lessonsNumber}
+                onChange={(e) => setLessonsNumber(e.target.value)}
+                required
+              />
 
-      <div className={i.rowBlock}>
-        <div className={i.lessonHeader}>
-          <span className={i.label}>Course Core Lessons:</span>
-
-          <div className={i.lessonList}>
-            {lessons.map((lesson, index) => (
-              <div key={index} className={i.lessonItem}>
-                {lesson}
+              <label className={i.label} htmlFor="status">
+                Course Status:
+              </label>
+              <div className={i.selectWrap}>
+                <select
+                  id="status"
+                  name="status"
+                  className={i.select}
+                  value={formData.status}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+                
               </div>
-            ))}
-          </div>
+            </div>
 
-    <button type="button" className={i.addButton} onClick={addLesson}>
-      +
-    </button>
-    <span className={i.addText}>Add Lessons</span>
-  </div>
-
+            <div className={i.rowBlock}>
+             
+    
               {showModal && (
                 <div className={i.modalOverlay}>
                   <div className={i.modalContent}>
@@ -232,7 +281,11 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
 )}
 
             <div className={i.buttonRow}>
-              <button className={i.discardbutton} type="button" onClick={resetForm}>
+              <button
+                className={i.discardbutton}
+                type="button"
+                onClick={resetForm}
+              >
                 Discard
               </button>
               <button className={i.createbutton} type="submit">

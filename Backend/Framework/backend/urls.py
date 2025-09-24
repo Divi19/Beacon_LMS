@@ -17,20 +17,45 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from api.views import *
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('courses/frontend/', FrontendView.as_view(), name="frontend"),
-    path('courses/frontend/<str:pk>/', FrontendDetailView.as_view(), name="frontend-detail"),
-    path('courses/<str:course_id>/lessons/', LessonsView.as_view(), name="course-lessons"),
-    path('lessons/<str:course_id>/', LessonDetailView.as_view(), name="lesson-detail"),
-    #students
-    #path('students/<str:student_id>/my_courses/', StudentEnrolledCourses.as_view(), name='my_courses'),
-    #path('students/<str:student_id>/enrollment/', StudentUnenrolledCourses.as_view(), name='enrollment'),
-    path("courses/frontend/<int:student_profile_id>/student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
-    path("courses/frontend/<int:student_profile_id>/student/enrollment/", StudentUnenrolledCourses.as_view(), name="my-courses"),
-    path("courses/frontend/<int:student_profile_id>/student/enroll/", StudentEnroll.as_view(), name="my-courses"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    #Fetch current logged in user
+    path("user/", CurrentUser.as_view(), name="current-user"),
+
+    #Course details
+    path('courses/<str:course_id>/detail/', CourseDetailView.as_view(), name="courses-detail"),
+    #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
+    path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
     
-   
+    #Instructors
+    path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
+    #Instructors Courses
+    path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
+    #Instructors Classrooms
+    path("instructor/<str:lesson_id>/classrooms/", ClassroomView.as_view(), name="classrooms"),
+    #Instructor Lessons 
+    path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
+    path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
+    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
+    path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/create/", LessonsView.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/prerequisites/bulk-create/", LessonPrereqBulkCreateView.as_view()),
+    
+    
+    #Students login TODO
+    path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
+    #Student Courses
+    path("student/<int:student_profile_id>/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
+    path("student/<int:student_profile_id>/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
+    path("student/<int:student_profile_id>/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
+    #Students Classrooms
+    path("student/<int:student_profile_id>/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    path("student/<int:student_profile_id>/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    #logout 
+    path("user/logout/", UserLogout.as_view(), name="logout")
+    
 ]
