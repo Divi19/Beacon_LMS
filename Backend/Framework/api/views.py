@@ -120,7 +120,6 @@ class InstructorLogin(APIView):
         }
         return Response(payload, status=status.HTTP_200_OK)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class InstructorCoursesView(APIView):
     """
     Instructor viewing and creating own courses.
@@ -147,9 +146,10 @@ class InstructorCoursesView(APIView):
         output = [
             {
                 "course_id": course.course_id,
+                "code": course.code,
                 "course_title": course.course_title,
                 "course_credits": course.course_credits,
-                "course_director": course.course_director,
+                "course_director": course.owner_instructor.full_name,
                 "course_description": course.course_description,
                 "course_number_of_lessons": course.course_number_of_lessons,
                 "enrolled_count": getattr(course, "enrolled_count", 0),
@@ -187,9 +187,6 @@ class InstructorCoursesView(APIView):
             return Response(serializer.data, status=201)
 
         return Response(serializer.errors, status=400)
-
-
-
 
 class ClassroomView(APIView):
     """
@@ -237,8 +234,6 @@ class ClassroomView(APIView):
                 status=400,
             )
         return Response(ClassroomSerializer(classroom, context={"request": request}).data, status=201)
-
-
 
 class StudentsEnrolledView(APIView):
     """
@@ -314,51 +309,56 @@ class StudentsEnrolledView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 """
 Lesson part
 """
-@method_decorator(csrf_exempt, name='dispatch')
+
 class LessonsView(APIView):
+    """
+    Lessons specific to a course
+    """
     permission_classes = [AllowAny]
+
     def get(self, request, course_id):
         """
-        GET method
+        GET all lessons for a course
         """
         course = get_object_or_404(Course, course_id=course_id)
-        # lessons = course.lessons.all().order_by("slot_index")
         lessons = course.lessons.all()
-        data = LessonSerializer(lessons, many=True).data
-        return Response(data)
-    
+        serializer = LessonSerializer(lessons, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request, course_id):
+        """
+        POST create a new lesson for a course
+        """
         course = get_object_or_404(Course, course_id=course_id)
         data = request.data.copy()
         data["courses"] = course.course_id
-        serializer = LessonSerializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            print(serializer.errors)
-            return Response(serializer.errors, status= 400)
-        
-@method_decorator(csrf_exempt, name='dispatch')
+        serializer = LessonSerializer(data=data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        lesson = serializer.save()
+        return Response(LessonSerializer(lesson, context={"request": request}).data,
+                        status=status.HTTP_201_CREATED)
+
+
 class LessonDetailView(APIView):
+    """
+    Lesson detail / update
+    """
     permission_classes = [AllowAny]
+
     def get(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
-        data = LessonSerializer(lesson).data
-        return Response(data)
+        serializer = LessonSerializer(lesson, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
-        serializer = LessonSerializer(lesson, data=request.data, partial=False)  # full update
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
-    
+        serializer = LessonSerializer(lesson, data=request.data, context={"request": request}, partial=False)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK) 
 
 """
 Student Part
