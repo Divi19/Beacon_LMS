@@ -145,7 +145,7 @@ const handleToggleLessons = async () => {
                     </Button>
           </div>
         </div>
-    <div className={s.wrap}>
+    <div className={s.wraprow}>
   <div className={s.row1}>
     <div className={s.panel1}>
       <h2 className={s.label}>Enrolled Students</h2>
