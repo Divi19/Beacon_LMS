@@ -106,7 +106,7 @@ CREATE TABLE classroom (
   lesson_id       INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
   instructor_id   INT NOT NULL REFERENCES instructor_profile(instructor_profile_id),
   title           VARCHAR(255) NOT NULL,
-  duration_weeks  INT,
+  -- duration_weeks  INT,
   is_active       BOOLEAN NOT NULL DEFAULT TRUE,
   capacity        INT,
   -- NEW scheduling fields for day

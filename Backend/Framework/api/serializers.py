@@ -326,20 +326,32 @@ class ClassroomSerializer(serializers.ModelSerializer):
     start_time = serializers.TimeField(source="time_start")
     end_time = serializers.TimeField(source="time_end")
     capacity = serializers.IntegerField(min_value=1, max_value=10)
+    title = serializers.CharField(max_length=255, required=True)
     # you compute duration on the FE if missing; keeping write_only is okay
-    duration_minutes = serializers.IntegerField(write_only=True, required=False)
+    # duration_minutes = serializers.IntegerField(write_only=True, required=False)
+    duration_minutes = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Classroom
         fields = [
             "classroom_id",
             "lesson",
+            "title",
             "day", "start_time", "end_time",
             "duration_minutes", "capacity",
             "is_active", "instructor", "created_at",
             "enrolled_count",
         ]
-        read_only_fields = ["lesson", "instructor", "created_at"]
+        read_only_fields = ["lesson", "instructor", "created_at", "classroom_id", "duration_minutes"]
+
+    def get_duration_minutes(self, obj):
+        if obj.time_start and obj.time_end:
+            from datetime import datetime
+            start = datetime.combine(datetime.today(), obj.time_start)
+            end = datetime.combine(datetime.today(), obj.time_end)
+            duration = (end - start).total_seconds() / 60
+            return int(duration)
+        return 0
 
     def validate(self, attrs):
         # pull values (handles create/update)

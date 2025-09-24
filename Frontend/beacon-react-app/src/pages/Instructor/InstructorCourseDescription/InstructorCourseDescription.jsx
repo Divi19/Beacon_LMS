@@ -228,7 +228,8 @@ useEffect(() => {
               <Button
                 variant="orange"
                 className={s.createLessonBtn}
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation();
                   navigate(`/instructor/course/${course.course_id}/lesson-creation`,
                   {state : {
                     slot_index: idx,
@@ -242,9 +243,9 @@ useEffect(() => {
                     lesson_created_at: lessons[idx]?.lesson_created_at || "",
                     lesson_created_by: lessons[idx]?.lesson_created_by || "",
                     lesson_prerequisite: lessons[idx]?.lesson_prerequisite || "",
-                  } }
-                  )
-                }
+                  }
+                });
+                }}
                 >
                   Create
                 </Button>

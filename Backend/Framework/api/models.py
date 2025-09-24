@@ -232,15 +232,17 @@ Classroom
 """
 class Classroom(models.Model):
     
-    classroom_id = models.CharField(
-        primary_key=True, max_length=6, unique=True,
-        default=generate_custom_id, editable=False
-    )
+    # classroom_id = models.CharField(
+    #     primary_key=True, max_length=6, unique=True,
+    #     default=generate_custom_id, editable=False
+    # )
+    classroom_id = models.AutoField(primary_key=True, db_column="classroom_id")
  
-    lesson = models.ForeignKey("Lesson", models.DO_NOTHING, blank=True, null=True)
+    lesson = models.ForeignKey("Lesson", models.DO_NOTHING, blank=True, null=True, db_column="lesson_id")
     instructor = models.ForeignKey("InstructorProfile", models.DO_NOTHING, blank=True, null=True)
 
-    duration_minutes = models.PositiveIntegerField(blank=True, null=True)  # int is plenty
+    title = models.CharField(max_length=255, null=True, blank=True, db_column="title")
+    # duration_weeks = models.PositiveIntegerField(blank=True, null=True)  # int is plenty
     is_active = models.BooleanField(default=True)
     capacity = models.PositiveIntegerField(
         default=10, validators=[MinValueValidator(1), MaxValueValidator(10)]
@@ -256,13 +258,13 @@ class Classroom(models.Model):
         db_table = "classroom"
         unique_together = (("lesson", "day_of_week", "time_start", "time_end"),)
 
-    def save(self, *args, **kwargs):
-        if not self.classroom_id:
-            new_id = generate_custom_id()
-            while Classroom.objects.filter(classroom_id=new_id).exists():
-                new_id = generate_custom_id()
-            self.classroom_id = new_id #weirdass why not reflected??
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.classroom_id:
+    #         new_id = generate_custom_id()
+    #         while Classroom.objects.filter(classroom_id=new_id).exists():
+    #             new_id = generate_custom_id()
+    #         self.classroom_id = new_id #weirdass why not reflected??
+    #     super().save(*args, **kwargs)
 
 class ClassroomEnrollment(models.Model):
     id = models.BigAutoField(primary_key=True) 
