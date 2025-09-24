@@ -12,7 +12,7 @@ export default function StudentEnrollment() {
   const { isEnrolled } = useEnrollment();
   const navigate = useNavigate();
   //Dummy value
-  const student_id = 5
+  const student_id = 2
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [unenrolled, setUnenrolled] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
