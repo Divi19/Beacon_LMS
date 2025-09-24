@@ -32,6 +32,7 @@ export default function InstructorCourseDescription() {
 
     if (willOpen && course?.course_id) {
       try {
+        
         const res = await api.get(`/instructor/courses/${courseId}/lessons/`);
         console.log("Lessons API response", res.data);
 
@@ -47,10 +48,17 @@ export default function InstructorCourseDescription() {
    */
   useEffect(() => {
     try {
+      axios
+        .get(`http://localhost:8000/courses/${courseId}/detail/`)
+        .then((res) => setCourse(res.data))
+        .catch(() => setCourse(null));
+      
+       /**
       api
         .get(`/courses/${courseId}/detail/`)
         .then((res) => setCourse(res.data))
         .catch(() => setCourse(null));
+       */ 
 
       //Fetching placeholders
       api
@@ -254,7 +262,7 @@ export default function InstructorCourseDescription() {
                       );
                     }}
                   >
-                    Create
+                    Update
                   </Button>
                 </div>
               ))

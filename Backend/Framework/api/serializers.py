@@ -8,7 +8,8 @@ from rest_framework.validators import UniqueTogetherValidator
 #djando
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import authenticate
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Coalesce
+from django.db.models import Sum
 
 #local 
 from .models import *
@@ -366,6 +367,35 @@ class LessonSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop("created_by", None)
         return super().update(instance, validated_data)
+
+    def _validate_total_credits(self, *, course: Course, instance: Lesson | None, new_credits: int | None):
+        """Ensure sum(other lessons) + this lesson <= course.credits."""
+        if not course:
+            return  # nothing to check
+        cap = course.credits or 0
+        new_credits = new_credits or 0
+
+        qs = Lesson.objects.filter(course=course)
+        if instance and instance.pk:
+            qs = qs.exclude(pk=instance.pk)
+
+        used = qs.aggregate(total=Coalesce(Sum("credits"), 0))["total"]
+        if used + new_credits > cap:
+            raise serializers.ValidationError({
+                "credits": f"Total lesson credits would be {used + new_credits}, "
+                           f"exceeding course cap {cap}."
+            })
+
+    def validate(self, attrs):
+        # Determine target course and intended credits
+        instance = getattr(self, "instance", None)
+        course = attrs.get("course") or (instance.course if instance else None)
+
+        # For PATCH, only check if credits is being changed; for POST, check incoming credits
+        if "credits" in attrs or instance is None:
+            new_credits = attrs.get("credits", instance.credits if instance else 0)
+            self._validate_total_credits(course=course, instance=instance, new_credits=new_credits)
+        return attrs
 
 class LessonPrereqBulkInSerializer(serializers.Serializer):
     prerequisites = serializers.ListField(

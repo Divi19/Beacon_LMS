@@ -336,6 +336,15 @@ class LessonPrereqView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
+    def get(self, request, course_id):
+        """
+        GET method. Retrieving Prereq lessons 
+        """
+        course = get_object_or_404(Course, course_id=course_id)
+        lessons = LessonPrerequisite.objects.filter(lesson = lesson).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
+        data = LessonSerializer(lessons, many=True).data
+        return Response(data)
+
 class LessonPrereqBulkCreateView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
@@ -637,8 +646,8 @@ Shared
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
 class CourseDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication] 
+    #permission_classes = [IsAuthenticated]
+    #authentication_classes = [CustomJWTAuthentication] 
     def get(self, request, course_id):
         course = get_object_or_404(
             Course.objects.select_related('owner_instructor')
