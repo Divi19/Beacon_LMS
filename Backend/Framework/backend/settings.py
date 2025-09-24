@@ -14,6 +14,8 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import os
+import sys
+
 
 
 load_dotenv()
@@ -117,14 +119,22 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'lms_db',
+        'NAME': 'my_lms_db',
         'USER': 'myuser',
-        'PASSWORD': 'mypassword',
-        'HOST': "127.0.0.1",
+        'PASSWORD': 'Divi12345',
+        'HOST': 'localhost',
         'PORT': '5432',
-        "DISABLE_SERVER_SIDE_CURSORS": True
+    }
 }
-}
+
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(os.path.dirname(__file__), 'test_db.sqlite3'),
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
