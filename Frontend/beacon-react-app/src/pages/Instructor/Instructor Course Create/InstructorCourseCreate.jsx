@@ -102,81 +102,87 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         <h1 className={i.title}>COURSE CREATION</h1>
       </header>
       <div>
-        <form className={i.form} onSubmit={handleSubmit}>
-          <div className={i.formContainer}>
-            <div className={i.row}>
-              <label className={i.label}>Course Details</label>
-            </div>
-            <div className={i.row}>
-              <label className={i.label}>Course Title:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="courseName"
-                value={formData.courseName}
-                onChange={handleChange}
-                required
-              />
-            </div>
+  <form className={i.form} onSubmit={handleSubmit}>
+    <div className={i.formContainer}>
+      <div className={i.row}>
+        <label className={i.label}>Course Details</label>
+      </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Course ID:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="ID"
-                value={formData.ID}
-                onChange={handleChange}
-                required
-              />
-            </div>
+      <div className={i.row}>
+        <label className={i.label} htmlFor="courseName">Course Title:</label>
+        <input
+          id="courseName"
+          className={i.input}
+          type="text"
+          name="courseName"
+          value={formData.courseName}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Course Credits:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="credits"
-                value={formData.credits}
-                onChange={handleChange}
-                required
-              />
-            </div>
+      <div className={i.row}>
+        <label className={i.label} htmlFor="ID">Course ID:</label>
+        <input
+          id="ID"
+          className={i.input}
+          type="text"
+          name="ID"
+          value={formData.ID}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Course Director:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="director"
-                value={formData.director}
-                onChange={handleChange}
-                required
-              />
-            </div>
+      <div className={i.row}>
+        <label className={i.label} htmlFor="credits">Course Credits:</label>
+        <input
+          id="credits"
+          className={i.input}
+          type="text"
+          name="credits"
+          value={formData.credits}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Description:</label>
-              <textarea
-                className={i.input}
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-              />
-            </div>
+      <div className={i.row}>
+        <label className={i.label} htmlFor="director">Course Director:</label>
+        <input
+          id="director"
+          className={i.input}
+          type="text"
+          name="director"
+          value={formData.director}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-            <div className={i.rowBlock}>
-              <div className={i.lessonHeader}>
-    <span className={i.label}>Course Core Lessons:</span>
+      <div className={i.row}>
+        <label className={i.label} htmlFor="description">Description:</label>
+        <textarea
+          id="description"
+          className={i.input}
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-    <div className={i.lessonList}>
-      {lessons.map((lesson, index) => (
-        <div key={index} className={i.lessonItem}>
-          {lesson}
-        </div>
-      ))}
-    </div>
+      <div className={i.rowBlock}>
+        <div className={i.lessonHeader}>
+          <span className={i.label}>Course Core Lessons:</span>
+
+          <div className={i.lessonList}>
+            {lessons.map((lesson, index) => (
+              <div key={index} className={i.lessonItem}>
+                {lesson}
+              </div>
+            ))}
+          </div>
 
     <button type="button" className={i.addButton} onClick={addLesson}>
       +
@@ -209,17 +215,21 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
             </div>
 
             {showOptionalModal && (
-              <div className={i.modalOverlay}>
-                <div className={i.modalContent}>
-                  <h3>Course Created Successfully!</h3>
-                  <div className={i.modalButtons}>
-                    <button className={i.selectButton} onClick={goToCoursePage}>
-                      Go to course page
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+  <div className={i.modalOverlay}>
+    <div className={i.modalContent}>
+      <h3>Course Created Successfully!</h3>
+      <div className={i.modalButtons}>
+        <button
+          type="button"
+          className={i.selectButton}
+          onClick={goToCoursePage}
+        >
+          Go to course page
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
             <div className={i.buttonRow}>
               <button className={i.discardbutton} type="button" onClick={resetForm}>
