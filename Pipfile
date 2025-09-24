@@ -7,6 +7,10 @@ name = "pypi"
 dotenv = "*"
 asgiref = "==3.9.1"
 django = "==5.2.6"
+<<<<<<< HEAD
+=======
+djangorestframework = "==3.16.1"
+>>>>>>> origin/Frontend_Isabella
 django-cors-headers = "*"
 djangorestframework-simplejwt = "*"
 pyjwt = "*"
@@ -15,7 +19,11 @@ sqlparse = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
 django-environ = "*"
+<<<<<<< HEAD
 djangorestframework = "*"
+=======
+axios = "*"
+>>>>>>> origin/Frontend_Isabella
 
 [dev-packages]
 

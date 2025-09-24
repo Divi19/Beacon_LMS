@@ -3,7 +3,6 @@ import EntryPage from "./pages/EntryPage/EntryPage";
 import StudentMyCourses from "./pages/Student/StudentMyCourses/StudentMyCourses";
 import CourseDetailEnrolled from "./pages/Student/StudentMyCourses/CourseDetailEnrolled";
 import StudentEnrollment from "./pages/Student/StudentEnrollment/StudentEnrollment";
-import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLessonDetail"
 
 import CourseDetail from "./pages/Student/StudentEnrollment/CourseDetail";
 
@@ -23,6 +22,8 @@ import InstructorClassCreation from "./pages/Instructor/Instructor Class Creatio
 
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
+import StudentLessonEnroll from "./pages/Student/StudentLessonEnroll/StudentLessonEnroll";
+import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLessonDetail";
   
 export default function App(){
   const [details, setDetails] = useState([]);

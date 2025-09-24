@@ -312,7 +312,6 @@ export default function StudentLessonDetail() {
       <div className={i.topBar}>
         <StudentTopBar />
       </div>
-
       <header className={i.header}>
         <div className={i.rect}>
           <div className={i.courseInfo}>

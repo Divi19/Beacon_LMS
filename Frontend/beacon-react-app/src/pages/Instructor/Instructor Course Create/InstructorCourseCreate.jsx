@@ -171,7 +171,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
               <label className={i.label}>Course Director:</label>
               <input
                 className={i.input}
-                placeholder="Enter Instructor ID or default to current instructor"
+                placeholder="Default to current instructor if empty"
                 type="text"
                 name="director"
                 value={formData.director}

@@ -52,6 +52,18 @@ class CurrentUser(RetrieveAPIView):#Receiving a single object, read-only
         return self.request.user #According to the json upon logged in, the user nested content
 
 
+# Create your views here.
+def course_creation(request):
+    if request.method == 'POST':
+        form = CoursesForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('create_courses')
+    else:
+        form = CoursesForm()
+
+    return render(request, 'course.html', {'form' : form})
+
 """
 Instructor Part
 """
@@ -438,6 +450,83 @@ class StudentEnrolledCourses(APIView):
                 "course_description": course.description}
                 for course in courses]
         return Response(output, status=status.HTTP_200_OK)
+
+class StudentUnenrolledCourses(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, student_profile_id):
+        student = get_object_or_404(StudentProfile, student_profile_id = student_profile_id)
+        enrolled_ids = student.courses.values_list("pk", flat = True) #gives list of pk values (course_ids)
+        res = Course.objects.exclude(pk__in=enrolled_ids) #Exclude by pk
+        data = CourseSerializer(res, many=True).data
+        return Response(data)
+    
+class StudentEnroll(APIView):
+    permission_classes=[AllowAny]
+    def post(self, request, student_profile_id):
+        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        course_id = request.data.get("course_id")
+        if not course_id:
+            return Response({"detail": "course_id is required"})
+
+        course = get_object_or_404(Course, pk=course_id)
+
+        if student.courses.filter(pk=course.pk).exists():
+            # idempotent: already enrolled
+            return Response(
+                {"detail": "Student already enrolled", "course": CourseSerializer(course).data},
+            )
+
+        student.courses.add(course)
+        return Response(CourseSerializer(course).data)
+
+
+
+"""
+class StudentEnrolledCourses(APIView):
+    def get(self, student_id):
+        #Grab current student if 
+        try:
+            #Checking if the student exists.
+            student = StudentProfile.objects.get(pk=student_id)
+        except StudentProfile.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+
+        enrolled_courses = Course.objects.filter(enrollments__student=student)
+        serializer = CourseSerializer(enrolled_courses, many=True)
+        return Response(serializer.data, status=200)
+
+
+class StudentUnenrolledCourses(APIView):
+    def get(self, student_id):
+        try:
+            student = StudentProfile.objects.get(pk=student_id)
+        except StudentProfile.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+
+        unenrolled_courses = Course.objects.exclude(enrollments__student=student)
+        serializer = CourseSerializer(unenrolled_courses, many=True)
+        return Response(serializer.data, status=200)
+
+    def post(self, request, student_id):
+
+        course_id = request.data.get("course_id")
+
+        try:
+            student = StudentProfile.objects.get(pk=student_id)
+            course = Course.objects.get(course_id=course_id)
+        except StudentProfile.DoesNotExist:
+            return Response({'error': 'Student not found'}, status=404)
+        except Course.DoesNotExist:
+            return Response({'error': 'Course not found'}, status=404)
+
+        enrollment, created = Enrollment.objects.get_or_create(student=student, course=course)
+        if not created: #If the way it's fetched is not created 
+            return Response({'error': 'Already enrolled'}, status=400)
+
+        serializer = EnrollmentSerializer(enrollment)
+        
+        return Response(serializer.data, status=201)
+"""
 
 class StudentUnenrolledCourses(APIView):
     permission_classes = [AllowAny]

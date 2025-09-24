@@ -12,7 +12,7 @@ export default function StudentEnrollmentPage() {
   const navigate = useNavigate();
   const [enrolled, setEnrolled] = useState([])
   //Dummy value
-  const student_id = 1 
+  const student_id = 5 
   
   useEffect( () => {
   console.log(`[StudentEnrollmentPage] fetching courses for student_id=${student_id}`);
@@ -77,6 +77,7 @@ export default function StudentEnrollmentPage() {
                     director: c.course_director,
                     description: c.course_description,
                   }}
+                  isEnrolled={true}
                   ctaText="View"
                   onClick={() => navigate(`/student/course/${c.course_id}`)}
                   

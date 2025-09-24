@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import i from "./InstructorStudentProgress.module.css";
+<<<<<<< HEAD
 import InstructorTopBar from "../../../../components/InstructorTopBar/InstructorTopBar";
+=======
+import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
+>>>>>>> origin/Frontend_Isabella
 import Button from "../../../components/Button/Button";
 import { useNavigate } from "react-router-dom";
 
