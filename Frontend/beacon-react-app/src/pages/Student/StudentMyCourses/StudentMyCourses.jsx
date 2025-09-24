@@ -12,7 +12,7 @@ export default function StudentEnrollmentPage() {
   const navigate = useNavigate();
   const [enrolled, setEnrolled] = useState([])
   //Dummy value
-  const student_id = 5 
+  const student_id = 1 
   
   useEffect( () => {
   console.log(`[StudentEnrollmentPage] fetching courses for student_id=${student_id}`);

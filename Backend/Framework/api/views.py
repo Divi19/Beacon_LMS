@@ -202,7 +202,7 @@ class LessonsView(APIView):
         GET method. Retrieving Lessons
         """
         course = get_object_or_404(Course, course_id=course_id)
-        lessons = Lesson.objects.filter(course = course) 
+        lessons = Lesson.objects.filter(course = course).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
         data = LessonSerializer(lessons, many=True).data
         return Response(data)
     
@@ -629,8 +629,11 @@ Shared
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
 class CourseDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication] 
+    """"
+    Uncomment permission and authentication_classes after implementing auth for student
+    """
+    #permission_classes = [IsAuthenticated]
+    #authentication_classes = [CustomJWTAuthentication] 
     def get(self, request, course_id):
         """
         GET method. Fetching course and returning a customised json response
