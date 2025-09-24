@@ -1,5 +1,6 @@
 -- =========================================================
 -- Switch default schema
+-- =========================================================
 SET search_path = public;
 
 -- =========================================================
@@ -85,9 +86,10 @@ CREATE TABLE lesson (
   objectives      TEXT,
   duration_weeks  INT,
   status          VARCHAR(50) NOT NULL DEFAULT 'draft',
-  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  -- is_active       BOOLEAN NOT NULL DEFAULT TRUE,
   created_by      INT NOT NULL REFERENCES instructor_profile(instructor_profile_id),
-  created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+  prerequisite    TEXT
 );
 
 -- LESSON_PREREQUISITE 
@@ -104,7 +106,7 @@ CREATE TABLE classroom (
   lesson_id       INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
   instructor_id   INT NOT NULL REFERENCES instructor_profile(instructor_profile_id),
   title           VARCHAR(255) NOT NULL,
-  duration_weeks  INT,
+  -- duration_weeks  INT,
   is_active       BOOLEAN NOT NULL DEFAULT TRUE,
   capacity        INT,
   -- NEW scheduling fields for day
@@ -141,6 +143,7 @@ CREATE TABLE classroom_enrollment (
 ALTER TABLE course ADD COLUMN credits INT;
 ALTER TABLE course ADD COLUMN director VARCHAR(50);
 ALTER TABLE course ADD COLUMN description TEXT;
+ALTER TABLE course ADD COLUMN number_of_lessons INT DEFAULT 0;
 
 -- Enforce course ownership and restrict delete
 ALTER TABLE course
@@ -218,5 +221,3 @@ CREATE INDEX IF NOT EXISTS idx_enrollment_student ON enrollment(student_id);
 --   before enrolling in any classroom of that lesson. Enforce later
 --   via trigger or application logic.
 -- =========================================================
-
-

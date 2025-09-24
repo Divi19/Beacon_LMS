@@ -1,36 +1,46 @@
+# This is an auto-generated Django model module.
+# You'll have to do the following manually to clean this up:
+#   * Rearrange models' order
+#   * Make sure each model has one field with primary_key=True
+#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
+#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
+# Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
-from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.core.validators import MaxValueValidator, MinValueValidator
+import random
+import string
 
-# ----- Constants to mirror CHECK(day_of_week ...) -----
-DAY_CHOICES = [
-    ('Monday','Monday'), ('Tuesday','Tuesday'), ('Wednesday','Wednesday'),
-    ('Thursday','Thursday'), ('Friday','Friday'), ('Saturday','Saturday'),
-    ('Sunday','Sunday'),
-]
+def generate_custom_id():
+    letters = ''.join(random.choices(string.ascii_uppercase, k=2))
+    digits = ''.join(random.choices(string.digits, k=4))
+    return f"{letters}{digits}"
 
-# -------------------- USERS --------------------
+"""
+Users 
+"""
 class User(models.Model):
     user_id = models.AutoField(primary_key=True)
-    email = models.EmailField(unique=True, max_length=255)          
-    password_hash = models.CharField(max_length=255)             
-    role = models.CharField(max_length=50)                         
+    email = models.EmailField(unique=True, max_length=255, blank=True, null=True)
+    password_hash = models.CharField(max_length=255, blank=True, null=True)
+    role = models.CharField(max_length=50,  blank=True, null=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
-        db_table = 'users'  # matches SQL
+        db_table = 'user'
 
-    @property
+    @property 
     def is_authenticated(self):
         return True
 
 
-# -------------------- PROFILES --------------------
 class InstructorProfile(models.Model):
     instructor_profile_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
-    full_name = models.CharField(max_length=255)                     
-    staff_no = models.CharField(unique=True, max_length=50)          
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+    full_name = models.CharField(max_length=255,null=True, blank=True)
+    staff_no = models.CharField(unique=True, max_length=50,null=True, blank=True)
 
     class Meta:
         managed = True
@@ -39,147 +49,191 @@ class InstructorProfile(models.Model):
 
 class StudentProfile(models.Model):
     student_profile_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
-    full_name = models.CharField(max_length=255)                     
-    student_no = models.CharField(unique=True, max_length=50)        # NOT NULL
-    locked_at = models.DateTimeField(null=True, blank=True)
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+    full_name = models.CharField(max_length=255)
+    student_no = models.CharField(unique=True, max_length=50)
+    locked_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = 'student_profile'
 
-
-# -------------------- COURSE --------------------
+"""
+Courses
+"""
 class Course(models.Model):
-    course_id = models.AutoField(primary_key=True)
-    code = models.CharField(unique=True, max_length=20)             
-    title = models.CharField(max_length=255)                        
-    status = models.CharField(max_length=50)                       
-    owner_instructor = models.ForeignKey(
-        InstructorProfile,
-        on_delete=models.PROTECT                                    
-    )
-    credits = models.IntegerField(null=True, blank=True)             
-    director = models.CharField(max_length=50, null=True, blank=True) 
-    description = models.TextField(null=True, blank=True)
+    class CourseStatus(models.TextChoices):
+        ACTIVE = "Active", "ACTIVE"
+        INACTIVE = "Inactive", "INACTIVE"
+        DRAFT = "Draft", "DRAFT"
+    
+    course_id = models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=True)
+    title = models.CharField(max_length=255,null=True, blank=True)
+    status = models.CharField(max_length=50, choices=CourseStatus.choices, default=CourseStatus.ACTIVE)
+    owner_instructor = models.ForeignKey('InstructorProfile', models.DO_NOTHING,  null=True, blank=True,)
+    credits = models.PositiveIntegerField(blank=False, null=True, default=30,  editable=False,)
+    description = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = 'course'
 
+    def save(self, *args, **kwargs):
+        if not self.course_id:
+            # ensure uniqueness: regenerate if collision occurs
+            new_id = generate_custom_id()
+            while Course.objects.filter(course_id=new_id).exists():
+                new_id = generate_custom_id()
+            self.course_id = new_id
+        super().save(*args, **kwargs)
+
 
 class CourseDraft(models.Model):
-    draft_id = models.AutoField(primary_key=True)
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, null=True, blank=True)
-    title = models.CharField(max_length=255)                         
-    outline_json = models.JSONField(null=True, blank=True)           
-    created_by = models.ForeignKey(InstructorProfile, on_delete=models.DO_NOTHING)  
-    is_selected = models.BooleanField(default=False)                 
+    draft_id = models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=False)
+    course = models.ForeignKey(Course, models.DO_NOTHING, blank=True, null=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    outline_json = models.JSONField(blank=True, null=True)
+    created_by = models.ForeignKey('InstructorProfile', models.DO_NOTHING, null=True, blank=True,db_column='created_by')
+    is_selected = models.BooleanField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
         db_table = 'course_draft'
 
-
-# -------------------- LESSON --------------------
-class Lesson(models.Model):
-    lesson_id = models.AutoField(primary_key=True)
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING) 
-    title = models.CharField(max_length=255)                        
-    description = models.TextField(null=True, blank=True)
-    objectives = models.TextField(null=True, blank=True)
-    duration_weeks = models.IntegerField(null=True, blank=True)
-    status = models.CharField(max_length=50, default='draft')        
-    is_active = models.BooleanField(default=True)                  
-    created_by = models.ForeignKey(
-        InstructorProfile,
-        on_delete=models.DO_NOTHING,
-        db_column='created_by'
-    )                                                            
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        managed = True
-        db_table = 'lesson'
-
-
-class LessonPrerequisite(models.Model):
-    id = models.AutoField(primary_key=True)
-    lesson = models.ForeignKey(
-        Lesson, on_delete=models.DO_NOTHING, related_name='prereqs_for'
-    )
-    prereq_lesson = models.ForeignKey(
-        Lesson, on_delete=models.DO_NOTHING, related_name='is_prereq_of'
-    )
-
-    class Meta:
-        managed = True
-        db_table = 'lesson_prerequisite'
-        unique_together = (('lesson', 'prereq_lesson'),)           
-
-    def clean(self):
-        # enforce CHECK (lesson_id <> prereq_lesson_id)
-        if self.lesson_id and self.prereq_lesson_id and self.lesson_id == self.prereq_lesson_id:
-            raise ValidationError("A lesson cannot be a prerequisite of itself.")
-
-
-# -------------------- CLASSROOM --------------------
-class Classroom(models.Model):
-    id = models.AutoField(primary_key=True)                        
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)      
-    instructor = models.ForeignKey(InstructorProfile, on_delete=models.DO_NOTHING)
-    title = models.CharField(max_length=255)                         
-    duration_weeks = models.IntegerField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)                     
-    capacity = models.IntegerField(null=True, blank=True)             
-    day_of_week = models.CharField(max_length=20, choices=DAY_CHOICES) 
-    time_start = models.TimeField()                                
-    time_end = models.TimeField()                                    
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        managed = True
-        db_table = 'classroom'
-        unique_together = (('lesson', 'day_of_week', 'time_start', 'time_end'),)
-
-    def clean(self):
-        if self.time_start and self.time_end and not (self.time_start < self.time_end):
-            raise ValidationError("time_start must be < time_end")
-
-
-# -------------------- ENROLLMENTS --------------------
-class LessonEnrollment(models.Model):
-    id = models.AutoField(primary_key=True)
-    lesson = models.ForeignKey(Lesson, on_delete=models.DO_NOTHING)
-    student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING)
-    enrolled_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        managed = True
-        db_table = 'lesson_enrollment'
-        unique_together = (('lesson', 'student'),)                   
-
-
-class ClassroomEnrollment(models.Model):
-    id = models.AutoField(primary_key=True)
-    classroom = models.ForeignKey(Classroom, on_delete=models.DO_NOTHING)
-    student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING)
-    enrolled_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        managed = True
-        db_table = 'classroom_enrollment'
-        unique_together = (('classroom', 'student'),)              
+    def save(self, *args, **kwargs):
+        if not self.draft_id:
+            # ensure uniqueness: regenerate if collision occurs
+            new_id = generate_custom_id()
+            while CourseDraft.objects.filter(draft_id=new_id).exists():
+                new_id = generate_custom_id()
+            self.draft_id = new_id
+        super().save(*args, **kwargs)
 
 
 class Enrollment(models.Model):
     enrollment_id = models.AutoField(primary_key=True)
-    student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING, null=True, blank=True)
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, null=True, blank=True)
+    student = models.ForeignKey('StudentProfile', models.DO_NOTHING, blank=True, null=True)
+    course = models.ForeignKey(Course, models.DO_NOTHING, blank=True, null=True)
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
         db_table = 'enrollment'
         unique_together = (('student', 'course'),)
+
+"""
+Lessons 
+"""
+
+class Lesson(models.Model):
+    class LessonStatus(models.TextChoices):
+        ACTIVE = "Active", "ACTIVE"
+        INACTIVE = "Inactive", "INACTIVE"
+        ARCHIVED = "Archived", "ARCHIVED"
+    class DurationWeeks(models.IntegerChoices):
+        TWO = 2, "2"
+        THREE = 3, "3"
+        FOUR = 4 , "4"
+    lesson_id =  models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=False)
+    course = models.ForeignKey(Course, models.DO_NOTHING, null=True, blank=True,)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(blank=True, null=True)
+    credits = models.PositiveIntegerField(blank=True, null=True, default=0)
+    objectives = models.TextField(blank=True, null=True)
+    duration_weeks = models.PositiveIntegerField(blank=True, null=True, choices=DurationWeeks.choices, default=DurationWeeks.FOUR)
+    status = models.CharField(max_length=50, choices=LessonStatus.choices, default=LessonStatus.ACTIVE)
+    #is_active = models.BooleanField(null=True, blank=True, default=True)
+    created_by = models.ForeignKey(InstructorProfile, models.DO_NOTHING,null=True, blank=True, db_column='created_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'lesson'
+
+    def save(self, *args, **kwargs):
+        if not self.lesson_id:
+            # ensure uniqueness: regenerate if collision occurs
+            new_id = generate_custom_id()
+            while Lesson.objects.filter(lesson_id=new_id).exists():
+                new_id = generate_custom_id()
+            self.lesson_id = new_id
+        super().save(*args, **kwargs)
+
+
+class LessonEnrollment(models.Model):
+    id = models.BigAutoField(primary_key=True) 
+    #pk = models.CompositePrimaryKey('lesson_id', 'student_id')
+    lesson = models.ForeignKey(Lesson, models.DO_NOTHING, null=True, blank=True,)
+    student = models.ForeignKey('StudentProfile', models.DO_NOTHING, null=True, blank=True,)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'lesson_enrollment'
+
+
+class LessonPrerequisite(models.Model):
+    id = models.BigAutoField(primary_key=True) 
+    #lesson_id = models.ForeignKey(Lesson, models.DO_NOTHING)
+    #pk = models.CompositePrimaryKey('lesson_id', 'prereq_lesson_id')
+    lesson = models.ForeignKey(Lesson, models.DO_NOTHING, null=True, blank=True,)
+    prereq_lesson = models.ForeignKey(Lesson, models.DO_NOTHING, null=True, blank=True, related_name='lessonprerequisite_prereq_lesson_set')
+
+    class Meta:
+        managed = True
+        db_table = 'lesson_prerequisite'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lesson", "prereq_lesson"], name="uq_lesson_prereq"
+            )
+        ]
+
+"""
+Classroom
+"""
+class Classroom(models.Model):
+    
+    classroom_id = models.CharField(
+        primary_key=True, max_length=6, unique=True,
+        default=generate_custom_id, editable=False
+    )
+ 
+    lesson = models.ForeignKey("Lesson", models.DO_NOTHING, blank=True, null=True)
+    instructor = models.ForeignKey("InstructorProfile", models.DO_NOTHING, blank=True, null=True)
+
+    duration_minutes = models.PositiveIntegerField(blank=True, null=True)  # int is plenty
+    is_active = models.BooleanField(default=True)
+    capacity = models.PositiveIntegerField(
+        default=10, validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
+    day_of_week = models.CharField(max_length=20, blank=True, null=True)
+    time_start = models.TimeField(blank=True, null=True)
+    time_end = models.TimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+
+    class Meta:
+        managed = True
+        db_table = "classroom"
+        unique_together = (("lesson", "day_of_week", "time_start", "time_end"),)
+
+    def save(self, *args, **kwargs):
+        if not self.classroom_id:
+            new_id = generate_custom_id()
+            while Classroom.objects.filter(classroom_id=new_id).exists():
+                new_id = generate_custom_id()
+            self.classroom_id = new_id #weirdass why not reflected??
+        super().save(*args, **kwargs)
+
+class ClassroomEnrollment(models.Model):
+    id = models.BigAutoField(primary_key=True) 
+    #pk = models.CompositePrimaryKey('classroom_id', 'student_id')
+    classroom = models.ForeignKey(Classroom, models.DO_NOTHING,null=True, blank=True,)
+    student = models.ForeignKey('StudentProfile', models.DO_NOTHING,null=True, blank=True,)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'classroom_enrollment'
+
