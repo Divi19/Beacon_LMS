@@ -30,7 +30,11 @@ const handleToggleLessons = async () => {
       const res = await api.get(`/instructor/courses/${courseId}/lessons/`);
       console.log("Lessons API response", res.data);
 
-      setLessons(res.data);
+      setLessons(
+        res.data.sort((a, b) => {
+          return a.title.localeCompare(b.title, undefined, {numeric: true});
+        })
+      );
     } catch (err) {
       console.error("Error fetching lessons", err);
       setLessons([]);
