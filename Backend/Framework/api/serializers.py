@@ -40,6 +40,7 @@ class LoginSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
     
+ 
 class CurrentUserSerializer(serializers.ModelSerializer):
     instructor_profile_id = serializers.SerializerMethodField() #An added field
     instructor_full_name = serializers.SerializerMethodField()
@@ -106,13 +107,16 @@ class StudentSerializer(serializers.ModelSerializer):
         POST student creation (registration), invoked implicitly using .save() in views
         """
         #validated data contains email and password 
+        title = validated_data.pop('title', None)
         email = validated_data.pop('email', None) 
+        password = validated_data.pop('password') #TODO: Is it password or password hash? 
+        first_name = validated_data.pop('first_name', None)
+        last_name = validated_data.pop('last_name', None)
         role = validated_data.pop('role', 'student')
-        raw_pwd = validated_data.pop('password')
         
         user = User.objects.create(
             email = email,
-            password_hash=raw_pwd, #plain password 
+            password_hash=password, #plain password 
             role=role #Set the role or default to student 
         )
         
