@@ -323,6 +323,7 @@ class LessonBulkCreateView(APIView):
                     objectives=objectives,
                     duration_weeks=duration_weeks,
                     status=status_str,
+                    designer_id = inst,
                     created_by=inst,
                     created_at=now,                    # bulk_create won’t set auto_now_add
                 ))
@@ -336,12 +337,11 @@ class LessonPrereqView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
-    def get(self, request, course_id):
+    def get(self, request, lesson_id):
         """
         GET method. Retrieving Prereq lessons 
         """
-        course = get_object_or_404(Course, course_id=course_id)
-        lessons = LessonPrerequisite.objects.filter(lesson = lesson).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
+        lessons = LessonPrerequisite.objects.filter(lesson_id = lesson_id).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
         data = LessonSerializer(lessons, many=True).data
         return Response(data)
 
@@ -447,16 +447,31 @@ class StudentsEnrolledView(APIView):
 """
 Student Part
 """
+
+class studentRegister(APIView):
+    permission_classes=[AllowAny]
+    authentication_classes = []
+    def post(self, request): 
+        serializer = StudentSerializer(
+            data = request.data, 
+        )
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save() 
+        return Response(StudentSerializer(student).data, status=201)
+
 class StudentEnrolledCourses(APIView):
-    permission_classes = [AllowAny]
-    def get(self, request, student_profile_id):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    
+    def get(self, request):
         """
         Fetching all enrolled course 
         - Look for the student 
         - Reverse relationship to grab enrolled courses
         - Parse and return json 
         """
-        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
         courses = Course.objects.filter(status=Course.CourseStatus.ACTIVE, enrollment__student=student).distinct() 
         output = [{
                 "course_id": course.course_id,
@@ -468,19 +483,12 @@ class StudentEnrolledCourses(APIView):
                 for course in courses]
         return Response(output, status=status.HTTP_200_OK)
 
-class StudentUnenrolledCourses(APIView):
-    permission_classes = [AllowAny]
-    def get(self, request, student_profile_id):
-        student = get_object_or_404(StudentProfile, student_profile_id = student_profile_id)
-        enrolled_ids = student.courses.values_list("pk", flat = True) #gives list of pk values (course_ids)
-        res = Course.objects.exclude(pk__in=enrolled_ids) #Exclude by pk
-        data = CourseSerializer(res, many=True).data
-        return Response(data)
-    
 class StudentEnroll(APIView):
-    permission_classes=[AllowAny]
-    def post(self, request, student_profile_id):
-        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]     
+    def post(self, request):
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
         course_id = request.data.get("course_id")
         if not course_id:
             return Response({"detail": "course_id is required"})
@@ -496,65 +504,18 @@ class StudentEnroll(APIView):
         student.courses.add(course)
         return Response(CourseSerializer(course).data)
 
-
-
-"""
-class StudentEnrolledCourses(APIView):
-    def get(self, student_id):
-        #Grab current student if 
-        try:
-            #Checking if the student exists.
-            student = StudentProfile.objects.get(pk=student_id)
-        except StudentProfile.DoesNotExist:
-            return Response({'error': 'Student not found'}, status=404)
-
-        enrolled_courses = Course.objects.filter(enrollments__student=student)
-        serializer = CourseSerializer(enrolled_courses, many=True)
-        return Response(serializer.data, status=200)
-
-
 class StudentUnenrolledCourses(APIView):
-    def get(self, student_id):
-        try:
-            student = StudentProfile.objects.get(pk=student_id)
-        except StudentProfile.DoesNotExist:
-            return Response({'error': 'Student not found'}, status=404)
-
-        unenrolled_courses = Course.objects.exclude(enrollments__student=student)
-        serializer = CourseSerializer(unenrolled_courses, many=True)
-        return Response(serializer.data, status=200)
-
-    def post(self, request, student_id):
-
-        course_id = request.data.get("course_id")
-
-        try:
-            student = StudentProfile.objects.get(pk=student_id)
-            course = Course.objects.get(course_id=course_id)
-        except StudentProfile.DoesNotExist:
-            return Response({'error': 'Student not found'}, status=404)
-        except Course.DoesNotExist:
-            return Response({'error': 'Course not found'}, status=404)
-
-        enrollment, created = Enrollment.objects.get_or_create(student=student, course=course)
-        if not created: #If the way it's fetched is not created 
-            return Response({'error': 'Already enrolled'}, status=400)
-
-        serializer = EnrollmentSerializer(enrollment)
-        
-        return Response(serializer.data, status=201)
-"""
-
-class StudentUnenrolledCourses(APIView):
-    permission_classes = [AllowAny]
-    def get(self, request, student_profile_id):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request):
+        user = self.request.user
         """
         Fetching all unenrolled course 
         - Look for the student 
         - Reverse relationship to grab unenrolled courses
         - Parse and return json 
         """
-        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        student = get_object_or_404(StudentProfile, user=user)
         #Grab all courses that are not enrolled using backward relationship
         courses = Course.objects.filter(status=Course.CourseStatus.ACTIVE).exclude(enrollment__student=student).distinct() #Preventing duplicate courses
         output = [{
@@ -566,13 +527,14 @@ class StudentUnenrolledCourses(APIView):
             for course in courses]
         return Response(output, status=status.HTTP_200_OK)
     
-    def post(self, request, student_profile_id):
+    def post(self, request):
         """
         Enroll a student
         - Look for the student 
         - Create new Enrollment objects
         """
-        student = get_object_or_404(StudentProfile, pk=student_profile_id)
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
         #Checking if course id is present and if student has already enrolled 
         serializer = EnrollmentSerializer(
             data=request.data,
@@ -589,19 +551,22 @@ class StudentUnenrolledClassrooms(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication] 
     """
-    permission_classes = [AllowAny]
-    def get(self, request, student_profile_id, lesson_id, **kwargs):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request, lesson_id, **kwargs):
         """
         GET method to retrieve unenrolled classrooms
         """
-        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
         lesson = Lesson.objects.get(lesson_id = lesson_id)
         unenrolled_classrooms = Classroom.objects.filter(lesson=lesson, is_active=True).exclude(classroomenrollment__student=student).distinct()
         serializer = ClassroomSerializer(unenrolled_classrooms, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
     
-    def post(self, request, student_profile_id, lesson_id, classroom_id):
-        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+    def post(self, request, lesson_id, classroom_id):
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
         # sanity: ensure the classroom belongs to the lesson in the URL
         classroom = get_object_or_404(Classroom, classroom_id=classroom_id, lesson__lesson_id=lesson_id)
 
@@ -613,11 +578,12 @@ class StudentUnenrolledClassrooms(APIView):
         enrollment = ser.save()
         return Response(ClassroomEnrollmentSerializer(enrollment).data, status=201)
     
-    def delete(self, request, student_profile_id, lesson_id, classroom_id, **kwargs):
+    def delete(self, request, lesson_id, classroom_id, **kwargs):
         """
         Idempotent: delete if exists; 204 even if nothing to delete.
         """
-        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
         # Optional: ensure the classroom belongs to the lesson in the URL
         classroom = get_object_or_404(Classroom, classroom_id=classroom_id, lesson__lesson_id=lesson_id)
 
@@ -625,29 +591,13 @@ class StudentUnenrolledClassrooms(APIView):
         ClassroomEnrollment.objects.filter(student=student, classroom=classroom).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 """
-#Redundant
-class StudentEnrolledClassrooms(APIView): 
-    permission_classes = [AllowAny]
-    def get(self, request, student_profile_id, pk):
-        student = get_object_or_404(StudentProfile, student_profile_id=student_profile_id)
-        lesson = Lesson.objects.get(lesson_id = pk)
-        enrolled_classrooms = Classroom.objects.filter(lesson=lesson,is_active = True).exclude(classroomenrollment__student=student).distinct()
-        output =[{
-                "day_of_week": classroom.day_of_week,
-                "time_start": classroom.time_start,
-                "time_end": classroom.time_end,
-                "instructor": classroom.instructor.full_name,
-                    } for classroom in enrolled_classrooms]
-        return Response(output,  status=status.HTTP_200_OK)
-"""
-"""
 Shared
 """
 #For getting a single course, no list and no post method
 @method_decorator(csrf_exempt, name='dispatch')
 class CourseDetailView(APIView):
-    #permission_classes = [IsAuthenticated]
-    #authentication_classes = [CustomJWTAuthentication] 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
     def get(self, request, course_id):
         course = get_object_or_404(
             Course.objects.select_related('owner_instructor')
