@@ -448,7 +448,7 @@ class StudentsEnrolledView(APIView):
 Student Part
 """
 
-class studentRegister(APIView):
+class StudentRegister(APIView):
     permission_classes=[AllowAny]
     authentication_classes = []
     def post(self, request): 

@@ -49,6 +49,8 @@ urlpatterns = [
     
     #Students login TODO
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
+    #Student registration
+    path("student/register/", StudentRegister.as_view()),
     #Student Courses
     path("student/<int:student_profile_id>/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
     path("student/<int:student_profile_id>/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
