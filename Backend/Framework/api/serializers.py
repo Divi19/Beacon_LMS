@@ -94,11 +94,14 @@ class StudentSerializer(serializers.ModelSerializer):
     #password for student creation
     email = serializers.EmailField(write_only = True)
     password = serializers.CharField(write_only = True) 
-    user = UserSerializer() 
+    first_name = serializers.CharField(write_only = True) 
+    last_name = serializers.CharField(write_only = True) 
+    title = serializers.CharField(write_only = True)  
+    #user = UserSerializer() 
 
     class Meta:
         model = StudentProfile
-        fields = ['student_profile_id', 'user', 'full_name', 'student_no', 'locked_at', 'password', 'email']
+        fields = ['first_name', 'last_name', 'title', 'locked_at', 'password', 'email']
         read_only_fields = ['student_profile_id', 'student_no']
 
     #during post 
@@ -106,12 +109,8 @@ class StudentSerializer(serializers.ModelSerializer):
         """
         POST student creation (registration), invoked implicitly using .save() in views
         """
-        #validated data contains email and password 
-        title = validated_data.pop('title', None)
         email = validated_data.pop('email', None) 
         password = validated_data.pop('password') #TODO: Is it password or password hash? 
-        first_name = validated_data.pop('first_name', None)
-        last_name = validated_data.pop('last_name', None)
         role = validated_data.pop('role', 'student')
         
         user = User.objects.create(
