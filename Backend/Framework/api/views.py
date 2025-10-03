@@ -363,6 +363,56 @@ class LessonDetailView(APIView):
 """
 Student Part
 """
+
+class StudentRegister(APIView):
+    permission_classes=[AllowAny]
+    authentication_classes = []
+    def post(self, request): 
+        serializer = StudentSerializer(
+            data = request.data, 
+        )
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save() 
+        return Response(StudentSerializer(student).data, status=201)
+
+class StudentLogin(APIView): 
+    """
+    Posting login request. 
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = [] #Bypassing authentication
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user'] #in the post json
+        token = RefreshToken.for_user(user) #Creates a token
+
+        student = (
+            StudentProfile.objects
+            .select_related("user")
+            .filter(user=user)
+            .first()
+        )
+        if not student:
+            # Auth succeeded, but user lacks instructor privileges
+            return Response({"error": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        
+        payload = {
+            "access": str(token.access_token),
+            "refresh": str(token),
+            "user": {
+                "student_profile_id": student.student_profile_id,
+                "first_name": student.first_name,
+                "last_name": student.last_name,
+                "role": "student",
+                "email": user.email,
+                "user_id": user.user_id,
+            },
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+
 class StudentEnrolledCourses(APIView):
     permission_classes = [AllowAny]
     def get(self, request, student_profile_id):
