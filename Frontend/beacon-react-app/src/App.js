@@ -28,7 +28,12 @@ import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLess
 
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
-  
+import StudentLessonEnroll from "./pages/Student/StudentLessonEnroll/StudentLessonEnroll";
+import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLessonDetail";
+import StudentLogin from "./pages/Student/Student Login/StudentLogin";
+import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
+import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
+
 export default function App(){
   const [details, setDetails] = useState([]);
 
@@ -53,10 +58,16 @@ export default function App(){
 
     <Routes>
       <Route path="/" element={<EntryPage />} />
-      <Route path="/student/my-courses" element={<StudentMyCourses />} />
+      <Route path="/student/my-courses" element={<StudentEnrollmentPage />} />
       <Route path="/student/enrollment" element={<StudentEnrollment />} />
       <Route path="/student/enrollment/:courseId" element={<CourseDetail />} />
       <Route path="/student/course/:courseId" element={<CourseDetailEnrolled />} />
+      <Route path="/student/login" element={<StudentLogin/>} />
+      <Route path="/student/signup" element={<StudentSignUp/>} />
+
+
+      {/* Instructor Side */}
+      {/* Courses */}
       <Route path="/instructor/courses/new" element={<InstructorCourseCreation />} />
       <Route path="/instructor/course-create" element={<InstructorCourseCreate />} />
       <Route path="/instructor/course-list" element={<InstructorCourseList />} />
