@@ -67,8 +67,9 @@
     display: flex;
     justify-content: flex-end;
     margin-top: 18px;
+    justify-content: space-between;
   }
-  
+
   .enrollBtn {
     padding: 8px 28px;
     border-radius: 30px;

@@ -21,30 +21,31 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-   
+    path('api/', include('api.urls')),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     #Fetch current logged in user
     path("user/", CurrentUser.as_view(), name="current-user"),
 
     #Course details
-    path('courses/frontend/<str:pk>/', CourseDetailView.as_view(), name="courses-detail"),
+    path('courses/<str:course_id>/detail/', CourseDetailView.as_view(), name="courses-detail"),
     #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
     path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
-
     
     #Instructors
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #Instructors Courses
     path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
+    path("instructor/courses/<str:course_id>/", ActiveClassroom.as_view()),
     #Instructors Classrooms
     path("instructor/<str:lesson_id>/classrooms/", ClassroomView.as_view(), name="classrooms"),
-    #Instructors Lessons 
-    path('courses/<str:course_id>/lessons/', LessonsView.as_view(), name="course-lessons"),
-    path('lessons/<str:lesson_id>/', LessonDetailView.as_view(), name="lesson-detail"),
-
-
-
+    #Instructor Lessons 
+    path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
+    path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
+    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
+    path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/create/", LessonsView.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/prerequisites/bulk-create/", LessonPrereqBulkCreateView.as_view()),
+    
     
     #Students login TODO
     path("student/login/", StudentLogin.as_view(), name="student-login"),

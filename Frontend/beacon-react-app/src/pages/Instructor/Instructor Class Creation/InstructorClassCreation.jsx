@@ -15,11 +15,10 @@ export default function InstructorClassroomCreate() {
    */
   const { courseId, lessonId } = useParams();
   const [form, setForm] = useState({
-    title: "",
-    day_of_week: "", //day_of_week
-    time_start: "", //time_start
-    time_end: "", //time_end
-    // duration_weeks: "",
+    classroom_id:"",
+    day: "", //day_of_week
+    start_time: "", //time_start
+    end_time: "", //time_end
     capacity: "", //capacity 
   });
   const [submitting, setSubmitting] = useState(false);
@@ -27,14 +26,14 @@ export default function InstructorClassroomCreate() {
 
   // duration in minutes based on time inputs
   const durationMinutes = useMemo(() => {
-    if (!form.time_start || !form.time_end) return 0;
-    const [sh, sm] = form.time_start.split(":").map(Number);
-    const [eh, em] = form.time_end.split(":").map(Number);
+    if (!form.start_time || !form.end_time) return 0;
+    const [sh, sm] = form.start_time.split(":").map(Number);
+    const [eh, em] = form.end_time.split(":").map(Number);
     const start = sh * 60 + sm;
     const end = eh * 60 + em;
     const d = end - start;
     return d > 0 ? d : 0;
-  }, [form.time_start, form.time_end]);
+  }, [form.start_time, form.end_time]);
 
   const durationLabel = useMemo(() => {
     if (!durationMinutes) return "Duration (calculated from time)";
@@ -63,11 +62,9 @@ export default function InstructorClassroomCreate() {
     setError("");
     // simple client validation
     if (
-      !form.title ||
-      !form.day_of_week ||
-      !form.time_start ||
-      !form.time_end ||
-      // !form.duration_weeks ||
+      !form.day ||
+      !form.start_time ||
+      !form.end_time ||
       !form.capacity
     ) {
       setError("Please fill in all fields.");
@@ -88,22 +85,21 @@ export default function InstructorClassroomCreate() {
 
       // Build the classroom record to save (shape matches LessonDetail renderer)
       // local storage for frontend simulation to be replaced by backend. until setshowsuccess.
+      const code = (form.classroom_id || "").trim();
       const newClassroom = {
         //id: form.classroom_id || Math.random().toString().slice(2, 8),
-        title: form.title,
-        day: form.day_of_week,
-        start_time: form.time_start,
-        end_time: form.time_end,
-        // duration_weeks: Number(durationMinutes),
+        day: form.day,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        duration_minutes: Number(durationMinutes),
         capacity: Number(form.capacity),
-        // duration_minutes: durationMinutes,
+        ...(code ? { classroom_id: code } : {}),
       };
       console.log("payload", newClassroom);
       await api.post(`/instructor/${lessonId}/classrooms/`, newClassroom);
       // Show successfull creation popup
       setShowSuccess(true);
     } catch (err) {
-      console.error("API Error:", err)
       const apiMsg =
             err?.response?.data?.detail ||
             (Array.isArray(err?.response?.data?.non_field_errors) && err.response.data.non_field_errors[0]) ||
@@ -127,25 +123,10 @@ export default function InstructorClassroomCreate() {
             <h2 className={s.formTitle}>Classroom Details</h2>
 
             <form className={s.form} onSubmit={handleSubmit} noValidate>
-
               <div className={s.row}>
-                <label htmlFor="title" className={s.label}>
-                  Classroom Title:
+                <label htmlFor="classroom_id" className={s.label}>
+                  Classroom ID:
                 </label>
-                <input
-                  id="title"
-                  name="title"
-                  type="text"
-                  className={s.input}
-                  placeholder="Classroom Title"
-                  value={form.title}
-                  onChange={onChange}
-                  required
-                />
-              </div>
-
-              {/* <div className={s.row}>
-                <span className={s.label}> Classroom Duration:</span>
                 <input
                   id="classroom_id"
                   name="classroom_id"
@@ -156,7 +137,7 @@ export default function InstructorClassroomCreate() {
                   onChange={onChange}
                   required
                 />
-              </div> */}
+              </div>
 
               <div className={s.row}>
                 <span className={s.label}>Classroom Duration:</span>
@@ -170,15 +151,15 @@ export default function InstructorClassroomCreate() {
               </div>
 
               <div className={s.row}>
-                <label htmlFor="day_of_week" className={s.label}>
+                <label htmlFor="day" className={s.label}>
                   Classroom Day:
                 </label>
                 <div className={s.selectWrap}>
                   <select
-                    id="day_of_week"
-                    name="day_of_week"
+                    id="day"
+                    name="day"
                     className={s.select}
-                    value={form.day_of_week}
+                    value={form.day}
                     onChange={onChange}
                     required
                   >
@@ -204,18 +185,18 @@ export default function InstructorClassroomCreate() {
                 <div className={s.timeRow}>
                   <input
                     type="time"
-                    name="time_start"
+                    name="start_time"
                     className={s.input}
-                    value={form.time_start}
+                    value={form.start_time}
                     onChange={onChange}
                     required
                   />
                   <span className={s.toText}>To</span>
                   <input
                     type="time"
-                    name="time_end"
+                    name="end_time"
                     className={s.input}
-                    value={form.time_end}
+                    value={form.end_time}
                     onChange={onChange}
                     required
                   />

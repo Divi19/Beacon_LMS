@@ -12,10 +12,10 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(20px, 3vw, 35px);
-  color: #e4973f; 
+  color: #e4973f;
 }
 .formContainer {
-  background: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%); 
+  background: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%);
   padding: 30px;
   border-radius: 20px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
@@ -32,10 +32,8 @@
 .label {
   width: 150px;
   font-weight: 500;
-  font-size: 16px;
-  text-align: left;
+  text-align: right;
   margin-right: 20px;
-  color:#883b0c;
 }
 
 .input {
@@ -139,6 +137,11 @@ textarea.input {
   flex-wrap: wrap;
 }
 
+.label {
+  font-weight: 500;
+  font-size: 16px;
+}
+
 .lessonList {
   display: flex;
   gap: 8px;
@@ -151,7 +154,6 @@ textarea.input {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 14px;
-  color: gray;
 }
 
 .addButton {

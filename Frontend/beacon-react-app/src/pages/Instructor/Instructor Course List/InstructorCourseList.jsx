@@ -115,7 +115,8 @@ export default function InstructorCourseList() {
                 }
                 style={{ cursor: "pointer" }}
               >
-                <h2 className={s.cardTitle}>{course.course_title}</h2>
+                <h2 className={s.cardTitle}>{course.course_title}  {" "}
+                {"["}{statusText}{"]"}</h2>
 
                 <div className={s.cardDesc1}>
                   <div className={s.leftGroup}>
@@ -125,8 +126,7 @@ export default function InstructorCourseList() {
                     </span>
                   </div>
                   <span>
-                    <strong>{course.course_credits}</strong> Credits —{" "}
-                    {statusText}
+                    <strong>{course.course_credits}</strong> Credits 
                   </span>
                 </div>
 

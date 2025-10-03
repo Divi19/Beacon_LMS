@@ -1,29 +1,23 @@
 import { Routes, Route } from "react-router-dom";
 import EntryPage from "./pages/EntryPage/EntryPage";
-// import StudentMyCourses from "./pages/StudentMyCourses/StudentMyCourses";
-// import CourseDetailEnrolled from "./pages/StudentMyCourses/CourseDetailEnrolled";
-// import StudentEnrollment from "./pages/StudentEnrollment/StudentEnrollment";
-// import CourseDetail from "./pages/StudentEnrollment/CourseDetail";
-// import InstructorCourseCreation from "./pages/InstructorCourseCreation";
-// import InstructorCourseCreate from "./pages/Instructor Course Create/InstructorCourseCreate";
-// import InstructorCourseList from "./pages/Instructor Course List/InstructorCourseList";
-// import InstructorCourseDescription from "./pages/InstructorCourseDescription/InstructorCourseDescription";
-// import InstructorLessonCreation from "./pages/InstructorLessonCreation";
-import InstructorLessonCreate from "./pages/Instructor Lesson Create/InstructorLessonCreate";
-import InstructorLessonList from "./pages/Instructor Lesson List/InstructorLessonList";
-import InstructorLessonCreation from "./pages/Instructor Lesson Creation/InstructorLessonCreation"
 import StudentMyCourses from "./pages/Student/StudentMyCourses/StudentMyCourses";
 import CourseDetailEnrolled from "./pages/Student/StudentMyCourses/CourseDetailEnrolled";
 import StudentEnrollment from "./pages/Student/StudentEnrollment/StudentEnrollment";
+
 import CourseDetail from "./pages/Student/StudentEnrollment/CourseDetail";
+
 import InstructorCourseCreation from "./pages/Instructor/Instructor Course Creation/InstructorCourseCreation";
 import InstructorCourseCreate from "./pages/Instructor/Instructor Course Create/InstructorCourseCreate";
 import InstructorCourseList from "./pages/Instructor/Instructor Course List/InstructorCourseList";
-import InstructorCourseDescription from "./pages/Instructor/InstructorCourseDescription/InstructorCourseDescription";
+import InstructorCourseDescription from "./pages/Instructor/Instructor Course Description/InstructorCourseDescription";
 import InstructorLogin from "./pages/Instructor/Instructor Login/InstructorLogin";
+
 import InstructorLessonDetail from "./pages/Instructor/Instructor Lesson Detail/InstructorLessonDetail";
+import InstructorLessonCreation from "./pages/Instructor/Instructor Lesson Creation/InstructorLessonCreation";
+import InstructorLessonCreate from "./pages/Instructor/Instructor Lesson Create/InstructorLessonCreate";
+import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/InstructorLessonList";
+
 import InstructorClassCreation from "./pages/Instructor/Instructor Class Creation/InstructorClassCreation"; 
-import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLessonDetail"
 
 
 import axios from 'axios';
@@ -57,6 +51,7 @@ export default function App(){
         ))}
 
     <Routes>
+      {/* Student Side */}
       <Route path="/" element={<EntryPage />} />
       <Route path="/student/my-courses" element={<StudentEnrollmentPage />} />
       <Route path="/student/enrollment" element={<StudentEnrollment />} />
@@ -72,16 +67,23 @@ export default function App(){
       <Route path="/instructor/course-create" element={<InstructorCourseCreate />} />
       <Route path="/instructor/course-list" element={<InstructorCourseList />} />
       <Route path="/instructor/course/:courseId" element={<InstructorCourseDescription />} />
-      <Route path="/instructor/course/:courseId/lessons" element={<InstructorLessonCreation />} />
+      <Route path="/instructor/login" element={<InstructorLogin/>} />
+      
+      {/* Lessons */}
+      <Route path="/instructor/course/:courseId/lesson/:lessonId" element={<InstructorLessonDetail />}/>
+      <Route path="/student/course/:courseId/lesson/:lessonId" element={<StudentLessonDetail />}/>
+      {/*<Route path="/instructor/course/:courseId/lessons/:lessonId" element={<InstructorLessonCreation />} />*/}
       <Route path="/instructor/course/:courseId/lesson-list" element={<InstructorLessonList />} />
+      <Route path="/instructor/course/:courseId/lesson-creation/:lessonId" element={<InstructorLessonCreate />} /> 
+
       {/* <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} /> */}
       {/* Changed from Isabella version */}
-      <Route path="/instructor/course/:courseId/lesson-creation" element={<InstructorLessonCreate />} /> 
-      
-      <Route path="/instructor/login" element={<InstructorLogin/>} />
-      <Route path="/instructor/course/:courseId/lesson/:lessonId" element={<InstructorLessonDetail />}/>
+
+      {/* Classrooms */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassCreation />}/>
-      <Route path="/student/course/:courseId/lesson/:lessonId" element={<StudentLessonDetail />}/>
+
+      
+
     </Routes>
   </div>
   );

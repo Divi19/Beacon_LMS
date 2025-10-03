@@ -105,7 +105,7 @@
 }
 
 .cardDesc1 span:last-child {
-  margin-right: 10px;
+  margin-right: 30px;
 }
 
 .cardDesc2 {
@@ -117,7 +117,7 @@
 }
 
 .cardDesc2 span:last-child {
-  margin-right: 10px;
+  margin-left: 10px;
 }
 
 .leftGroup {
