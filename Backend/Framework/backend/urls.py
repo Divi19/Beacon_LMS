@@ -47,15 +47,16 @@ urlpatterns = [
 
     
     #Students login TODO
-    path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
-    #Student Courses
-    path("student/<int:student_profile_id>/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
-    path("student/<int:student_profile_id>/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
-    path("student/<int:student_profile_id>/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
+    path("student/login/", StudentLogin.as_view(), name="student-login"),
+    #Student registration
+    path("student/signup/", StudentRegister.as_view(), name="student-register"),
+    #Student Courses(No need student id in path since the JWT Token already identifies the student, safer approach as well)
+    path("student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
+    path("student/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
+    path("student/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
     #Students Classrooms
-    path("student/<int:student_profile_id>/classooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
-    path("student/<int:student_profile_id>/classooms/enrolled/", StudentEnrolledClassrooms.as_view(), name="enrolled-classrooms"),
-    path("student/<int:student_profile_id>/classooms/enroll/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    path("student/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+    path("student/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")
     

@@ -12,18 +12,22 @@ export default function StudentEnrollment() {
   const { isEnrolled } = useEnrollment();
   const navigate = useNavigate();
   //Dummy value
-  const student_id = 2
+  const student_id = localStorage.getItem("studentId")
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [unenrolled, setUnenrolled] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
 
   const fetchCourses = async () => {
+    const token = localStorage.getItem("accessToken");
+
     try {
-      await axios.get(`http://localhost:8000/student/${student_id}/courses/unenrolled/`).then(
-        res => {
-          setUnenrolled(res.data);
+      const res = await axios.get(`http://localhost:8000/student/courses/unenrolled/`,
+        {
+          headers: {Authorization: `Bearer ${token}`,
+        },
         }
-      )
+      );
+          setUnenrolled(res.data);
     } catch (err) {
       console.error("Error fetching unenrolled courses", err);
       alert("Failed to load available courses.");
