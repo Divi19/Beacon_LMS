@@ -614,3 +614,6 @@ class CourseDetailView(APIView):
             "enrolled_count": course.enrolled_count,  
         }
         return Response(output, status=status.HTTP_200_OK)
+    
+
+    
