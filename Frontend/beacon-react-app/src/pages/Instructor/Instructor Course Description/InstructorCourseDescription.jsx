@@ -48,8 +48,8 @@ export default function InstructorCourseDescription() {
    */
   useEffect(() => {
     try {
-      axios
-        .get(`http://localhost:8000/courses/${courseId}/detail/`)
+      api
+        .get(`/courses/${courseId}/detail/`)
         .then((res) => setCourse(res.data))
         .catch(() => setCourse(null));
       
