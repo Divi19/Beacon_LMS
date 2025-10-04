@@ -409,8 +409,8 @@ def test_register_success_creates_user_and_student(api, url, db):
     # Linked User created with same email and plain password stored in password_hash (per your current code)
     user = User.objects.first()
     assert user.email == "student1@example.com"
-    assert user.password_hash == "PlainPw123!"   # NOTE: this mirrors your current implementation
-    assert user.role == "student"  # default set in serializer.create()
+    assert user.password_hash == "PlainPw123!"  
+    assert user.role == "student"  
 
 def test_missing_required_fields(api, url, db):
     # Missing email

@@ -12,15 +12,18 @@ export default function CourseDetail() {
   //const { enroll, isEnrolled } = useEnrollment()
   const [course, setCourse] = useState(null);
   const [submittingId, setSubmittingId] = useState(null);
-  const student_id = 1 
-
+  const token = localStorage.getItem("accessToken");
 
   async function handleEnroll(courseId) {
     try {
       setSubmittingId(courseId);
       await axios.post(
-        `http://localhost:8000/student/${student_id}/courses/enroll/`,
-        { course_id: courseId }
+        `http://localhost:8000/student/courses/enroll/`,
+        { course_id: courseId },
+        {headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
       );
       // success: go to "My Courses"
       navigate("/student/my-courses");
@@ -39,7 +42,9 @@ export default function CourseDetail() {
   }
   
   useEffect(() => {
-    axios.get(`http://localhost:8000/courses/${courseId}/detail/`)
+    axios.get(`http://localhost:8000/courses/${courseId}/detail/`, {
+      headers: {Authorization: `Bearer ${token}`}
+    })
     .then((res) => setCourse(res.data))
     .catch(() => setCourse(null));
   }, [courseId]);
