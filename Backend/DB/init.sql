@@ -110,22 +110,17 @@ CREATE TABLE lesson_prerequisite (
 
 -- CLASSROOM 
 CREATE TABLE classroom (
-  classroom_id    SERIAL PRIMARY KEY,
-  lesson_id       INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
-  instructor_id   INT NOT NULL REFERENCES instructor_profile(instructor_profile_id),
-  title           VARCHAR(255) NOT NULL,
-  duration_weeks  INT,
-  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
-  capacity        INT,
-  -- NEW scheduling fields for day
-  day_of_week     VARCHAR(20) NOT NULL CHECK (
-    day_of_week IN ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')
-  ),
-  time_start      TIME NOT NULL,
-  time_end        TIME NOT NULL,
-  CONSTRAINT chk_class_time_order CHECK (time_start < time_end),
-  created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+  director       VARCHAR(255),
+  classroom_id   VARCHAR(32) PRIMARY KEY,
+  location       VARCHAR(255),
+  duration_weeks INT,
+  capacity       INT,
+  is_online      BOOLEAN NOT NULL DEFAULT FALSE,
+  zoom_link      TEXT,
+  is_active      BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
 
 -- LESSON_ENROLLMENT 
 CREATE TABLE lesson_enrollment (
@@ -169,10 +164,6 @@ ALTER TABLE course_draft
 ALTER TABLE course_draft
   ALTER COLUMN outline_json TYPE JSONB USING outline_json::jsonb;
 
--- avoid duplicate exact sessions for same lesson/day/time
-ALTER TABLE classroom
-  ADD CONSTRAINT uq_lesson_day_time UNIQUE (lesson_id, day_of_week, time_start, time_end);
-
 ---Adding surrogate keys
 -- LESSON_PREREQUISITE: drop composite PK, add id, add UNIQUE
 ALTER TABLE lesson_prerequisite DROP CONSTRAINT pk_lesson_prerequisite;
@@ -213,13 +204,6 @@ CREATE INDEX IF NOT EXISTS idx_lesson_course     ON lesson(course_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_status     ON lesson(status);
 CREATE INDEX IF NOT EXISTS idx_lesson_created_by ON lesson(created_by);
 
--- classroom lookups
-CREATE INDEX IF NOT EXISTS idx_classroom_lesson     ON classroom(lesson_id);
-CREATE INDEX IF NOT EXISTS idx_classroom_instructor ON classroom(instructor_id);
--- classroom timetable lookups
-CREATE INDEX IF NOT EXISTS idx_classroom_day       ON classroom(day_of_week);
-CREATE INDEX IF NOT EXISTS idx_classroom_day_time  ON classroom(day_of_week, time_start);
-
 -- lesson enrollment lookups
 CREATE INDEX IF NOT EXISTS idx_lesson_enr_student ON lesson_enrollment(student_id);
 
@@ -229,6 +213,9 @@ CREATE INDEX IF NOT EXISTS idx_classroom_enr_student ON classroom_enrollment(stu
 -- Sprint 1 course-level enrollment
 CREATE INDEX IF NOT EXISTS idx_enrollment_course  ON enrollment(course_id);
 CREATE INDEX IF NOT EXISTS idx_enrollment_student ON enrollment(student_id);
+
+CREATE INDEX IF NOT EXISTS idx_classroom_active ON classroom(is_active);
+
 
 -- =========================================================
 -- Notes:
