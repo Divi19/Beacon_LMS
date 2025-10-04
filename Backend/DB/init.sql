@@ -75,11 +75,12 @@ CREATE TABLE course_draft (
 -- ENROLLMENT 
 CREATE TABLE enrollment (
     enrollment_id SERIAL PRIMARY KEY,
-    student_id INT REFERENCES student_profile(student_profile_id),
-    course_id INT REFERENCES course(course_id),
+    student_id INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE RESTRICT,
+    course_id  VARCHAR(32) NOT NULL REFERENCES course(course_id) ON DELETE RESTRICT,
     enrolled_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(student_id, course_id)
 );
+
 
 -- LESSON 
 CREATE TABLE lesson (
