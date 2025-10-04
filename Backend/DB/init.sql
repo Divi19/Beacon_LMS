@@ -121,6 +121,14 @@ CREATE TABLE classroom (
   created_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- LESSON_CLASSROOM (lesson offered in classroom with optional schedule)
+CREATE TABLE lesson_classroom (
+  lesson_id          VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  classroom_id       VARCHAR(32) NOT NULL REFERENCES classroom(classroom_id) ON DELETE RESTRICT,
+  session_times_json JSONB,
+  linked_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (lesson_id, classroom_id)
+);
 
 -- LESSON_ENROLLMENT 
 CREATE TABLE lesson_enrollment (
@@ -215,6 +223,9 @@ CREATE INDEX IF NOT EXISTS idx_enrollment_course  ON enrollment(course_id);
 CREATE INDEX IF NOT EXISTS idx_enrollment_student ON enrollment(student_id);
 
 CREATE INDEX IF NOT EXISTS idx_classroom_active ON classroom(is_active);
+
+CREATE INDEX IF NOT EXISTS idx_lc_lesson    ON lesson_classroom(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_lc_classroom ON lesson_classroom(classroom_id);
 
 
 -- =========================================================
