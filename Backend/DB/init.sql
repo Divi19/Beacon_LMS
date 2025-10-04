@@ -84,17 +84,20 @@ CREATE TABLE enrollment (
 
 -- LESSON 
 CREATE TABLE lesson (
-  lesson_id       SERIAL PRIMARY KEY,
-  course_id       INT NOT NULL REFERENCES course(course_id),
-  title           VARCHAR(255) NOT NULL,
-  description     TEXT,
-  objectives      TEXT,
-  duration_weeks  INT,
-  status          VARCHAR(50) NOT NULL DEFAULT 'draft',
-  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
-  created_by      INT NOT NULL REFERENCES instructor_profile(instructor_profile_id),
-  created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+  lesson_id      VARCHAR(32) PRIMARY KEY,
+  course_id      VARCHAR(32) NOT NULL REFERENCES course(course_id) ON DELETE RESTRICT,
+  title          VARCHAR(255) NOT NULL,
+  description    TEXT,
+  objectives     TEXT,
+  duration_weeks INT,
+  credits        INT NOT NULL DEFAULT 0,
+  status         VARCHAR(50) NOT NULL DEFAULT 'draft',
+  designer_id    INT NOT NULL REFERENCES instructor_profile(instructor_profile_id) ON DELETE RESTRICT,
+  created_by     INT NOT NULL REFERENCES instructor_profile(instructor_profile_id) ON DELETE RESTRICT,
+  created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
 
 -- LESSON_PREREQUISITE 
 CREATE TABLE lesson_prerequisite (
@@ -189,9 +192,13 @@ ALTER TABLE classroom_enrollment ADD CONSTRAINT classroom_enrollment_pkey PRIMAR
 ALTER TABLE classroom_enrollment ADD CONSTRAINT uq_classroom_enrollment UNIQUE (classroom_id, student_id);
 
 
+
+
 -- =========================================================
 -- 4) INDEXES (performance/lookup)
 -- =========================================================
+
+CREATE INDEX IF NOT EXISTS idx_lesson_designer ON lesson(designer_id);
 
 ---Index on studnet and instructor profile
 CREATE INDEX IF NOT EXISTS idx_student_user_id    ON student_profile(user_id);
