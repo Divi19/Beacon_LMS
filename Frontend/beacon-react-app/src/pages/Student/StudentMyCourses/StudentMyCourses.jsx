@@ -15,12 +15,7 @@ export default function StudentEnrollmentPage() {
 
   useEffect( () => {
   console.log(`[StudentEnrollmentPage] fetching courses for student_id=${student_id}`);
-
-  const token = localStorage.getItem("accessToken");
-
-  axios.get(`http://localhost:8000/student/my_courses/`, {
-    headers: {Authorization: `Bearer ${token}`},
-  })
+  api.get(`/student/my_courses/`)
     .then(res => {
       console.log("[StudentEnrollmentPage] fetch success:", res.data);
       setEnrolled(res.data)

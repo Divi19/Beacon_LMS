@@ -323,7 +323,7 @@ class LessonBulkCreateView(APIView):
                     objectives=objectives,
                     duration_weeks=duration_weeks,
                     status=status_str,
-                    designer_id = inst,
+                    # designer_id = inst,
                     created_by=inst,
                     created_at=now,                    # bulk_create won’t set auto_now_add
                 ))

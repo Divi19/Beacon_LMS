@@ -22,8 +22,8 @@ export default function CourseDetailEnrolled() {
 
   useEffect(() => {
     let cancelled = false;
-    axios
-      .get(`http://localhost:8000/courses/${courseId}/detail/`)
+    api
+      .get(`/courses/${courseId}/detail/`)
       .then((res) => {
         if (!cancelled) setCourse(res.data);
       })
