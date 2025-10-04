@@ -54,12 +54,12 @@ CREATE TABLE instructor_profile (
 
 -- COURSE 
 CREATE TABLE course (
-    course_id SERIAL PRIMARY KEY,
-    code VARCHAR(20) UNIQUE NOT NULL,
+    course_id VARCHAR(32) PRIMARY KEY,         -- readable (e.g. AB1234)
     title VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL,
-    owner_instructor_id INT REFERENCES instructor_profile(instructor_profile_id)
+    owner_instructor_id INT NOT NULL REFERENCES instructor_profile(instructor_profile_id) ON DELETE RESTRICT
 );
+
 
 -- COURSE DRAFT 
 CREATE TABLE course_draft (
