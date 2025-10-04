@@ -145,7 +145,7 @@ class Lesson(models.Model):
     duration_weeks = models.PositiveIntegerField(blank=True, null=True, choices=DurationWeeks.choices, default=DurationWeeks.FOUR)
     status = models.CharField(max_length=50, choices=LessonStatus.choices, default=LessonStatus.ACTIVE)
     #is_active = models.BooleanField(null=True, blank=True, default=True)
-    created_by = models.ForeignKey(InstructorProfile, models.DO_NOTHING,null=True, blank=True, db_column='created_by')
+    designer_id = models.ForeignKey(InstructorProfile, models.DO_NOTHING,null=True, blank=True, db_column='created_by')
     created_by = models.ForeignKey(InstructorProfile, models.DO_NOTHING,null=True, blank=True, db_column='created_by')
     created_at = models.DateTimeField(auto_now_add=True)
 

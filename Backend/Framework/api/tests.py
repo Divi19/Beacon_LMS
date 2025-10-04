@@ -466,3 +466,18 @@ def test_response_schema_doesnt_leak_sensitive(api, url, db):
 
     for f in ["first_name", "last_name", "title", "locked_at"]:
         assert f in res.data
+
+def test_login_student(api, url, db):
+    res = api.post(url, valid_payload(), format="json")
+    assert res.status_code == status.HTTP_200_OK 
+
+def test_wrong_password(api, url, db):
+    mutated_payload = valid_payload(password="123")
+    res = api.post(url, mutated_payload, format="json")
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_wrong_email(api, url, db):
+    mutated_payload = valid_payload(email="mister@student.com")
+    res = api.post(url, mutated_payload, format="json")
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+    
