@@ -101,11 +101,12 @@ CREATE TABLE lesson (
 
 -- LESSON_PREREQUISITE 
 CREATE TABLE lesson_prerequisite (
-  lesson_id        INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
-  prereq_lesson_id INT NOT NULL REFERENCES lesson(lesson_id),
-  CONSTRAINT pk_lesson_prerequisite PRIMARY KEY (lesson_id, prereq_lesson_id),
-  CONSTRAINT chk_no_self_prereq CHECK (lesson_id <> prereq_lesson_id)
+  lesson_id        VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  prereq_lesson_id VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE RESTRICT,
+  CONSTRAINT chk_no_self_prereq CHECK (lesson_id <> prereq_lesson_id),
+  CONSTRAINT uq_lesson_prereq UNIQUE (lesson_id, prereq_lesson_id)
 );
+
 
 -- CLASSROOM 
 CREATE TABLE classroom (
