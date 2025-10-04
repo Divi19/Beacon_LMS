@@ -33,8 +33,12 @@ CREATE TABLE users (
 -- STUDENT PROFILE 
 CREATE TABLE student_profile (
     student_profile_id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(user_id),
-    full_name VARCHAR(255) NOT NULL,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    -- name parts added (keep full_name for backward compatibility if you still need it)
+    first_name VARCHAR(120),
+    last_name  VARCHAR(120),
+    titled     VARCHAR(40),
+    full_name  VARCHAR(255),
     student_no VARCHAR(50) UNIQUE NOT NULL,
     locked_at TIMESTAMP
 );
@@ -42,10 +46,11 @@ CREATE TABLE student_profile (
 -- INSTRUCTOR PROFILE 
 CREATE TABLE instructor_profile (
     instructor_profile_id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(user_id),
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     full_name VARCHAR(255) NOT NULL,
     staff_no VARCHAR(50) UNIQUE NOT NULL
 );
+
 
 -- COURSE 
 CREATE TABLE course (
@@ -186,6 +191,10 @@ ALTER TABLE classroom_enrollment ADD CONSTRAINT uq_classroom_enrollment UNIQUE (
 -- =========================================================
 -- 4) INDEXES (performance/lookup)
 -- =========================================================
+
+---Index on studnet and instructor profile
+CREATE INDEX IF NOT EXISTS idx_student_user_id    ON student_profile(user_id);
+CREATE INDEX IF NOT EXISTS idx_instructor_user_id ON instructor_profile(user_id);
 
 -- course ownership lookup
 CREATE INDEX IF NOT EXISTS idx_course_owner ON course(owner_instructor_id);
