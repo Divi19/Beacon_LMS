@@ -11,19 +11,18 @@ import {api} from "../../../api"
 export default function StudentEnrollmentPage() {
   const navigate = useNavigate();
   const [enrolled, setEnrolled] = useState([])
-  //Dummy value
-  const student_id = 1 
-  
+  const student_id = localStorage.getItem("studentId")
+
   useEffect( () => {
   console.log(`[StudentEnrollmentPage] fetching courses for student_id=${student_id}`);
-  axios.get(`http://localhost:8000/student/${student_id}/my_courses/`)
+  api.get(`/student/my_courses/`)
     .then(res => {
       console.log("[StudentEnrollmentPage] fetch success:", res.data);
       setEnrolled(res.data)
     })
     .catch(err => 
       console.error('Error fetching data', err));
-    }, []);
+    }, [student_id, navigate]);
 
     return (
       <>

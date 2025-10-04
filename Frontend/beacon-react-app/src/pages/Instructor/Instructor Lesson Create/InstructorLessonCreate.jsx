@@ -7,7 +7,7 @@ import {api} from "../../../api"
 
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { courseId, lessonId } = useParams();
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
@@ -69,7 +69,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
   const goToCoursePage = () => {
     setShowOptionalModal(false); 
-    navigate("/instructor/course-list"); 
+    navigate( `/instructor/course/${courseId}`); 
   };
 
   const handleChange = (e) => {
@@ -101,6 +101,11 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         description: formData.description,
         objectives: formData.description
       };
+
+      if (lessonData.duration_weeks < 2 || lessonData.duration_weeks > 4) {
+        alert("Duration weeks must be between 2 to 4 weeks.") 
+        return 
+      }
 
       // Send to Django backend
       submitPrereqs()  //creating prereqs

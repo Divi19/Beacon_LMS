@@ -8,7 +8,8 @@ from rest_framework.validators import UniqueTogetherValidator
 #djando
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import authenticate
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Coalesce
+from django.db.models import Sum
 
 #local 
 from .models import *
@@ -39,6 +40,7 @@ class LoginSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
     
+ 
 class CurrentUserSerializer(serializers.ModelSerializer):
     instructor_profile_id = serializers.SerializerMethodField() #An added field
     instructor_full_name = serializers.SerializerMethodField()
@@ -92,11 +94,14 @@ class StudentSerializer(serializers.ModelSerializer):
     #password for student creation
     email = serializers.EmailField(write_only = True)
     password = serializers.CharField(write_only = True) 
-    user = UserSerializer() 
+    first_name = serializers.CharField(write_only = True) 
+    last_name = serializers.CharField(write_only = True) 
+    title = serializers.CharField(write_only = True)  
+    #user = UserSerializer() 
 
     class Meta:
         model = StudentProfile
-        fields = ['student_profile_id', 'user', 'full_name', 'student_no', 'locked_at', 'password', 'email']
+        fields = ['first_name', 'last_name', 'title', 'locked_at', 'password', 'email']
         read_only_fields = ['student_profile_id', 'student_no']
 
     #during post 
@@ -104,14 +109,13 @@ class StudentSerializer(serializers.ModelSerializer):
         """
         POST student creation (registration), invoked implicitly using .save() in views
         """
-        #validated data contains email and password 
         email = validated_data.pop('email', None) 
+        password = validated_data.pop('password') #TODO: Is it password or password hash? 
         role = validated_data.pop('role', 'student')
-        raw_pwd = validated_data.pop('password')
         
         user = User.objects.create(
             email = email,
-            password_hash=raw_pwd, #plain password 
+            password_hash=password, #plain password 
             role=role #Set the role or default to student 
         )
         
@@ -366,6 +370,8 @@ class LessonSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop("created_by", None)
         return super().update(instance, validated_data)
+
+        
 
 class LessonPrereqBulkInSerializer(serializers.Serializer):
     prerequisites = serializers.ListField(
