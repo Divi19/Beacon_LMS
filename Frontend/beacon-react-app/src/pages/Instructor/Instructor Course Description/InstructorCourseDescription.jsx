@@ -22,6 +22,7 @@ export default function InstructorCourseDescription() {
   const [lessons, setLessons] = useState([]);
   const [placeholders, setPlaceholders] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
+  const [activeClassrooms, setActiveClassrooms] = useState([])
 
   // fetch the lessons only when user opens the lessons panel
   const handleToggleLessons = async () => {
@@ -31,6 +32,7 @@ export default function InstructorCourseDescription() {
 
     if (willOpen && course?.course_id) {
       try {
+        
         const res = await api.get(`/instructor/courses/${courseId}/lessons/`);
         console.log("Lessons API response", res.data);
 
@@ -50,12 +52,26 @@ export default function InstructorCourseDescription() {
         .get(`/courses/${courseId}/detail/`)
         .then((res) => setCourse(res.data))
         .catch(() => setCourse(null));
+      
+       /**
+      api
+        .get(`/courses/${courseId}/detail/`)
+        .then((res) => setCourse(res.data))
+        .catch(() => setCourse(null));
+       */ 
 
       //Fetching placeholders
       api
         .get(`/instructor/courses/${courseId}/lessons/`)
         .then((res) => setPlaceholders(res.data))
-        .catch(() => setPlaceholders(null));
+        .catch(() => setPlaceholders([]));
+
+      //Active classrooms 
+      api
+        .get(`instructor/courses/${courseId}/`)
+        .then((res) => setActiveClassrooms(res.data))
+        .catch(() => setActiveClassrooms([]))
+
     } catch (e) {
       console.log("Error loading data", e);
     }
@@ -246,7 +262,7 @@ export default function InstructorCourseDescription() {
                       );
                     }}
                   >
-                    Create
+                    Update
                   </Button>
                 </div>
               ))

@@ -50,8 +50,9 @@ class InstructorProfile(models.Model):
 class StudentProfile(models.Model):
     student_profile_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
-    full_name = models.CharField(max_length=255)
-    student_no = models.CharField(unique=True, max_length=50)
+    first_name = models.CharField(max_length=255, blank=True, null=True )
+    last_name = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
     locked_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:

@@ -105,22 +105,6 @@ export default function LessonDetail() {
           </div>
 
           <section className={`${s.cardBase} ${s.classrooms}`}>
-            <div className={s.clsHeaderRow}>
-              <h3 className={s.clsTitle}>Lesson Classrooms</h3>
-
-              <button
-                className={s.addBtn}
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/instructor/course/${courseId}/lesson/${lessonId}/classroom/new`
-                  )
-                }
-              >
-                Add Classroom →
-              </button>
-            </div>
-
             {!classrooms || classrooms.length === 0 ? (
               <>
                 <p className={s.empty}>No classroom created yet</p>
