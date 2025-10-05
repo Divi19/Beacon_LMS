@@ -209,7 +209,24 @@ ALTER TABLE classroom_enrollment ADD COLUMN id SERIAL;
 ALTER TABLE classroom_enrollment ADD CONSTRAINT classroom_enrollment_pkey PRIMARY KEY (id);
 ALTER TABLE classroom_enrollment ADD CONSTRAINT uq_classroom_enrollment UNIQUE (classroom_id, student_id);
 
+-- LESSON_ASSIGNMENT
+CREATE TABLE lesson_assignment (
+  assignment_id SERIAL PRIMARY KEY,
+  lesson_id     VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  title         VARCHAR(255) NOT NULL,
+  description   TEXT,
+  points        INT,
+  created_at    TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMP NOT NULL DEFAULT NOW()
+);
 
+-- STUDENT_ASSIGNMENT
+CREATE TABLE student_assignment (
+  assignment_id INT NOT NULL REFERENCES lesson_assignment(assignment_id) ON DELETE CASCADE,
+  student_id    INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
+  is_completed  BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (assignment_id, student_id)
+);
 
 
 -- =========================================================
