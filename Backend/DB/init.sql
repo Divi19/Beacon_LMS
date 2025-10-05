@@ -265,7 +265,8 @@ CREATE INDEX IF NOT EXISTS idx_lc_classroom ON lesson_classroom(classroom_id);
 CREATE INDEX IF NOT EXISTS idx_reading_lesson          ON lesson_reading(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_student_reading_student ON student_reading(student_id);
 
-
+CREATE INDEX IF NOT EXISTS idx_assignment_lesson          ON lesson_assignment(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_student_assignment_student ON student_assignment(student_id);
 -- =========================================================
 -- Notes:
 -- -> Business rule (Sprint 2 US5): a student should be enrolled in the lesson
