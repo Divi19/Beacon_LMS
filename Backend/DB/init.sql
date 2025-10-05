@@ -146,6 +146,24 @@ CREATE TABLE classroom_enrollment (
   CONSTRAINT pk_classroom_enrollment PRIMARY KEY (classroom_id, student_id)
 );
 
+-- LESSON_READING
+CREATE TABLE lesson_reading (
+  reading_id  SERIAL PRIMARY KEY,
+  lesson_id   VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  title       VARCHAR(255) NOT NULL,
+  url         TEXT,
+  created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- STUDENT_READING
+CREATE TABLE student_reading (
+  reading_id   INT NOT NULL REFERENCES lesson_reading(reading_id) ON DELETE CASCADE,
+  student_id   INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
+  is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (reading_id, student_id)
+);
+
 -- =========================================================
 -- 3) ALTER TABLES (add columns / constraints / type tweaks)
 -- =========================================================
@@ -226,6 +244,9 @@ CREATE INDEX IF NOT EXISTS idx_classroom_active ON classroom(is_active);
 
 CREATE INDEX IF NOT EXISTS idx_lc_lesson    ON lesson_classroom(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_lc_classroom ON lesson_classroom(classroom_id);
+
+CREATE INDEX IF NOT EXISTS idx_reading_lesson          ON lesson_reading(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_student_reading_student ON student_reading(student_id);
 
 
 -- =========================================================
