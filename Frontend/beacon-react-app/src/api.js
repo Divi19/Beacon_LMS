@@ -19,6 +19,11 @@ api.interceptors.request.use((cfg) => {
     if (!isAuthFree) {
       const t = localStorage.getItem("accessToken");
       if (t) cfg.headers.Authorization = `Bearer ${t}`;
+      
     }
+    
     return cfg;
+
+    
+
   });
