@@ -132,9 +132,9 @@ CREATE TABLE lesson_classroom (
 
 -- LESSON_ENROLLMENT 
 CREATE TABLE lesson_enrollment (
-  lesson_id    INT NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
-  student_id   INT NOT NULL REFERENCES student_profile(student_profile_id),
-  enrolled_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+  lesson_id   VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  student_id  INT         NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
+  enrolled_at TIMESTAMP   NOT NULL DEFAULT NOW(),
   CONSTRAINT pk_lesson_enrollment PRIMARY KEY (lesson_id, student_id)
 );
 
