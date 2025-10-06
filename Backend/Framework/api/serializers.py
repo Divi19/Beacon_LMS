@@ -112,6 +112,11 @@ class StudentSerializer(serializers.ModelSerializer):
         email = validated_data.pop('email', None) 
         password = validated_data.pop('password') #TODO: Is it password or password hash? 
         role = validated_data.pop('role', 'student')
+
+        #Check is user exists 
+        is_exist = User.objects.filter(email=email) 
+        if is_exist: 
+            raise serializers.ValidationError("This email already exists. Are you registered?")
         
         user = User.objects.create(
             email = email,
