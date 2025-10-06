@@ -73,8 +73,10 @@ class LessonTests(TestCase):
         self.course = Course.objects.create(title="Biology", owner_instructor=self.inst)
 
     def test_lesson_creation(self):
-        lesson = Lesson.objects.create(course=self.course, created_by=self.inst, title="Cells")
+        lesson = Lesson.objects.create(course=self.course, designer=self.inst, created_by=self.inst, title="Cells")
         self.assertIsNotNone(lesson.lesson_id)
+        self.assertIsNotNone(lesson.designer)
+        self.assertIsNotNone(lesson.duration_weeks)
         self.assertEqual(lesson.status, Lesson.LessonStatus.ACTIVE)
 
 
@@ -411,6 +413,10 @@ def test_register_success_creates_user_and_student(api, url, db):
     assert user.email == "student1@example.com"
     assert user.password_hash == "PlainPw123!"  
     assert user.role == "student"  
+
+def test_register_existing_email(api, url, db):
+    res = api.post(url, valid_payload(), format="json")
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 def test_missing_required_fields(api, url, db):
     # Missing email

@@ -41,7 +41,9 @@ export default function StudentSignUp({ logoSrc }) {
     setSuccessMessage(null);
 
     try {
-      const { data } = await api.post("/student/signup/", formData);
+      const cleanData = {...formData}
+      delete cleanData.confirm_password
+      const { data } = await api.post("/student/signup/", cleanData);
 
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
@@ -190,12 +192,12 @@ export default function StudentSignUp({ logoSrc }) {
               </label>
               <div className={styles.pwRow}>
                 <input
-                  id="confirmPassword"
-                  name="confirmPassword"
+                  id="confirm_password"
+                  name="confirm_password"
                   type={showPw2 ? "text" : "password"}
                   autoComplete="new-password"
                   className={styles.input}
-                  value={formData.confirmPassword}
+                  value={formData.confirm_password}
                   onChange={handleChange}
                   required
                 />
