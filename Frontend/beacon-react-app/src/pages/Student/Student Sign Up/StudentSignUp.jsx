@@ -159,8 +159,8 @@ export default function StudentSignUp({ logoSrc }) {
           />
 
           <div className={styles.pwGrid}>
-            <div>
-              <label htmlFor="password" className={`${styles.label} ${styles.labelPassword}`}>
+            <div className={styles.field}>
+              <label htmlFor="password" className={styles.label}>
                 Password:
               </label>
               <div className={styles.pwRow}>
@@ -173,44 +173,36 @@ export default function StudentSignUp({ logoSrc }) {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  aria-required="true"
-                  minLength={6}
                 />
                 <button
                   type="button"
                   className={styles.pwToggle}
                   onClick={() => setShowPw((s) => !s)}
-                  aria-label={showPw ? "Hide password" : "Show password"}
                 >
                   {showPw ? "Hide" : "Show"}
                 </button>
               </div>
             </div>
 
-            <div>
-              <label htmlFor="confirm_password" className={`${styles.label} ${styles.labelPassword}`}>
+            <div className={styles.field}>
+              <label htmlFor="confirmPassword" className={styles.label}>
                 Confirm password:
               </label>
               <div className={styles.pwRow}>
                 <input
-                  id="confirm_password"
-                  name="confirm_password"
+                  id="confirmPassword"
+                  name="confirmPassword"
                   type={showPw2 ? "text" : "password"}
                   autoComplete="new-password"
                   className={styles.input}
-                  value={formData.confirm_password}
+                  value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  aria-required="true"
-                  minLength={6}
                 />
                 <button
                   type="button"
                   className={styles.pwToggle}
                   onClick={() => setShowPw2((s) => !s)}
-                  aria-label={
-                    showPw2 ? "Hide confirm password" : "Show confirm password"
-                  }
                 >
                   {showPw2 ? "Hide" : "Show"}
                 </button>
