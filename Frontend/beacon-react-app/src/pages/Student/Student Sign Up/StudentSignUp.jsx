@@ -160,7 +160,7 @@ export default function StudentSignUp({ logoSrc }) {
 
           <div className={styles.pwGrid}>
             <div>
-              <label htmlFor="password" className={styles.label}>
+              <label htmlFor="password" className={`${styles.label} ${styles.labelPassword}`}>
                 Password:
               </label>
               <div className={styles.pwRow}>
@@ -188,7 +188,7 @@ export default function StudentSignUp({ logoSrc }) {
             </div>
 
             <div>
-              <label htmlFor="confirm_password" className={styles.label}>
+              <label htmlFor="confirm_password" className={`${styles.label} ${styles.labelPassword}`}>
                 Confirm password:
               </label>
               <div className={styles.pwRow}>
