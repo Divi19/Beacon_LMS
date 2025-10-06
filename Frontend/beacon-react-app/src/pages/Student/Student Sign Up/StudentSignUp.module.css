@@ -178,3 +178,17 @@
     margin-top: clamp(10px, 1.2vw, 16px);
     gap: 12px;
 }
+
+.pwGrid {
+  display: grid;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+
+@media (min-width: 760px) {
+  .pwGrid {
+    grid-template-columns: 1fr 1fr;
+    align-items: end; 
+  }
+}
