@@ -20,25 +20,26 @@ DROP TABLE IF EXISTS course_draft            CASCADE;
 DROP TABLE IF EXISTS course                  CASCADE;
 DROP TABLE IF EXISTS instructor_profile      CASCADE;
 DROP TABLE IF EXISTS student_profile         CASCADE;
-DROP TABLE IF EXISTS users                   CASCADE;
+DROP TABLE IF EXISTS "user"                  CASCADE;
 
 -- =========================================================
 -- 2) CREATE TABLES
 -- =========================================================
 
--- USERS
-CREATE TABLE users (
+-- USERS (renamed to quoted identifier "user")
+CREATE TABLE "user" (
   user_id       SERIAL PRIMARY KEY,
   email         VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role          VARCHAR(50)  NOT NULL,
-  created_at    TIMESTAMP    NOT NULL DEFAULT NOW()
+  created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
+  is_active     BOOLEAN      NOT NULL DEFAULT TRUE
 );
 
 -- STUDENT PROFILE
 CREATE TABLE student_profile (
   student_profile_id SERIAL PRIMARY KEY,
-  user_id            INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+  user_id            INT NOT NULL REFERENCES "user"(user_id) ON DELETE RESTRICT,
   -- name parts (keep full_name if you still need it)
   first_name VARCHAR(120),
   last_name  VARCHAR(120),
@@ -51,7 +52,7 @@ CREATE TABLE student_profile (
 -- INSTRUCTOR PROFILE
 CREATE TABLE instructor_profile (
   instructor_profile_id SERIAL PRIMARY KEY,
-  user_id               INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+  user_id               INT NOT NULL REFERENCES "user"(user_id) ON DELETE RESTRICT,
   full_name             VARCHAR(255) NOT NULL,
   staff_no              VARCHAR(50) UNIQUE NOT NULL
 );
@@ -66,17 +67,6 @@ CREATE TABLE course (
   credits              INT,
   director             VARCHAR(50),
   description          TEXT
-);
-
--- COURSE DRAFT
-CREATE TABLE course_draft (
-  draft_id      SERIAL PRIMARY KEY,
-  course_id     VARCHAR(32) REFERENCES course(course_id) ON DELETE SET NULL,
-  title         VARCHAR(255) NOT NULL,
-  outline_json  JSONB,
-  created_by    INT NOT NULL REFERENCES instructor_profile(instructor_profile_id) ON DELETE RESTRICT,
-  is_selected   BOOLEAN DEFAULT FALSE,
-  created_at    TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- ENROLLMENT (course-level)
@@ -106,9 +96,9 @@ CREATE TABLE lesson (
 
 -- LESSON PREREQUISITE (surrogate key + uniqueness + self-check)
 CREATE TABLE lesson_prerequisite (
-  id               SERIAL PRIMARY KEY,
-  lesson_id        VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
-  prereq_lesson_id VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE RESTRICT,
+  prereq_id         SERIAL PRIMARY KEY,
+  lesson_id         VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  prereq_lesson_id  VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE RESTRICT,
   CONSTRAINT chk_no_self_prereq CHECK (lesson_id <> prereq_lesson_id),
   CONSTRAINT uq_lesson_prereq UNIQUE (lesson_id, prereq_lesson_id)
 );
@@ -126,21 +116,22 @@ CREATE TABLE classroom (
   created_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- LESSON_CLASSROOM (lesson offered in classroom with optional schedule)
+-- LESSON_CLASSROOM (surrogate PK + keep pair unique)
 CREATE TABLE lesson_classroom (
-  lesson_id          VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
-  classroom_id       VARCHAR(32) NOT NULL REFERENCES classroom(classroom_id) ON DELETE RESTRICT,
-  session_times_json JSONB,
-  linked_at          TIMESTAMP NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (lesson_id, classroom_id)
+  lesson_classroom_id SERIAL PRIMARY KEY,
+  lesson_id           VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  classroom_id        VARCHAR(32) NOT NULL REFERENCES classroom(classroom_id) ON DELETE RESTRICT,
+  session_times_json  JSONB,
+  linked_at           TIMESTAMP NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_lesson_classroom_pair UNIQUE (lesson_id, classroom_id)
 );
 
 -- LESSON_ENROLLMENT (surrogate PK + uniqueness)
 CREATE TABLE lesson_enrollment (
-  id          SERIAL PRIMARY KEY,
-  lesson_id   VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
-  student_id  INT         NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
-  enrolled_at TIMESTAMP   NOT NULL DEFAULT NOW(),
+  lesson_enrollment_id SERIAL PRIMARY KEY,
+  lesson_id            VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  student_id           INT         NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
+  enrolled_at          TIMESTAMP   NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_lesson_enrollment UNIQUE (lesson_id, student_id)
 );
 
@@ -163,12 +154,13 @@ CREATE TABLE lesson_reading (
   updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- STUDENT_READING (completion state)
+-- STUDENT_READING (surrogate PK + restore uniqueness)
 CREATE TABLE student_reading (
+  student_reading_id SERIAL PRIMARY KEY,
   reading_id   INT NOT NULL REFERENCES lesson_reading(reading_id) ON DELETE CASCADE,
   student_id   INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
   is_completed BOOLEAN NOT NULL DEFAULT FALSE,
-  PRIMARY KEY (reading_id, student_id)
+  CONSTRAINT uq_student_reading UNIQUE (reading_id, student_id)
 );
 
 -- LESSON_ASSIGNMENT
@@ -182,12 +174,13 @@ CREATE TABLE lesson_assignment (
   updated_at    TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- STUDENT_ASSIGNMENT
+-- STUDENT_ASSIGNMENT (surrogate PK + restore uniqueness)
 CREATE TABLE student_assignment (
+  student_assignment_id SERIAL PRIMARY KEY,
   assignment_id INT NOT NULL REFERENCES lesson_assignment(assignment_id) ON DELETE CASCADE,
   student_id    INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
   is_completed  BOOLEAN NOT NULL DEFAULT FALSE,
-  PRIMARY KEY (assignment_id, student_id)
+  CONSTRAINT uq_student_assignment UNIQUE (assignment_id, student_id)
 );
 
 -- =========================================================
