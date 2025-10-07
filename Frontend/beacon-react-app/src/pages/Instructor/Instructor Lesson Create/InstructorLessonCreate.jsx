@@ -6,13 +6,13 @@ import axios from "axios";
 import { api } from "../../../api";
 
 export default function InstructorLessonCreation({ onCourseCreated }) {
-    const navigate = useNavigate();
-    const { lessonId } = useParams();
-    const [lessons, setLessons] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [lessonInput, setLessonInput] = useState("");
-    const [showOptionalModal, setShowOptionalModal] = useState(false);
-    const [prereqInput, setPrereqInput] = useState("");
+  const navigate = useNavigate();
+  const { lessonId } = useParams();
+  const [lessons, setLessons] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [lessonInput, setLessonInput] = useState("");
+  const [showOptionalModal, setShowOptionalModal] = useState(false);
+  const [prereqInput, setPrereqInput] = useState("");
 
     const submitPrereqs = async () => {
         /**Handle prerequisites submission */
@@ -69,10 +69,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         }
     };
 
-    const goToCoursePage = () => {
-        setShowOptionalModal(false);
-        navigate("/instructor/course-list");
-    };
+  const goToCoursePage = () => {
+    setShowOptionalModal(false); 
+    navigate("/instructor/course-list"); 
+  };
 
     const handleChange = e => {
         const { name, value } = e.target;
@@ -92,17 +92,17 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         setLessonInput("");
     };
 
-    const handleSubmit = async e => {
-        e.preventDefault();
-        try {
-            // Prepare data for Django backend
-            const lessonData = {
-                title: formData.title,
-                duration_weeks: formData.duration_weeks,
-                credits: formData.credits,
-                description: formData.description,
-                objectives: formData.description,
-            };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Prepare data for Django backend
+      const lessonData = {
+        title: formData.title,
+        duration_weeks: formData.duration_weeks,
+        credits: formData.credits,
+        description: formData.description,
+        objectives: formData.description
+      };
 
             // Send to Django backend
             submitPrereqs(); //creating prereqs

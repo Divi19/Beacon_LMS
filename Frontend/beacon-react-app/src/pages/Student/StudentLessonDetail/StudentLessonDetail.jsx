@@ -3,12 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentLessonDetail.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
-import axios from "axios";
 
 export default function StudentLessonDetail() {
   const navigate = useNavigate();
-  //const { courseId, lessonId } = useParams();
-  const { courseId } = useParams();
+  const { courseId, lessonId } = useParams();
 
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
@@ -22,10 +20,6 @@ export default function StudentLessonDetail() {
   // modal
   const [showModal, setShowModal] = useState(false);
   const [modalText, setModalText] = useState("");
-
-  //dummy
-  const student_profile_id = 1
-  const lessonId = "AH0476"
 
   /* 
      TEMP “API” – replace these with real endpoints when ready
@@ -55,7 +49,6 @@ export default function StudentLessonDetail() {
     // GET /student/lessons/:lessonId/enrollment (or included in lesson detail)
     // Return whether the current student is enrolled and selected class if exists
     // For now, simulate “not enrolled”
-    
     return new Promise((resolve) =>
       setTimeout(
         () =>
@@ -76,17 +69,6 @@ export default function StudentLessonDetail() {
   async function apiGetClassrooms() {
     // GET /student/lessons/:lessonId/classrooms
     // Use backend fields so it plugs in cleanly later, to be removed after backedn integration
-    try {
-           const { data } = await axios.get(
-             `http://localhost:8000/student/${student_profile_id}/lessons/${lessonId}/classrooms/unenrolled/`
-           );
-           return Array.isArray(data) ? data : [];
-         } catch (e) {
-           console.error("Error fetching classrooms", e);
-           return [];
-         }
-    
-    /**
     return new Promise((resolve) =>
       setTimeout(
         () =>
@@ -155,39 +137,20 @@ export default function StudentLessonDetail() {
         220
       )
     );
-     */
   }
 
   async function apiEnrollClassroom(classroom_id) {
     // POST /student/classrooms/:classroom_id/enroll
-    try {
-      const { data } = await axios.post(
-        `http://localhost:8000/student/${student_profile_id}/lessons/${lessonId}/classrooms/enroll/${classroom_id}/`
-      );
-      return data
-    } catch (e) {
-      console.error("Error fetching classrooms", e);
-      return [];
-    }
-    /**return new Promise((resolve) =>
+    return new Promise((resolve) =>
       setTimeout(() => resolve({ ok: true }), 250)
-    );*/
+    );
   }
 
   async function apiLeaveClassroom(classroom_id) {
     // DELETE /student/classrooms/:classroom_id/enroll
-    try {
-      const { data } = await axios.delete(
-        `http://localhost:8000/student/${student_profile_id}/lessons/${lessonId}/classrooms/enroll/${classroom_id}/`
-      );
-      return data
-    } catch (e) {
-      console.error("Error fetching classrooms", e);
-      return [];
-    }
-    /**return new Promise((resolve) =>
+    return new Promise((resolve) =>
       setTimeout(() => resolve({ ok: true }), 250)
-    );*/
+    );
   }
 
   useEffect(() => {
@@ -312,6 +275,7 @@ export default function StudentLessonDetail() {
       <div className={i.topBar}>
         <StudentTopBar />
       </div>
+
       <header className={i.header}>
         <div className={i.rect}>
           <div className={i.courseInfo}>
@@ -404,8 +368,8 @@ export default function StudentLessonDetail() {
             <div className={i.noChosenText}>No Chosen Classroom yet</div>
             <div className={i.clsList}>
               {classrooms.map((c) => {
-                const available = Math.max((c.enrolled_count ?? 0), 0);
-                const full = c.enrolled_count <= c.capacity || !c.is_active;
+                const available = Math.max((c.capacity ?? 0) - (c.enrolled_count ?? 0), 0);
+                const full = available <= 0 || !c.is_active;
 
                 return (
                   <div className={i.clsCard} key={c.classroom_id}>
@@ -488,6 +452,7 @@ export default function StudentLessonDetail() {
 
               <div className={i.clsColActions}>
                 <Button
+                  variant="orange"
                   className={i.leaveBtn}
                   onClick={handleLeaveClassroom}
                 >
