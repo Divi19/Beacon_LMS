@@ -102,7 +102,7 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = ['first_name', 'last_name', 'title', 'locked_at', 'password', 'email']
-        read_only_fields = ['student_profile_id', 'student_no']
+        read_only_fields = ['student_profile_id']
 
     #during post 
     def create(self, validated_data):
