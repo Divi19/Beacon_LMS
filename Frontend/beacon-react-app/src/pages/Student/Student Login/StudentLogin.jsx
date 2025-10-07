@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
-import styles from "./InstructorLogin.module.css";
+import styles from "./StudentLogin.module.css";
 import {api} from "../../../api" 
 
 // Optional: pass a logo URL via props if you prefer
-// Usage: <InstructorLogin logoSrc="/assets/beacon-logo.png" />
-export default function InstructorLogin({ logoSrc }) {
+// Usage: <StudentLogin logoSrc="/assets/beacon-logo.png" />
+export default function StudentLogin({ logoSrc }) {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,14 +34,17 @@ export default function InstructorLogin({ logoSrc }) {
   
     try {
       const { data } = await api.post(
-        "/instructor/login/",
+        "/student/login/",
         formData
+        
       );
+      console.log("Login response:", data);
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
+      localStorage.setItem("studentId", data.user.student_profile_id);
       setSuccessMessage("Login successful");
-      navigate("/instructor/course-list", { replace: true });
+      navigate("/student/my-courses", { replace: true });
     } catch (err) {
       // Robust error extraction
       if (err.response && err.response.data) {
@@ -75,14 +78,14 @@ export default function InstructorLogin({ logoSrc }) {
 
   return (
     <main className={styles.wrap}>
-      <section className={styles.card} role="region" aria-label="Instructor Sign In">
+      <section className={styles.card} role="region" aria-label="Student Sign In">
        <img src="/logo.svg" alt="Beacon logo" className={styles.logo} />    
 
-        <h1 className={styles.title}>Sign In - Instructor</h1>
+        <h1 className={styles.title}>Sign In - Student</h1>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <label htmlFor="email" className={styles.label}>
-            Instructor Email:
+            Student Email:
           </label>
           <input
             id="email"
@@ -126,9 +129,18 @@ export default function InstructorLogin({ logoSrc }) {
 
           {error && <p className={styles.error} role="alert">{error}</p>}
 
-          <button className={styles.cta} type="submit" disabled={isLoading}>
+          <div className={styles.buttonRow}>
+            <Link to="/student/signup" className={styles.ctaAlt}>
+              <span className={styles.ctaTextUnderline}>Sign Up</span>
+            </Link>
+
+            <button className={styles.cta} type="submit" disabled={isLoading}>
             {isLoading ? "Logging In…" : <span className={styles.ctaTextUnderline}>Log In</span>}
           </button>
+          </div>
+          {/* <button className={styles.cta} type="submit" disabled={isLoading}>
+            {isLoading ? "Logging In…" : <span className={styles.ctaTextUnderline}>Log In</span>}
+          </button> */}
         </form>
 
         {/* Optional small print / links area */}

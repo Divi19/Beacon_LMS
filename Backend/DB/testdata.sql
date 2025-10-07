@@ -5,7 +5,7 @@
 BEGIN;
 
 -- Work inside our app schema
-SET search_path = lms_schema;
+SET search_path = public;
 
 ------------------------------------------------------------
 -- USERS (PostgreSQL upsert)

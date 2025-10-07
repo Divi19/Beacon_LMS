@@ -7,23 +7,22 @@ import { useEnrollment } from "../../../state/EnrollmentContext";
 import allCourses from "../../../data/courses";
 import CourseCard from "../../../components/CourseCard/CourseCard";
 import s from "./StudentEnrollment.module.css";
+import { api } from "../../../api";
 
 export default function StudentEnrollment() {
   const { isEnrolled } = useEnrollment();
   const navigate = useNavigate();
   //Dummy value
-  const student_id = 1
+  const student_id = localStorage.getItem("studentId")
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [unenrolled, setUnenrolled] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
 
   const fetchCourses = async () => {
+
     try {
-      await axios.get(`http://localhost:8000/student/${student_id}/courses/unenrolled/`).then(
-        res => {
+      const res = await api.get(`/student/courses/unenrolled/`);
           setUnenrolled(res.data);
-        }
-      )
     } catch (err) {
       console.error("Error fetching unenrolled courses", err);
       alert("Failed to load available courses.");
@@ -33,7 +32,7 @@ export default function StudentEnrollment() {
   const handleEnroll = async (courseId) => {
     try {
       setSubmittingId(courseId);
-      await axios.post( `http://localhost:8000/student/${student_id}/courses/enroll/`, {
+      await api.post( `/student/${student_id}/courses/enroll/`, {
         course_id: courseId,
       });
       fetchCourses(); // refresh after write so UI stays correct (the number of unenrolled)
@@ -53,53 +52,6 @@ export default function StudentEnrollment() {
   useEffect(() => {
     fetchCourses();
   }, []);
-
-// export default function StudentEnrollment() {
-//   //const { isEnrolled } = useEnrollment();
-//   const navigate = useNavigate();
-//   //Dummy value
-//   const student_id = 1 
-//   //const available = allCourses.filter((c) => !isEnrolled(c.id));
-//   const [unenrolled, setUnenrolled] = useState([])
-//   const [submittingId, setSubmittingId] = useState(null);
-
-//   const fetchCourses = async () => {
-//     try {
-//       await axios.get(`http://localhost:8000/courses/frontend/${student_id}/student/enrollment/`).then(
-//         res => {
-//           setUnenrolled(res.data);
-//         }
-//       )
-//     } catch (err) {
-//       console.error("Error fetching unenrolled courses", err);
-//       alert("Failed to load available courses.");
-//     } 
-//   };
-
-  // const handleEnroll = async (courseId) => {
-  //   try {
-  //     setSubmittingId(courseId);
-  //     await axios.post( `http://localhost:8000/courses/frontend/${student_id}/student/enroll/`, {
-  //       course_id: courseId,
-  //     });
-  //     await fetchCourses(); // refresh after write so UI stays correct
-  //   } catch (err) {
-  //     const detail = err?.response?.data?.detail;
-  //     if (detail === "Student already enrolled") {
-  //       await fetchCourses();
-  //     } else {
-  //       console.error("Enrollment failed", err);
-  //       alert(detail || "Failed to enroll in course.");
-  //     }
-  //   } finally {
-  //     setSubmittingId(null);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchCourses();
-  // }, []);
-
 
   return (
     <>
