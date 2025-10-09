@@ -45,7 +45,7 @@
 .label {
   font-size: clamp(16px, 1.6vw, 18px);
   font-weight: 600;
-  color: #9c440c;
+  color: #0f6b76;
   margin-top: 6px;
 }
 
@@ -103,8 +103,8 @@
   height: clamp(46px, 6.2vw, 58px);
   border-radius: 1000px;
   border: none;
-  background:#f29907;
-  color:#9c440c;
+  background:#aff188;
+  color:#07920b;
   font-weight: 700;
   font-size: clamp(16px, 1.6vw, 18px);
   cursor: pointer;
