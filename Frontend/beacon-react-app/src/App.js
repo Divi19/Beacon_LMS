@@ -28,6 +28,10 @@ import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
 
+import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
+import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
+import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
+
 export default function App(){
   const [details, setDetails] = useState([]);
 
@@ -81,6 +85,9 @@ export default function App(){
 
       {/* Classrooms */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassCreation />}/>
+      <Route path="/admin/log-in" element={<AdminLogIn />}/>
+      <Route path="/admin/main-page" element={<AdminMainPage />}/>
+      <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
 
       
 
