@@ -1,0 +1,174 @@
+.wrap {
+  padding: clamp(16px, 4vw, 40px);
+  padding-top: 150px;
+}
+
+.header {
+  margin-bottom: clamp(16px, 3vw, 28px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  letter-spacing: 0.25em;
+  font-weight: 800;
+  font-size: clamp(26px, 4.8vw, 46px);
+  color: #7ad1d8;
+}
+
+.label {
+  margin-top: 10px;
+  margin-left: 10px;
+  letter-spacing: normal;
+  font-weight: normal;
+  font-size: clamp(20px, 3.3vw, 25px);
+  color: #176978;
+}
+
+.label1 {
+  margin-left: 10px;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 300px;
+  letter-spacing: normal;
+  font-weight: normal;
+  font-size: clamp(9px, 2.2vw, 20px);
+  color: #176978;
+}
+
+.label2 {
+  margin: 10px 0 0 55px;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 300px;
+  letter-spacing: normal;
+  font-weight: normal;
+  font-size: clamp(9px, 2.2vw, 20px);
+  color: #176978;
+}
+
+
+.card {
+  margin: 0 auto;
+  max-width: 1100px;
+  min-height: 360px;
+  background: #f7f8fb;
+  border-radius: 18px;
+  border: 2px solid transparent;
+  background-image:
+    linear-gradient(#f7f8fb, #f7f8fb),
+    linear-gradient(180deg, var(--bg-right-top), var(--bg-right-bot));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  padding: clamp(20px, 4vw, 40px);
+  display: grid;
+  place-items: center;
+}
+
+.emptyText {
+  margin: 0 0 18px;
+  text-align: center;
+  color: #175e69;
+  font-size: clamp(14px, 2.2vw, 18px);
+}
+
+.ctaRow {
+  display: grid;
+  place-items: center;
+}
+
+.enrollBtn {
+  max-width: 340px;
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: clamp(16px, 2.2vw, 20px);
+}
+
+.arrow {
+  display: inline-block;
+}
+
+.topBar {
+  width: 100vw;  
+  margin-left: calc(-1 * clamp(16px, 4vw, 40px)); 
+  margin-right: calc(-1 * clamp(16px, 4vw, 40px)); 
+  margin-top: calc(-1 * clamp(16px, 4vw, 40px));   
+  background: #fff; 
+}
+
+.rect {
+margin-top: 20px;
+width: 700px;
+height: 78px;
+background: linear-gradient(to bottom, #88ccd8 0%, #88ccd8 50%, #f1cea8 100%);
+border-radius: 6px;
+}
+
+.rect1 {
+margin-top:10px;
+width: 200px;
+height: 50px;
+background: linear-gradient(to bottom, #88ccd8 0%, #88ccd8 50%, #f1cea8 100%);
+border-radius: 6px;
+}
+
+.grid1 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(16px, 3vw, 28px);
+  margin-top: 20px;
+}
+
+.card1 {
+  display: flex;
+  flex-direction: column; 
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 20px;
+  padding-bottom: 50px; 
+  border-radius: 20px;
+  background: linear-gradient(to bottom, #71bfcd 0%, #71bfcd 50%, #f1cea8 100%);
+  color: rgb(27, 99, 112);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.cardTitle {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.cardDesc1 {
+  display: flex;
+  justify-content: left;
+  width: 100%;
+  font-size: 16px;
+}
+
+.cardDesc1 span:last-child {
+  margin-right: 30px;
+}
+
+.cardDesc2 {
+  display: flex;
+  justify-content: left; 
+  width: 100%;
+  font-size: 16px;
+}
+
+.cardDesc2 span:last-child {
+  margin-left: 10px;
+}
+
+.leftGroup {
+  display: flex;
+  gap: 8px; 
+}
