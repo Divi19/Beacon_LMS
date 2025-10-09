@@ -31,6 +31,7 @@ import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCou
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
 import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
+import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
 
 export default function App(){
   const [details, setDetails] = useState([]);
@@ -88,6 +89,7 @@ export default function App(){
       <Route path="/admin/log-in" element={<AdminLogIn />}/>
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
+      <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
 
       
 
