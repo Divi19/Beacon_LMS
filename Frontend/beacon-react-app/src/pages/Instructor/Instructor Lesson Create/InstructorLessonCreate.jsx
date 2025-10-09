@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import i from "./InstructorLessonCreate.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from 'axios';
-import {api} from "../../../api" 
+import axios from "axios";
+import { api } from "../../../api";
 
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
@@ -17,14 +17,16 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const submitPrereqs = async () => {
     /**Handle prerequisites submission */
     // split by commas / whitespace / newlines
-    
+
     const prereqIds = prereqInput
       .split(/[\s,]+/)
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
-  
-    if (prereqIds.length === 0) { return; } //Nothing entered --> Just leave
-  
+
+    if (prereqIds.length === 0) {
+      return;
+    } //Nothing entered --> Just leave
+
     try {
       const res = await api.post(
         `instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
@@ -38,12 +40,15 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   };
 
   const [formData, setFormData] = useState({
+    lesson_id: "",
     title: "",
     credits: "",
-    duration_weeks:"",
+    duration_weeks: "",
+    estimated_effort: "",
     director: "",
     description: "",
-    objectives: "", 
+    objectives: "",
+    status: "Draft",
   });
 
   const openModal = () => {
@@ -68,8 +73,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   };
 
   const goToCoursePage = () => {
-    setShowOptionalModal(false); 
-    navigate( `/instructor/course/${courseId}`); 
+    setShowOptionalModal(false);
+    navigate(`/instructor/course/${courseId}`);
   };
 
   const handleChange = (e) => {
@@ -80,14 +85,14 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const resetForm = () => {
     setFormData({
       title: "",
-      duration_weeks:"",
+      duration_weeks: "",
       credits: "",
       director: "",
       description: "",
-      objectives: ""
+      objectives: "",
     });
-    setLessons([]);      
-    setLessonInput("");  
+    setLessons([]);
+    setLessonInput("");
   };
 
   const handleSubmit = async (e) => {
@@ -99,30 +104,29 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         duration_weeks: formData.duration_weeks,
         credits: formData.credits,
         description: formData.description,
-        objectives: formData.description
+        objectives: formData.description,
       };
 
       if (lessonData.duration_weeks < 2 || lessonData.duration_weeks > 4) {
-        alert("Duration weeks must be between 2 to 4 weeks.") 
-        return 
+        alert("Duration weeks must be between 2 to 4 weeks.");
+        return;
       }
 
       // Send to Django backend
-      submitPrereqs()  //creating prereqs
-      await api.patch( `/instructor/lessons/${lessonId}/create/`, lessonData);
+      submitPrereqs(); //creating prereqs
+      await api.patch(`/instructor/lessons/${lessonId}/create/`, lessonData);
       console.log("Course created successfully:", lessonData);
-      
+
       // Refresh the course list in parent component
       if (onCourseCreated) {
         onCourseCreated();
       }
-      
+
       // Show success modal
       setShowOptionalModal(true);
-      
     } catch (error) {
-      console.error('Error creating lesson:', error);
-      alert('Error creating lesson. Please try again.');
+      console.error("Error creating lesson:", error);
+      alert("Error creating lesson. Please try again.");
     }
   };
 
@@ -136,100 +140,130 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       </header>
       <div>
         <form className={i.form} onSubmit={handleSubmit}>
-          <div className={i.formContainer}>
-            <div className={i.row}>
-              <label className={i.label}>Lesson Details</label>
-            </div>
-            <div className={i.row}>
-              <label className={i.label}>Lesson Title:</label>
-              <input
-                className={i.input}
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div className={i.row}>
+            <label className={i.label}>Lesson Title:</label>
+            <input
+              className={i.input}
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Lesson Credits:</label>
-              <input
-                className={i.input}
-                type="number"
-                name="credits"
-                value={formData.credits}
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div className={i.row}>
+            <label className={i.label}>Lesson ID:</label>
+            <input
+              className={i.input}
+              type="text"
+              name="lesson_id"
+              value={formData.lesson_id}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Lesson Duration:</label>
-              <input
-                className={i.input}
-                type="number"
-                name="duration_weeks"
-                value={formData.duration_weeks}
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div className={i.row}>
+            <label className={i.label}>Lesson Credits:</label>
+            <input
+              className={i.input}
+              type="text"
+              name="credits"
+              value={formData.credits}
+              onChange={handleChange}
+            />
+          </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Lesson Description:</label>
-              <textarea
-                className={i.input}
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div className={i.row}>
+            <label className={i.label}>Lesson Duration:</label>
+            <select
+              className={i.input}
+              name="duration_weeks"
+              value={formData.duration_weeks}
+              onChange={handleChange}
+            >
+              <option value="">Select duration</option>
+              <option value="2">2 Weeks</option>
+              <option value="3">3 Weeks</option>
+              <option value="4">4 Weeks</option>
+            </select>
+          </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Lesson Objective:</label>
-              <textarea
-                className={i.input}
-                name="objectives"
-                value={formData.objectives}
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div className={i.row}>
+            <label className={i.label}>Estimated Effort:</label>
+            <input
+              className={i.input}
+              type="text"
+              name="estimated_effort"
+              value={formData.estimated_effort}
+              onChange={handleChange}
+            />
+          </div>
 
-            <div className={i.row}>
-              <label className={i.label}>Prerequisite Lesson:</label>
-              <textarea
-                className={i.input}
-                name="prerequisite"
-                value={prereqInput}
-                onChange={(e) => setPrereqInput(e.target.value)}
-                
-              />
-            </div>
+          <div className={i.row}>
+            <label className={i.label}>Lesson Designer:</label>
+            <select
+              className={i.input}
+              name="director"
+              value={formData.director}
+              onChange={handleChange}
+            >
+              <option value="">Select Instructor</option>
+              {/* Later map instructors from backend */}
+              <option value="Dr Charles Xavier">Dr Charles Xavier</option>
+              <option value="Mr La Pa Ta O Rulwena">
+                Mr La Pa Ta O Rulwena
+              </option>
+            </select>
+          </div>
 
-            {showOptionalModal && (
-              <div className={i.modalOverlay}>
-                <div className={i.modalContent}>
-                  <h3>Lesson Created Successfully!</h3>
-                  <div className={i.modalButtons}>
-                    <button className={i.selectButton} onClick={goToCoursePage}>
-                      Go to lesson page
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className={i.row}>
+            <label className={i.label}>Status:</label>
+            <select
+              className={i.input}
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+            >
+              <option value="Draft">Draft</option>
+              <option value="Active">Active</option>
+              <option value="Archived">Archived</option>
+            </select>
+          </div>
 
-            <div className={i.buttonRow}>
-              <button className={i.discardbutton} type="button" onClick={resetForm}>
-                Discard
-              </button>
-              <button className={i.createbutton} type="submit">
-                Create
-              </button>
-            </div>
+          <div className={i.row}>
+            <label className={i.label}>Prerequisite Lessons:</label>
+            <textarea
+              className={i.input}
+              name="prerequisite"
+              value={prereqInput}
+              onChange={(e) => setPrereqInput(e.target.value)}
+            />
+          </div>
+
+          <div className={i.row}>
+            <label className={i.label}>Reading List:</label>
+            <textarea className={i.input} name="reading_list" />
+          </div>
+
+          <div className={i.row}>
+            <label className={i.label}>Assignments:</label>
+            <textarea className={i.input} name="assignments" />
+          </div>
+
+          <div className={i.row}>
+            <label className={i.label}>Physical Classroom:</label>
+            <button type="button" className={i.linkButton}>
+              Link Classroom
+            </button>
+          </div>
+
+          <div className={i.row}>
+            <label className={i.label}>Online Classroom:</label>
+            <button type="button" className={i.createClassroomButton}>
+              Create Classroom
+            </button>
           </div>
         </form>
       </div>

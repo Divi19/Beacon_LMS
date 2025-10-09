@@ -250,41 +250,50 @@ class CourseSerializer(serializers.ModelSerializer):
         validated_data.pop("course_id", None)
         return super().update(instance, validated_data)
 
+
 class ClassroomSerializer(serializers.ModelSerializer):
-    enrolled_count = serializers.IntegerField(read_only=True)
-    lesson = serializers.PrimaryKeyRelatedField(read_only=True)
     #Request
-    day = serializers.CharField(source="day_of_week", write_only=True)
-    start_time = serializers.TimeField(source="time_start", write_only=True,)
-    end_time = serializers.TimeField(source="time_end", write_only=True,)
     capacity = serializers.IntegerField(min_value=1, max_value=10)
-    duration_minutes = serializers.IntegerField(required=False)
     classroom_id = serializers.CharField(required=False, allow_blank=True)
-    
-    
+    zoom_link = serializers.CharField(required=True, allow_blank=False)
+    is_online = serializers.BooleanField(write_only=True, default=True)
+    #director = serializers.PrimaryKeyRelatedField(queryset=InstructorProfile.objects.all(), write_only=True, required=False, allow_blank=True)
+    is_active = serializers.BooleanField(write_only=True, default=True)
     #Responses 
-    day_of_week = serializers.CharField(read_only=True)
-    time_start  = serializers.TimeField(read_only=True)
-    time_end    = serializers.TimeField(read_only=True)
+    classroom_id = serializers.CharField(read_only=True)
+    location = serializers.CharField() #In responses and requests 
+
+    course = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(), write_only=True
+    )
+
     class Meta:
         model = Classroom
         fields = [
-            "classroom_id",
-            "lesson", 
-            "day", "start_time", "end_time",
-            "day_of_week", "time_start", "time_end",
-            "duration_minutes", "capacity",
-            "is_active", "instructor", "created_at",
-            "enrolled_count",
+            "capacity", "classroom_id", "zoom_link", "is_online", "location", "director"
         ]
-        read_only_fields = ["lesson", "instructor", "created_at"]
+        read_only_fields = ["lesson", "created_at"]
+
+    def create(self, validated_data):
+        request = self.context.get("request") #read the current request (who is requesting?)
+        if "owner_instructor" not in validated_data and request and hasattr(request, "user"):
+            #In case validated data isn't storing owner_instructor, but user instead
+            pass #Instructor is someone else
+        else:
+            #No instructor inputted 
+            try:
+                #Grab instructor based on user field and add it into the validated data 
+                owner = InstructorProfile.objects.get(user=request.user)
+                validated_data["director"] = owner
+            except InstructorProfile.DoesNotExist:
+                pass
+
+        return Classroom.objects.create(**validated_data)
 
     def validate(self, attrs):
         # pull values (handles create/update)
-        inst = getattr(self.instance, "instructor", None)
         req = self.context.get("request")
-        if not inst and req and getattr(req.user, "is_authenticated", False):
-            from .models import InstructorProfile
+        if req and getattr(req.user, "is_authenticated", False):
             inst = InstructorProfile.objects.filter(user=req.user).first()
 
         lesson = (

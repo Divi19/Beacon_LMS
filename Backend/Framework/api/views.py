@@ -157,7 +157,15 @@ class ClassroomView(APIView):
             return Response({"detail": "Not an instructor."}, status=403)
         if not lesson:
             return Response({"detail": "No related lessons."}, status=403)
-        classrooms = (Classroom.objects.filter(lesson=lesson, instructor=instr).annotate(enrolled_count=Count("classroomenrollment", distinct=True)) if instr and lesson else Classroom.objects.none())
+        classrooms = (
+            Classroom.objects
+            .filter(
+                director=instr,                          # Classroom has 'director', not 'instructor'
+                lessonclassroom__lesson=lesson           # traverse via LessonClassroom → Lesson
+            )
+            .annotate(enrolled_count=Count("classroomenrollment", distinct=True))
+            .distinct()
+        )
         serializer = ClassroomSerializer(classrooms, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
     
@@ -173,6 +181,8 @@ class ClassroomView(APIView):
             raise serializers.ValidationError("This user is not an instructor.")
         ser = ClassroomSerializer(data=request.data, context={"request": request, "lesson": lesson})
         ser.is_valid(raise_exception=True)
+
+
         try:
             classroom = ser.save(lesson=lesson, instructor=instructor)
         except IntegrityError:
@@ -181,7 +191,7 @@ class ClassroomView(APIView):
                 status=400,
             )
         return Response(ClassroomSerializer(classroom, context={"request": request}).data, status=201)
-
+    
 class ActiveClassroom(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication] 
@@ -244,7 +254,6 @@ class LessonDetails(APIView):
         GET method. Retrieving Lessons
         """
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
-        lesson_id =  models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=False)
         output = {
             "lesson_id": lesson.lesson_id,
             "title": lesson.title,
