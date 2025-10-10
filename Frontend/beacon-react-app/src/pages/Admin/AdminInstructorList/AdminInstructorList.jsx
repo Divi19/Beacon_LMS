@@ -1,13 +1,32 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./AdminInstructorList.module.css";
 import AdminTopBar from "../../../components/AdminTopBar/AdminTopBar";
 import { api } from "../../../api";
+import AdminCard from "../../../components/AdminCard/AdminCard";
 
 export default function AdminInstructorList() {
     const navigate = useNavigate();
+    const [instructors, setInstructors] = useState([
+            {
+                id: 1,
+                title: "Ms",
+                name: "Polla Clae",
+                email: "polla.clae@beacon.edu",
+                password: "pclae123",
+                account_status: "Active",
+            },
+            {
+                id: 2,
+                title: "Mr",
+                name: "Will Ed",
+                email: "will.ed@beacon.edu",
+                password: "wille123",
+                account_status: "Active",
+            },
+        ]);
 
     useEffect(() => {
         let cancelled = false;
@@ -67,63 +86,29 @@ export default function AdminInstructorList() {
                 </Button>
             </header>
 
-            <div className={i.grid1}>
-                <div className={i.card1}>
-                    <h2>Ms. Polla Clae</h2>
-                    <div className={i.cardDesc1}>
-                        <div className={i.leftGroup}>
-                            <span>Email: </span>
-                            <span className={i.spacing}>
-                                <strong>polla.clae@beacon.edu</strong>
-                            </span>
-                        </div>
+            {instructors.length === 0 ? (
+                            <div className={i.noInstructor}>No instructor has been created yet.</div>
+                        ) : (
+                            <div className={i.grid1}>
+                                {instructors.map(instructor => (
+                                    <AdminCard
+                                        key={instructor.id}
+                                        instructor={{
+                                            title: instructor.title,
+                                            name: instructor.name,
+                                            password: instructor.password,
+                                            account_status: instructor.account_status,
+                                        }}
+                                        isEnrolled={true}
+                                        ctaText="View"
+                                        onClick={() =>
+                                            navigate(`/student/lesson/${instructor.id}`)
+                                        }
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
-
-                    <div className={i.cardDesc1}>
-                        <div className={i.leftGroup}>
-                            <span>Email Password: </span>
-                            <span className={i.spacing}>
-                                <strong>pclae123</strong>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className={i.cardDesc2}>
-                        <span>Account status: </span>
-                        <span>
-                            <strong>Active</strong>
-                        </span>
-                    </div>
-                </div>
-
-                <div className={i.card1}>
-                    <h2>Ms. Polla Clae</h2>
-                    <div className={i.cardDesc1}>
-                        <div className={i.leftGroup}>
-                            <span>Email: </span>
-                            <span className={i.spacing}>
-                                <strong>polla.clae@beacon.edu</strong>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className={i.cardDesc1}>
-                        <div className={i.leftGroup}>
-                            <span>Email Password: </span>
-                            <span className={i.spacing}>
-                                <strong>pclae123</strong>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className={i.cardDesc2}>
-                        <span>Account status: </span>
-                        <span>
-                            <strong>Active</strong>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+                );
+            }
+            
