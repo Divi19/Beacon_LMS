@@ -70,8 +70,49 @@ export default function StudentMyLessonsPage() {
             </div>
             <header className={i.header}>
                 <h1 className={i.title}>MY LESSONS</h1>
+                <div className={i.rect}>
+                    <div className={i.label}>
+                        <strong>{course.title}</strong>
+                    </div>
+                    <div className={i.label1}>
+                        <span>
+                            Code:<span> {course.code}</span>
+                        </span>
+                        <span>
+                            {course.credit}
+                            <span> Credits</span>
+                        </span>
+                    </div>
+                </div>
             </header>
             <header className={i.header}>
+                <Button
+                    variant="blue"
+                    className={i.enrollBtn}
+                    onClick={() => navigate("/student/lesson-enrollment")}
+                >
+                    <span>Enrollment</span>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 8 16 12 12 16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                </Button>
+                <div className={i.rect1}>
+                    <div className={i.label2}>
+                        <strong>{course.status}</strong>
+                    </div>
+                </div>
             </header>
 
             {lessons.length === 0 ? (
