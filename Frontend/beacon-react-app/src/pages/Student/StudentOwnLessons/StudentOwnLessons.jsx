@@ -5,7 +5,7 @@ import Button from "../../../components/Button/Button";
 import i from "./StudentOwnLessons.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 import { api } from "../../../api";
-import LessonDisplay from "../../../components/Button/LessonDisplay/LessonDisplay";
+import LessonDisplay from "../../../components/LessonDisplay/LessonDisplay";
 
 export default function StudentMyLessonsPage() {
     const navigate = useNavigate();

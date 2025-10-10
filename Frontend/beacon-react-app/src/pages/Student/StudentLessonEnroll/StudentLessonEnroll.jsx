@@ -5,7 +5,7 @@ import Button from "../../../components/Button/Button";
 import i from "./StudentLessonEnroll.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 import { api } from "../../../api";
-import LessonCard from "../../../components/Button/LessonCard/LessonCard";
+import LessonCard from "../../../components/LessonCard/LessonCard";
 
 export default function StudentMyLessonsPage() {
     const navigate = useNavigate();
