@@ -56,6 +56,7 @@ urlpatterns = [
     path("student/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
     path("student/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
     #Student Lessons
+    path("student/courses/<str:course_id>/lessons/enrolled/", StudentEnrolledLessons.as_view(), name="enrolled-lessons"),
     path("student/courses/<str:course_id>/lessons/unenrolled/", StudentUnenrolledLessons.as_view(), name="unenrolled-lessons"),
     path("student/courses/<str:course_id>/lessons/enroll/<str:lesson_id>/", StudentUnenrolledLessons.as_view(), name="unenrolled-lessons"),
     #Students Classrooms

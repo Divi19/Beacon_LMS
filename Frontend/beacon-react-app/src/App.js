@@ -28,6 +28,7 @@ import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
 import StudentOwnLessons from "./pages/Student/StudentOwnLessons/StudentOwnLessons";
+import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
 
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
@@ -77,6 +78,7 @@ export default function App(){
       
       {/* Lessons */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId" element={<InstructorLessonDetail />}/>
+      <Route path="/student/course/:courseId/my-lessons" element={<StudentMyLessonsPage />}/>
       <Route path="/student/course/:courseId/lesson-enroll" element={<StudentLessonEnroll />}/>
       <Route path="/student/course/:courseId/lesson/:lessonId" element={<StudentLessonDetail />}/>
       {/*<Route path="/instructor/course/:courseId/lessons/:lessonId" element={<InstructorLessonCreation />} />*/}
@@ -93,7 +95,7 @@ export default function App(){
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
       <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
       <Route path="/trial" element={<StudentLessonEnroll />}/>
-      <Route path="/" element={<StudentOwnLessons />}/>
+      {/* <Route path="/" element={<StudentOwnLessons />}/> */}
 
       
 

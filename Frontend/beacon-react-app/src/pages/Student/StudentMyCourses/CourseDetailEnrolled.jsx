@@ -136,7 +136,7 @@ export default function CourseDetailEnrolled() {
               className={s.cta} // To remove after integration just to access lesson detail without actual lesson list page.
               type="button"
               onClick={() =>
-                navigate(`/student/course/${courseId}/lesson-enroll`
+                navigate(`/student/course/${courseId}/my-lessons`, { state: {course}}
                   // `/student/course/${courseId}/lesson/${getLessonId(course)}`
                 )
               }
