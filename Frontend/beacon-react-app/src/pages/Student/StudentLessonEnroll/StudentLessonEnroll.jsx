@@ -90,7 +90,7 @@ export default function StudentLessonEnroll() {
         lesson_id: lessonCode,
       });
 
-      navigate("/student/my-lesson");
+      navigate(`/student/course/${courseId}/my-lessons`);
       await fetchLessons(); // refresh after write so UI stays correct (the number of unenrolled)
     } catch (err) {
       const detail = err?.response?.data?.detail;
@@ -194,11 +194,12 @@ return (
                         <LessonCard
                             key={lesson.id}
                             lesson={{
-                                code: lesson.code,
+                                code: lesson.lesson_id,
                                 title: lesson.title,
-                                credit: lesson.credit,
-                                director: lesson.director,
-                                duration: lesson.duration,
+                                credit: lesson.credits,
+                                // director: lesson.director,
+                                duration: lesson.duration_weeks,
+                                description: lesson.description
                             }}
                             isEnrolled={true}
                             ctaText="Enrol"

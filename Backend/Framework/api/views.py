@@ -570,6 +570,9 @@ class StudentEnrolledLessons(APIView):
                 "lesson_id": lesson.lesson_id,
                 "lesson_title": lesson.title,
                 "lesson_description": lesson.description,
+                # "lesson_director": lesson.director,
+                "lesson_credits": lesson.credits,
+                "lesson_duration": lesson.duration_weeks,
                 "course_id": lesson.course.course_id,
                 "course_title": lesson.course.title,
                 }

@@ -11,10 +11,22 @@ export default function StudentMyLessonsPage() {
   const navigate = useNavigate();
   const { courseId } =useParams();
   const location = useLocation();
-  const course = location.state?.course || null
+  // const course = location.state?.course || null
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [course, setCourse] = useState(location.state?.course || null);
+  const [loadingCourse, setLoadingCourse] = useState(!location.state?.course);
+
+  useEffect(() => {
+    if (!course) {
+      setLoadingCourse(true);
+      api.get(`/courses/${courseId}/detail`)
+      .then(res => setCourse(res.data))
+      .catch(err => console.error("Failed to fetch course", err))
+      .finally(() => setLoadingCourse(false));
+    }
+  }, [course, courseId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,10 +62,10 @@ export default function StudentMyLessonsPage() {
       <header className={i.header}>
         <h1 className={i.title}>MY LESSONS</h1>
         <div className={i.rect}>
-            <div className={i.label}><strong>Bachelor of Computer Science</ strong></div>
+            <div className={i.label}><strong>{course?.course_title || "Loading..."}</strong></div>
             <div className={i.label1}>
-                <span>Code:<span> C2100</span></span>
-                <span>30<span> Credits</span></span>
+                <span>Code:<span> {course?.course_id || "-"}</span></span>
+                <span> {course?.course_credits || "-"}<span> Credits</span></span>
             </div>
         </div>
       </header>
@@ -123,9 +135,9 @@ export default function StudentMyLessonsPage() {
         lesson={{
           code: lesson.lesson_id,
           title: lesson.lesson_title,
-          credit: lesson.credits,
-          director: lesson.director,
-          duration: lesson.duration,
+          credit: lesson.lesson_credits,
+          // director: lesson.director,
+          duration: lesson.lesson_duration,
         }}
         isEnrolled={true}
         ctaText="View"
