@@ -1,17 +1,20 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
-import styles from "./InstructorLogin.module.css";
+import styles from "./AdminCreateInstructor.module.css";
 import {api} from "../../../api" 
 
 // Optional: pass a logo URL via props if you prefer
-// Usage: <InstructorLogin logoSrc="/assets/beacon-logo.png" />
-export default function InstructorLogin({ logoSrc }) {
+// Usage: <StudentLogin logoSrc="/assets/beacon-logo.png" />
+export default function AdminCreateInstructor({ logoSrc }) {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [formData, setFormData] = useState({
+    title: "",
     email: "",
-    password: ""
+    first_name: "",
+    last_name: "",
+    password: "",
   })
   const handleChange = (e) => {
     setFormData(
@@ -34,14 +37,15 @@ export default function InstructorLogin({ logoSrc }) {
   
     try {
       const { data } = await api.post(
-        "/instructor/login/",
+        "/student/signup/",
         formData
       );
+  
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
-      setSuccessMessage("Login successful");
-      navigate("/instructor/course-list", { replace: true });
+      setSuccessMessage("Sign up successful");
+      navigate("/student/login", { replace: true });
     } catch (err) {
       // Robust error extraction
       if (err.response && err.response.data) {
@@ -75,12 +79,28 @@ export default function InstructorLogin({ logoSrc }) {
 
   return (
     <main className={styles.wrap}>
-      <section className={styles.card} role="region" aria-label="Instructor Sign In">
+      <section className={styles.card} role="region" aria-label="Student Sign In">
        <img src="/logo.svg" alt="Beacon logo" className={styles.logo} />    
 
-        <h1 className={styles.title}>Sign In - Instructor</h1>
+        <h1 className={styles.title}>Instructor Account Creation</h1>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <label htmlFor="title" className={styles.label}>
+            Instructor Title:
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="title"
+            inputMode="title"
+            autoComplete="title"
+            className={styles.input}
+            // placeholder="you@example.com"
+            value={formData.title}
+            onChange={handleChange}
+            required
+            aria-required="true"
+          />
           <label htmlFor="email" className={styles.label}>
             Instructor Email:
           </label>
@@ -91,8 +111,42 @@ export default function InstructorLogin({ logoSrc }) {
             inputMode="email"
             autoComplete="email"
             className={styles.input}
-            placeholder="you@example.com"
+            // placeholder="you@example.com"
             value={formData.email}
+            onChange={handleChange}
+            required
+            aria-required="true"
+          />
+
+          <label htmlFor="first_name" className={styles.label}>
+            Full Name:
+          </label>
+          <input
+            id="first_name"
+            name="first_name"
+            type="first_name"
+            inputMode="first_name"
+            autoComplete="first_name"
+            className={styles.input}
+            // placeholder="you@example.com"
+            value={formData.first_name}
+            onChange={handleChange}
+            required
+            aria-required="true"
+          />
+
+          <label htmlFor="last_name" className={styles.label}>
+            Account status:
+          </label>
+          <input
+            id="last_name"
+            name="last_name"
+            type="last_name"
+            inputMode="last_name"
+            autoComplete="last_name"
+            className={styles.input}
+            // placeholder="you@example.com"
+            value={formData.last_name}
             onChange={handleChange}
             required
             aria-required="true"
@@ -108,7 +162,7 @@ export default function InstructorLogin({ logoSrc }) {
               type={showPw ? "text" : "password"}
               autoComplete="current-password"
               className={styles.input}
-              placeholder="••••••••"
+            //   placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
               required
@@ -126,9 +180,21 @@ export default function InstructorLogin({ logoSrc }) {
 
           {error && <p className={styles.error} role="alert">{error}</p>}
 
+          <div className={styles.buttonRow}>
+            {/* <Link to="/student/signup" className={styles.ctaAlt}>
+              <span className={styles.ctaTextUnderline}>Sign Up</span>
+            </Link> */}
           <button className={styles.cta} type="submit" disabled={isLoading}>
-            {isLoading ? "Logging In…" : <span className={styles.ctaTextUnderline}>Log In</span>}
+            {isLoading ? "Signing Up…" : <span className={styles.ctaTextUnderline}>Create</span>}
           </button>
+
+            {/* <button className={styles.cta} type="submit" disabled={isLoading}>
+            {isLoading ? "Logging In…" : <span className={styles.ctaTextUnderline}>Log In</span>}
+          </button> */}
+          </div>
+          {/* <button className={styles.cta} type="submit" disabled={isLoading}>
+            {isLoading ? "Logging In…" : <span className={styles.ctaTextUnderline}>Log In</span>}
+          </button> */}
         </form>
 
         {/* Optional small print / links area */}

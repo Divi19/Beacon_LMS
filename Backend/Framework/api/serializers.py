@@ -102,7 +102,7 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = ['first_name', 'last_name', 'title', 'locked_at', 'password', 'email']
-        read_only_fields = ['student_profile_id', 'student_no']
+        read_only_fields = ['student_profile_id']
 
     #during post 
     def create(self, validated_data):
@@ -158,6 +158,39 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         )
         return enrollment 
 
+class LessonEnrollmentSerializer(serializers.ModelSerializer):
+    # accept classroom id in the request body
+    lesson_id = serializers.PrimaryKeyRelatedField(
+        source="lesson", queryset=Lesson.objects.all(), write_only=True
+    )
+    
+    class Meta:
+        model = LessonEnrollment
+        fields = ["id", "lesson_id", "lesson", "student", "enrolled_at"]
+        read_only_fields = ["lesson", "student", "enrolled_at"]
+
+    def create(self, validated_data):
+        student = self.context.get("student")
+        if not student:
+            raise serializers.ValidationError("Serializer context must include 'student'.")
+        # DRF already converted classroom_id -> Classroom instance
+        lesson = validated_data.pop("lesson")
+
+        # business rules
+        if not lesson.is_active:
+            raise serializers.ValidationError("This lesson is currently inactive.")
+        if LessonEnrollment.objects.filter(student=student, lesson=lesson).exists():
+            raise serializers.ValidationError("This student is already enrolled in this lesson.")
+        if not Enrollment.objects.filter(course=lesson.course, student=student).exists():
+            raise serializers.ValidationError("Student must be enrolled in a course first")
+        # if not LessonEnrollment.objects.filter(lesson=lesson, student=student).exists():
+        #     raise serializers.ValidationError("This student is not enrolled in the related lesson.")
+        # if ClassroomEnrollment.objects.filter(classroom=classroom).count() >= classroom.capacity:
+        #     raise serializers.ValidationError("This classroom is currently full.")
+        # if ClassroomEnrollment.objects.filter(classroom__lesson=lesson).exists():
+        #     raise serializers.ValidationError("This student is already in a related classroom.")
+        return LessonEnrollment.objects.create(student=student, lesson=lesson, **validated_data)
+
 class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
     # accept classroom id in the request body
     classroom_id = serializers.PrimaryKeyRelatedField(
@@ -193,8 +226,20 @@ class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
 """
 Shared serializers
 """
+class LessonOutSerializer(serializers.ModelSerializer):
+    """
+    Seen only in responses
+    """
+    class Meta:
+        model = Lesson
+        fields = [
+            "lesson_id", "course", "title", "description", "credits",
+            "objectives", "duration_weeks", "status", "created_by", "created_at"
+        ]
+        read_only_fields = fields
 
 class CourseSerializer(serializers.ModelSerializer):
+    lessons = LessonOutSerializer(many=True, read_only=True, source="lesson_set")
     enrolled_count = serializers.IntegerField(read_only=True)
 
     # Client sends a PK here (optional). DRF resolves it to an InstructorProfile instance
@@ -225,6 +270,7 @@ class CourseSerializer(serializers.ModelSerializer):
             "owner_instructor",     # read-only output
             "description",
             "credits",
+            "lessons"
         ]
         read_only_fields = ["owner_instructor", "credits"]
 
@@ -429,14 +475,14 @@ class LessonBulkCreateInSerializer(serializers.Serializer):
     description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     objectives = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
-class LessonOutSerializer(serializers.ModelSerializer):
-    """
-    Seen only in responses
-    """
-    class Meta:
-        model = Lesson
-        fields = [
-            "lesson_id", "course", "title", "description", "credits",
-            "objectives", "duration_weeks", "status", "created_by", "created_at"
-        ]
-        read_only_fields = fields
+# class LessonOutSerializer(serializers.ModelSerializer):
+#     """
+#     Seen only in responses
+#     """
+#     class Meta:
+#         model = Lesson
+#         fields = [
+#             "lesson_id", "course", "title", "description", "credits",
+#             "objectives", "duration_weeks", "status", "created_by", "created_at"
+#         ]
+#         read_only_fields = fields

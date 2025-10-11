@@ -39,7 +39,6 @@ export default function StudentLogin({ logoSrc }) {
         
       );
       console.log("Login response:", data);
-  
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
