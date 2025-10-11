@@ -14,11 +14,16 @@ api.interceptors.request.use((cfg) => {
 
 api.interceptors.request.use((cfg) => {
     const url = (cfg.url || "").toString();
-    const isAuthFree = url.includes("/instructor/login/") || url.includes("/api/token/");
+    const isAuthFree = url.includes("/instructor/login/") || url.includes("/api/token/") || url.includes("/student/login/");
     //skips attaching header if path is as above
     if (!isAuthFree) {
       const t = localStorage.getItem("accessToken");
       if (t) cfg.headers.Authorization = `Bearer ${t}`;
+      
     }
+    
     return cfg;
+
+    
+
   });

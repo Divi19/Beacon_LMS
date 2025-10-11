@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
-import styles from "./InstructorLogin.module.css";
+import styles from "./AdminLogIn.module.css";
 import {api} from "../../../api" 
 
 // Optional: pass a logo URL via props if you prefer
 // Usage: <InstructorLogin logoSrc="/assets/beacon-logo.png" />
-export default function InstructorLogin({ logoSrc }) {
+export default function AdminLogIn({ logoSrc }) {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,14 +34,14 @@ export default function InstructorLogin({ logoSrc }) {
   
     try {
       const { data } = await api.post(
-        "/instructor/login/",
+        "/admin/log-in/",
         formData
       );
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
       setSuccessMessage("Login successful");
-      navigate("/instructor/course-list", { replace: true });
+      navigate("/admin/main-page", { replace: true });
     } catch (err) {
       // Robust error extraction
       if (err.response && err.response.data) {
@@ -78,11 +78,11 @@ export default function InstructorLogin({ logoSrc }) {
       <section className={styles.card} role="region" aria-label="Instructor Sign In">
        <img src="/logo.svg" alt="Beacon logo" className={styles.logo} />    
 
-        <h1 className={styles.title}>Sign In - Instructor</h1>
+        <h1 className={styles.title}>Sign In - Admin</h1>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <label htmlFor="email" className={styles.label}>
-            Instructor Email:
+            Admin Email:
           </label>
           <input
             id="email"

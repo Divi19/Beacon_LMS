@@ -1,5 +1,5 @@
 from contextvars import Token
-
+import re 
 from .forms import *
 
 #django 
@@ -194,7 +194,9 @@ class ActiveClassroom(APIView):
             .select_related('lesson', 'instructor')  # avoid N+1
             .order_by('day_of_week', 'time_start'))
         return Response(ClassroomSerializer(qs, many=True).data)
-        
+"""
+Lessons 
+"""
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LessonsView(APIView):
@@ -206,7 +208,7 @@ class LessonsView(APIView):
         """
         course = get_object_or_404(Course, course_id=course_id)
         lessons = Lesson.objects.filter(course = course).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
-        data = LessonSerializer(lessons, many=True).data
+        data = LessonOutSerializer(lessons, many=True).data
         return Response(data)
     
     def post(self, request, course_id):
@@ -255,15 +257,16 @@ class LessonDetails(APIView):
         }
         return Response(output, status=status.HTTP_200_OK)
 
+
+
 class LessonBulkCreateView(APIView):
     """
     POST /api/courses/<course_id>/lessons/bulk-create/
-    Body:
     {
       "count": 10,
       "credits": 10,
       "base_title": "Lesson",
-      "starting_number": 1,
+      "starting_number": 1,   # optional
       "duration_weeks": 4,
       "status": "Active",
       "description": "...",
@@ -271,19 +274,28 @@ class LessonBulkCreateView(APIView):
     }
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication] 
+    authentication_classes = [CustomJWTAuthentication]
 
     def _get_instructor(self, user):
         return InstructorProfile.objects.filter(user=user).first()
 
+    def _course_prefix(self, course):
+        # 'CL001' -> 'CL' (alpha prefix); if you want full 'CL001', just `return course.course_id`
+        m = re.match(r"([A-Za-z]+)", course.course_id or "")
+        return m.group(1) if m else (course.course_id or "")
+
+    def _format_lesson_id(self, course, n: int) -> str:
+        # e.g. 'CL-LES001' (3 digits; change to 2 if you like)
+        return f"{self._course_prefix(course)}-LES{n:03d}"
+
     def post(self, request, course_id):
-        # 1) validate course
+        # 1) course
         try:
             course = Course.objects.get(course_id=course_id)
         except Course.DoesNotExist:
             return Response({"detail": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # 2) validate payload
+        # 2) payload
         ser = LessonBulkCreateInSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         data = ser.validated_data
@@ -291,7 +303,7 @@ class LessonBulkCreateView(APIView):
         count           = data["count"]
         credits         = data["credits"]
         base_title      = data["base_title"]
-        starting_number = data["starting_number"]
+        starting_number = data.get("starting_number")
         duration_weeks  = data["duration_weeks"]
         status_str      = data["status"]
         description     = data.get("description")
@@ -300,37 +312,59 @@ class LessonBulkCreateView(APIView):
         inst = self._get_instructor(request.user)
         now = timezone.now()
 
-        # 3) bulk-create safely (note: bulk_create doesn't call save())
-        new_lessons = []
+        # 3) create in a transaction to avoid race conditions
         with transaction.atomic():
-            used_ids = set(Lesson.objects.values_list("lesson_id", flat=True))
-            for i in range(count):
-                lid = generate_custom_id()
-                # very low chance, but ensure uniqueness anyway
-                while lid in used_ids or Lesson.objects.filter(lesson_id=lid).exists():
-                    lid = generate_custom_id()
-                used_ids.add(lid)
+            # Lock existing lessons for this course so numbering is safe
+            existing_ids = list(
+                Lesson.objects
+                      .select_for_update()
+                      .filter(course=course)
+                      .values_list("lesson_id", flat=True)
+            )
 
-                n = starting_number + i
-                title = f"{base_title} {n}".strip()
+            # Extract already-used numeric parts from IDs like 'CL-LES001'
+            used_numbers = set()
+            for lid in existing_ids:
+                m = re.search(r'LES(\d+)$', lid or '')
+                if m:
+                    used_numbers.add(int(m.group(1)))
+
+            # Decide where to start
+            next_n = starting_number if starting_number else (max(used_numbers) + 1 if used_numbers else 1)
+
+            if (max(used_numbers) if used_numbers else 0) + count > 999:
+                 return Response({"detail": "Exceeds maximum of 999 lessons per course."}, status=400)
+
+            new_lessons = []
+            # Build desired lessons, skipping any collisions
+            for _ in range(count):
+                while True:
+                    candidate = self._format_lesson_id(course, next_n)
+                    if candidate not in existing_ids and not Lesson.objects.filter(lesson_id=candidate).exists():
+                        break
+                    next_n += 1  # bump to next free number
 
                 new_lessons.append(Lesson(
-                    lesson_id=lid,
+                    lesson_id=candidate,          # <- lesson_id IS the code
                     course=course,
                     credits=credits,
-                    title=title,                       # "Lesson 1", "Lesson 2", ...
+                    title=f"{base_title} {next_n}",
                     description=description,
                     objectives=objectives,
                     duration_weeks=duration_weeks,
                     status=status_str,
                     # designer_id = inst,
                     created_by=inst,
-                    created_at=now,                    # bulk_create won’t set auto_now_add
+                    created_at=now,
                 ))
 
-            Lesson.objects.bulk_create(new_lessons, batch_size=100)
+                existing_ids.append(candidate)
+                used_numbers.add(next_n)
+                next_n += 1
 
-        out = LessonOutSerializer(new_lessons, many=True).data
+            created = Lesson.objects.bulk_create(new_lessons, batch_size=100)
+
+        out = LessonOutSerializer(created, many=True).data
         return Response({"created": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
 class LessonPrereqView(APIView):
@@ -377,6 +411,9 @@ class LessonPrereqBulkCreateView(APIView):
         return Response({"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
 
+"""
+See student list 
+"""
 class StudentsEnrolledView(APIView):
     """
     GET /api/students/enrolled?course_id=...&lesson_id=...&classroom_id=...&q=...&ordering=full_name
@@ -582,6 +619,55 @@ class StudentUnenrolledCourses(APIView):
         enrollment = serializer.save()
         return Response(EnrollmentSerializer(enrollment).data, status=201)
 
+class StudentUnenrolledLessons(APIView): 
+    """
+    TODO: change to authentication by removing student_profile_id.
+    adding 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request, course_id, **kwargs):
+        """
+        GET method to retrieve unenrolled classrooms
+        """
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        course = get_object_or_404(Course, course_id=course_id)
+        unenrolled_lessons = Lesson.objects.filter(course=course).exclude(lessonenrollment__student=student).distinct()
+        serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
+        return Response(serializer.data,  status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        course_id = request.data.get("course_id")
+        lesson_id = request.data.get("lesson_id")
+        course = get_object_or_404(Course, course_id=course_id)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id, course=course)
+
+        ser = LessonEnrollmentSerializer(
+            data={"lesson_id": lesson.pk},
+            context={"request": request, "student": student},
+        )
+        ser.is_valid(raise_exception=True)
+        enrollment = ser.save()
+        return Response(LessonEnrollmentSerializer(enrollment).data, status=201)
+    
+    def delete(self, request, lesson_id, classroom_id, **kwargs):
+        """
+        Idempotent: delete if exists; 204 even if nothing to delete.
+        """
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        course = get_object_or_404(Course, course_id=course_id)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id, course=course)
+        classroom = get_object_or_404(Classroom, classroom_id=classroom_id, lesson__lesson_id=lesson_id)
+
+        LessonEnrollment.objects.filter(student=student, lesson=lesson).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class StudentUnenrolledClassrooms(APIView): 
     """
     TODO: change to authentication by removing student_profile_id.
@@ -642,6 +728,10 @@ class CourseDetailView(APIView):
                           .annotate(enrolled_count=Count('enrollment__student', distinct=True)),  
             course_id=course_id
         )
+
+        lessons = Lesson.objects.filter(course=course)
+        lesson_data = LessonSerializer(lessons, many=True).data
+
         output = {
             "course_id": course.course_id,
             "course_title": course.title,
@@ -649,6 +739,9 @@ class CourseDetailView(APIView):
             "course_director": course.owner_instructor.full_name if course.owner_instructor else None,
             "course_description": course.description,
             "status": course.status,
-            "enrolled_count": course.enrolled_count,  
+            "enrolled_count": course.enrolled_count
         }
         return Response(output, status=status.HTTP_200_OK)
+    
+
+    

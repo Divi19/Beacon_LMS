@@ -19,7 +19,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     course_id: "",
     director: "",
     description: "",
-    status: "Active", //Newly added here, check serializer again
+    status: "Active", 
   });
 
 
