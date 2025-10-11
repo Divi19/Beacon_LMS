@@ -33,6 +33,7 @@ export default function StudentLessonDetail() {
             lesson_id: lessonId ?? "TEMP_LESSON",
             course_id: courseId ?? "TEMP_COURSE",
             title: "Mathematics",
+            designer: "Ms. Wong",
             description: "",
             objectives:
               "Lorem ipsum dolor sit amet.\nconsectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -287,7 +288,7 @@ export default function StudentLessonDetail() {
             </div>
 
             <div className={i.courseName}>{lesson.title || "Untitled Lesson"}</div>
-            <div className={i.courseDesigner}>Lesson Designer: Ms. Wong</div>
+            <div className={i.courseDesigner}>Lesson Designer: {lesson.designer || " "}</div>
             <div className={i.courseDesigner}>
               Description: {lesson.description || ""}
             </div>
