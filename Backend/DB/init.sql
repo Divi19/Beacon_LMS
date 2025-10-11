@@ -227,3 +227,17 @@ CREATE INDEX IF NOT EXISTS idx_student_assignment_student ON student_assignment(
 --    before enrolling in any *classroom* of that lesson.
 --    Enforce via trigger or app logic later.
 -- =========================================================
+
+
+-- COURSE: drop stray director (not in ERD)
+ALTER TABLE course
+  DROP COLUMN IF EXISTS director;
+
+-- CLASSROOM: drop director (moved responsibility to LESSON_CLASSROOM)
+ALTER TABLE classroom
+  DROP COLUMN IF EXISTS director;
+
+-- LESSON_CLASSROOM: remove legacy JSON schedule blob
+ALTER TABLE lesson_classroom
+  DROP COLUMN IF EXISTS session_times_json;
+
