@@ -157,7 +157,7 @@ class ClassroomView(APIView):
             return Response({"detail": "Not an instructor."}, status=403)
         if not lesson:
             return Response({"detail": "No related lessons."}, status=403)
-        classrooms = (Classroom.objects.filter(lesson=lesson, instructor=instr).annotate(enrolled_count=Count("classroomenrollment", distinct=True)) if instr and lesson else Classroom.objects.none())
+        classrooms = (Classroom.objects.filter(lessonclassroom__lesson=lesson, lessonclassroom__lesson__designer=instr).annotate(enrolled_count=Count("classroomenrollment", distinct=True)) if instr and lesson else Classroom.objects.none())
         serializer = ClassroomSerializer(classrooms, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
     
@@ -190,7 +190,7 @@ class ActiveClassroom(APIView):
         course = get_object_or_404(Course, course_id=course_id)
         # all classrooms for that course
         qs = (Classroom.objects
-            .filter(lesson__course=course)           # join via Lesson
+            .filter(lessonclassroom__lesson__course=course)           # join via Lesson
             .select_related('lesson', 'instructor')  # avoid N+1
             .order_by('day_of_week', 'time_start'))
         return Response(ClassroomSerializer(qs, many=True).data)
@@ -353,7 +353,7 @@ class LessonBulkCreateView(APIView):
                     objectives=objectives,
                     duration_weeks=duration_weeks,
                     status=status_str,
-                    # designer_id = inst,
+                    designer_id = inst.instructor_profile_id,
                     created_by=inst,
                     created_at=now,
                 ))
@@ -558,6 +558,24 @@ class StudentEnrolledCourses(APIView):
                 for course in courses]
         return Response(output, status=status.HTTP_200_OK)
 
+class StudentEnrolledLessons(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    
+    def get(self, request, course_id):
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        lessons = Lesson.objects.filter(lessonenrollment__student=student, course__course_id=course_id).distinct() 
+        output = [{
+                "lesson_id": lesson.lesson_id,
+                "lesson_title": lesson.title,
+                "lesson_description": lesson.description,
+                "course_id": lesson.course.course_id,
+                "course_title": lesson.course.title,
+                }
+                for lesson in lessons]
+        return Response(output, status=status.HTTP_200_OK)
+
 class StudentEnroll(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]     
@@ -639,10 +657,10 @@ class StudentUnenrolledLessons(APIView):
         serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
     
-    def post(self, request):
+    def post(self, request, course_id, **kwargs):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
-        course_id = request.data.get("course_id")
+        # course_id = request.data.get("course_id")
         lesson_id = request.data.get("lesson_id")
         course = get_object_or_404(Course, course_id=course_id)
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id, course=course)

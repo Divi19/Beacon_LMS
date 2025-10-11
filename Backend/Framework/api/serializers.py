@@ -166,7 +166,7 @@ class LessonEnrollmentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = LessonEnrollment
-        fields = ["id", "lesson_id", "lesson", "student", "enrolled_at"]
+        fields = ["lesson_enrollment_id", "lesson_id", "lesson", "student", "enrolled_at"]
         read_only_fields = ["lesson", "student", "enrolled_at"]
 
     def create(self, validated_data):
@@ -177,8 +177,8 @@ class LessonEnrollmentSerializer(serializers.ModelSerializer):
         lesson = validated_data.pop("lesson")
 
         # business rules
-        if not lesson.is_active:
-            raise serializers.ValidationError("This lesson is currently inactive.")
+        # if not lesson.is_active:
+        #     raise serializers.ValidationError("This lesson is currently inactive.")
         if LessonEnrollment.objects.filter(student=student, lesson=lesson).exists():
             raise serializers.ValidationError("This student is already enrolled in this lesson.")
         if not Enrollment.objects.filter(course=lesson.course, student=student).exists():

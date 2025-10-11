@@ -204,7 +204,7 @@ class StudentProfile(models.Model):
     user = models.ForeignKey('User', models.DO_NOTHING)
     first_name = models.CharField(max_length=120, blank=True, null=True)
     last_name = models.CharField(max_length=120, blank=True, null=True)
-    titled = models.CharField(max_length=40, blank=True, null=True)
+    title = models.CharField(max_length=40, blank=True, null=True)
     full_name = models.CharField(max_length=255, blank=True, null=True)
     student_no = models.CharField(unique=True, max_length=50, default = generate_student_id, editable = True)
     locked_at = models.DateTimeField(auto_now_add=True)
