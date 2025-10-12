@@ -248,4 +248,11 @@ ALTER TABLE lesson_classroom
   ADD COLUMN IF NOT EXISTS time_end          TIME,
   ADD COLUMN IF NOT EXISTS duration_minutes  INT;
 
+ALTER TABLE lesson_classroom
+  ADD COLUMN IF NOT EXISTS director_id INT
+    REFERENCES instructor_profile(instructor_profile_id)
+    ON DELETE RESTRICT
+    NOT NULL;
+
+
 
