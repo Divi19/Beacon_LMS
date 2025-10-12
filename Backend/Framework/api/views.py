@@ -467,7 +467,7 @@ class LessonsView(APIView):
         """
         course = get_object_or_404(Course, course_id=course_id)
         lessons = Lesson.objects.filter(course = course).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
-        data = LessonSerializer(lessons, many=True).data
+        data = LessonOutSerializer(lessons, many=True).data
         return Response(data)
     
     def patch(self, request, lesson_id):
@@ -797,6 +797,27 @@ class StudentEnrolledCourses(APIView):
                 for course in courses]
         return Response(output, status=status.HTTP_200_OK)
 
+class StudentEnrolledLessons(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    
+    def get(self, request, course_id):
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        lessons = Lesson.objects.filter(lessonenrollment__student=student, course__course_id=course_id).distinct() 
+        output = [{
+                "lesson_id": lesson.lesson_id,
+                "lesson_title": lesson.title,
+                "lesson_description": lesson.description,
+                # "lesson_director": lesson.director,
+                "lesson_credits": lesson.credits,
+                "lesson_duration": lesson.duration_weeks,
+                "course_id": lesson.course.course_id,
+                "course_title": lesson.course.title,
+                }
+                for lesson in lessons]
+        return Response(output, status=status.HTTP_200_OK)
+
 class StudentEnroll(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]     
@@ -858,6 +879,55 @@ class StudentUnenrolledCourses(APIView):
         enrollment = serializer.save()
         return Response(EnrollmentSerializer(enrollment).data, status=201)
 
+class StudentUnenrolledLessons(APIView): 
+    """
+    TODO: change to authentication by removing student_profile_id.
+    adding 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    def get(self, request, course_id, **kwargs):
+        """
+        GET method to retrieve unenrolled classrooms
+        """
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        course = get_object_or_404(Course, course_id=course_id)
+        unenrolled_lessons = Lesson.objects.filter(course=course).exclude(lessonenrollment__student=student).distinct()
+        serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
+        return Response(serializer.data,  status=status.HTTP_200_OK)
+    
+    def post(self, request, course_id, **kwargs):
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        # course_id = request.data.get("course_id")
+        lesson_id = request.data.get("lesson_id")
+        course = get_object_or_404(Course, course_id=course_id)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id, course=course)
+
+        ser = LessonEnrollmentSerializer(
+            data={"lesson_id": lesson.pk},
+            context={"request": request, "student": student},
+        )
+        ser.is_valid(raise_exception=True)
+        enrollment = ser.save()
+        return Response(LessonEnrollmentSerializer(enrollment).data, status=201)
+    
+    def delete(self, request, lesson_id, classroom_id, **kwargs):
+        """
+        Idempotent: delete if exists; 204 even if nothing to delete.
+        """
+        user = self.request.user
+        student = get_object_or_404(StudentProfile, user=user)
+        course = get_object_or_404(Course, course_id=course_id)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id, course=course)
+        classroom = get_object_or_404(Classroom, classroom_id=classroom_id, lesson__lesson_id=lesson_id)
+
+        LessonEnrollment.objects.filter(student=student, lesson=lesson).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class StudentUnenrolledClassrooms(APIView): 
     """
     TODO: change to authentication by removing student_profile_id.
@@ -918,6 +988,10 @@ class CourseDetailView(APIView):
                           .annotate(enrolled_count=Count('enrollment__student', distinct=True)),  
             course_id=course_id
         )
+
+        lessons = Lesson.objects.filter(course=course)
+        lesson_data = LessonSerializer(lessons, many=True).data
+
         output = {
             "course_id": course.course_id,
             "course_title": course.title,
@@ -925,7 +999,7 @@ class CourseDetailView(APIView):
             "course_director": course.owner_instructor.full_name if course.owner_instructor else None,
             "course_description": course.description,
             "status": course.status,
-            "enrolled_count": course.enrolled_count,  
+            "enrolled_count": course.enrolled_count
         }
         return Response(output, status=status.HTTP_200_OK)
     

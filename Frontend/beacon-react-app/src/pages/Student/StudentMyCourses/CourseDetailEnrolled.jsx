@@ -17,8 +17,8 @@ export default function CourseDetailEnrolled() {
   // To remove after backend integration, frontend testing purposes.
   const getLessonId = (course) =>
     course?.lessons && course.lessons.length > 0
-      ? course.lessons[0]
-      : "TEMP_LESSON";
+      ? course.lessons[0].lesson_id
+      : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -83,9 +83,9 @@ export default function CourseDetailEnrolled() {
           <h3 className={s.subhead}>Core lessons:</h3>
           <div className={s.chips}>
             {course.lessons && course.lessons.length > 0 ? (
-              course.lessons.map((id) => (
-                <span key={id} className={s.chip}>
-                  {id}
+              course.lessons.map((lesson) => (
+                <span key={lesson.lesson_id} className={s.chip}>
+                  {lesson.title || lesson.lesson_id}
                 </span>
               ))
             ) : (
@@ -136,8 +136,8 @@ export default function CourseDetailEnrolled() {
               className={s.cta} // To remove after integration just to access lesson detail without actual lesson list page.
               type="button"
               onClick={() =>
-                navigate(
-                  `/student/course/${courseId}/lesson/${getLessonId(course)}`
+                navigate(`/student/course/${courseId}/my-lessons`, { state: {course}}
+                  // `/student/course/${courseId}/lesson/${getLessonId(course)}`
                 )
               }
             >
