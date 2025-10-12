@@ -13,6 +13,12 @@ from django.contrib.auth.hashers import check_password
 from django.db import IntegrityError, transaction
 from django.db.models import OuterRef, Subquery, Q
 from django.db.models import Count
+# views.py
+from itertools import chain
+from django.db.models import Value, IntegerField, TimeField, CharField
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 #Res
 from rest_framework.decorators import api_view
@@ -157,7 +163,15 @@ class ClassroomView(APIView):
             return Response({"detail": "Not an instructor."}, status=403)
         if not lesson:
             return Response({"detail": "No related lessons."}, status=403)
-        classrooms = (Classroom.objects.filter(lesson=lesson, instructor=instr).annotate(enrolled_count=Count("classroomenrollment", distinct=True)) if instr and lesson else Classroom.objects.none())
+        classrooms = (
+            Classroom.objects
+            .filter(
+                director=instr,                          # Classroom has 'director', not 'instructor'
+                lessonclassroom__lesson=lesson           # traverse via LessonClassroom → Lesson
+            )
+            .annotate(enrolled_count=Count("classroomenrollment", distinct=True))
+            .distinct()
+        )
         serializer = ClassroomSerializer(classrooms, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
     
@@ -173,6 +187,7 @@ class ClassroomView(APIView):
             raise serializers.ValidationError("This user is not an instructor.")
         ser = ClassroomSerializer(data=request.data, context={"request": request, "lesson": lesson})
         ser.is_valid(raise_exception=True)
+
         try:
             classroom = ser.save(lesson=lesson, instructor=instructor)
         except IntegrityError:
@@ -182,18 +197,262 @@ class ClassroomView(APIView):
             )
         return Response(ClassroomSerializer(classroom, context={"request": request}).data, status=201)
 
-class ActiveClassroom(APIView):
+"""
+TODO: Use after model done 
+"""
+class ActiveClassroomsView(APIView):
+    """
+    Specific to instructor 
+    Showing classrooms or multiple linked classrooms with self as director 
+    Both online and physical
+    """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication] 
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id=None, course_id=None):
+        """
+        GET Method 
+        Returns a flat list. Classrooms without links show LC fields as null.
+        Classrooms with links appear once per LessonClassroom.
+        Used to show classrooms in specific lessons or 
+                     classrooms in course
+        """
+        # Build a Q filter for LessonClassroom based on the params
+        if lesson_id is not None:
+            # Grab lesson-related classrooms 
+            lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+            q = Q(lesson=lesson)
+        elif course_id is not None:
+            # Grab course related classrooms (All lesson-linked classrooms)
+            course = get_object_or_404(Course, course_id=course_id)
+            q = Q(lesson__course=course)
+        elif lesson_id is None and course_id is None:
+            # Seeing Classrooms (seeing own and unlinked)
+            user = self.request.user
+            instructor = InstructorProfile.objects.get(user=request.user)
+            q = Q(director = instructor) 
+        else:
+            return Response({"detail": "Provide lesson_id or course_id."}, status=400)
+            
+        # 1) Rows for classrooms that DO have LessonClassroom links (one row per LC)
+        linked_rows = (
+            LessonClassroom.objects
+            .filter(q)
+            .select_related("classroom")
+            .values(
+                "classroom__classroom_id",
+                "classroom__location",
+                "day_of_week",
+                "time_start",
+                "time_end",
+                "duration_minutes",
+            )
+        )
+
+        # 2) Rows for classrooms with NO LessonClassroom links (single row per classroom)
+        #    We fill LC fields with NULLs so the shape matches.
+
+        if course_id is None: 
+            #Grabbing only linked classrooms 
+            unlinked_rows = ()
+        elif lesson_id is None:
+            #Grabbing only linked classrooms 
+            unlinked_rows = ()
+        else: 
+            #Grabbing all unlinked classrooms for lesson choosing and own seeing in classroom tab
+            unlinked_rows = (
+                Classroom.objects
+                .filter(lessonclassroom__isnull=True) 
+                .annotate(
+                    day_of_week=Value(None, output_field=CharField()),
+                    time_start=Value(None, output_field=TimeField()),
+                    time_end=Value(None, output_field=TimeField()),
+                    duration_minutes=Value(None, output_field=IntegerField()),
+                )
+                .values(
+                    "classroom_id",
+                    "location",
+                    "day_of_week",
+                    "time_start",
+                    "time_end",
+                    "duration_minutes",
+                )
+            )
+
+        # 3) Normalize keys so both sets match (rename classroom__classroom_id → classroom_id, etc.)
+        def norm_linked(r):
+            return {
+                "classroom_id": r["classroom__classroom_id"],
+                "location": r["classroom__location"],
+                "day_of_week": r["day_of_week"],
+                "time_start": r["time_start"],
+                "time_end": r["time_end"],
+                "duration_minutes": r["duration_minutes"],
+            }
+
+        def norm_unlinked(r):
+            return {
+                "classroom_id": r["classroom_id"],
+                "location": r["location"],
+                "day_of_week": r["day_of_week"],           # None
+                "time_start": r["time_start"],             # None
+                "time_end": r["time_end"],                 # None
+                "duration_minutes": r["duration_minutes"], # None
+            }
+
+        data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
+
+        # Optional: sort for stable output
+        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+
+        return Response(data)
+   
+class LinkClassroomsView(APIView):
+    """
+    Specific to instructor 
+    Showing chooseable classrooms of same course or unlinked
+    Must be physical
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
     def get(self, request, course_id):
-        # have a Course instance
+        """
+        GET Method 
+        Returns a flat list. Classrooms without links show LC fields as null.
+        Classrooms with links appear once per LessonClassroom.
+        Used to show classrooms in specific lessons or 
+                     classrooms in course
+        """
+        
         course = get_object_or_404(Course, course_id=course_id)
-        # all classrooms for that course
-        qs = (Classroom.objects
-            .filter(lesson__course=course)           # join via Lesson
-            .select_related('lesson', 'instructor')  # avoid N+1
-            .order_by('day_of_week', 'time_start'))
-        return Response(ClassroomSerializer(qs, many=True).data)
+        q = Q(lesson__course=course) & Q(classroom__is_online=False)
+        
+        # 1) Rows for classrooms that DO have LessonClassroom links (one row per LC) 
+        # but not pnline
+        linked_rows = (
+            LessonClassroom.objects
+            .filter(q)
+            .select_related("classroom")
+            .values(
+                "classroom__classroom_id",
+                "classroom__location",
+                "day_of_week",
+                "time_start",
+                "time_end",
+                "duration_minutes",
+            )
+        )
+
+        # 2) Rows for classrooms with NO LessonClassroom links (single row per classroom)
+        #    We fill LC fields with NULLs so the shape matches.
+        #Grabbing all unlinked classrooms for lesson choosing and own seeing in classroom tab
+        unlinked_rows = (
+            Classroom.objects
+                .filter(
+                    Q(lessonclassroom__isnull=True) 
+                    & Q(is_online=False)
+                        )  
+                .annotate(
+                    day_of_week=Value(None, output_field=CharField()),
+                    time_start=Value(None, output_field=TimeField()),
+                    time_end=Value(None, output_field=TimeField()),
+                    duration_minutes=Value(None, output_field=IntegerField()),
+                )
+                .values(
+                    "classroom_id",
+                    "location",
+                    "day_of_week",
+                    "time_start",
+                    "time_end",
+                    "duration_minutes",
+                )
+            )
+
+        # 3) Normalize keys so both sets match (rename classroom__classroom_id → classroom_id, etc.)
+        def norm_linked(r):
+            return {
+                "classroom_id": r["classroom__classroom_id"],
+                "location": r["classroom__location"],
+                "day_of_week": r["day_of_week"],
+                "time_start": r["time_start"],
+                "time_end": r["time_end"],
+                "duration_minutes": r["duration_minutes"],
+            }
+
+        def norm_unlinked(r):
+            return {
+                "classroom_id": r["classroom_id"],
+                "location": r["location"],
+                "day_of_week": r["day_of_week"],           # None
+                "time_start": r["time_start"],             # None
+                "time_end": r["time_end"],                 # None
+                "duration_minutes": r["duration_minutes"], # None
+            }
+
+        data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
+
+        # Optional: sort for stable output
+        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+
+        return Response(data)
+    
+    def post(self, request, lesson_id=None):
+        """
+        POST method 
+        - if given lesson_id = linking lessons 
+        - if not given lesson_id = creating classrooms 
+        """
+        if lesson_id is None:
+            #Creating classrooms 
+            serializer = ClassroomSerializer(
+                data = request.data, 
+            )
+            serializer.is_valid(raise_exception=True)
+            classroom = serializer.save()
+            return Response(ClassroomSerializer(classroom).data, status=201)
+
+        else:
+            #Linking classrooms 
+            serializer = LessonClassroomSerializer(
+                data = request.data, 
+            )
+            serializer.is_valid(raise_exception=True)
+            lesson_classroom = serializer.save() 
+            return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
+
+class OnlineClassroomsView(APIView):
+    """
+    Specific to instructor 
+    Showing chooseable classrooms of same course or unlinked
+    Must be physical
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def post(self, request, lesson_id):
+        """
+        POST method 
+        - if given lesson_id = linking lessons 
+        - if not given lesson_id = creating classrooms 
+        """
+            #Creating classrooms 
+        serializer = ClassroomSerializer(
+                data = request.data, 
+            )
+        serializer.is_valid(raise_exception=True)
+        classroom = serializer.save()
+        
+        #Linking classrooms 
+        serializer = LessonClassroomSerializer(
+            data = request.data, 
+        )
+        serializer.is_valid(raise_exception=True)
+        lesson_classroom = serializer.save() 
+        return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
+
+
+
 """
 Lessons 
 """
@@ -210,21 +469,6 @@ class LessonsView(APIView):
         lessons = Lesson.objects.filter(course = course).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
         data = LessonSerializer(lessons, many=True).data
         return Response(data)
-    
-    def post(self, request, course_id):
-        """
-        POST Method: Creating lessons?  TODO: might be redundant 
-        """
-        course = get_object_or_404(Course, course_id=course_id)
-        user = self.request.user #Grabbing current auth user 
-        try:
-            instructor = InstructorProfile.objects.get(user=request.user)
-        except InstructorProfile.DoesNotExist:
-            raise serializers.ValidationError("This user is not an instructor.")
-        ser = ClassroomSerializer(data=request.data, context={"request": request, "course_id": course.course_id})
-        ser.is_valid(raise_exception=True)
-        ser.save() 
-        return Response(ser.data)
     
     def patch(self, request, lesson_id):
         """
@@ -256,8 +500,6 @@ class LessonDetails(APIView):
             "created_by": lesson.created_by.full_name
         }
         return Response(output, status=status.HTTP_200_OK)
-
-
 
 class LessonBulkCreateView(APIView):
     """
@@ -367,7 +609,8 @@ class LessonBulkCreateView(APIView):
         out = LessonOutSerializer(created, many=True).data
         return Response({"created": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
-class LessonPrereqView(APIView):
+
+class LessonPrereqBulkCreateView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
@@ -378,10 +621,6 @@ class LessonPrereqView(APIView):
         lessons = LessonPrerequisite.objects.filter(lesson_id = lesson_id).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
         data = LessonSerializer(lessons, many=True).data
         return Response(data)
-
-class LessonPrereqBulkCreateView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication]
 
     def post(self, request, lesson_id):
         ser = LessonPrereqBulkInSerializer(data=request.data, context={"request": request, "lesson_id": lesson_id})

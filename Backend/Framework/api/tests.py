@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase, APIClient
 from .models import *
 from .serializers import *
 import datetime
@@ -486,4 +486,65 @@ def test_wrong_email(api, url, db):
     mutated_payload = valid_payload(email="mister@student.com")
     res = api.post(url, mutated_payload, format="json")
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
-    
+
+"""
+Test lesson enrollment 
+"""
+
+class EnrollmentForceAuthTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.student_user = User.objects.create_user(email="s2@example.com", password="pass1234")
+        self.instructor_user = User.objects.create(email="inst@example.com", password_hash="pw", role="instructor")
+        self.student = StudentProfile.objects.create(user=self.student_user, title="Ms", first_name="Jane", last_name="Doe")
+        self.instructor = InstructorProfile.objects.create(user=self.instructor_user, full_name="Inst One", staff_no="T123")
+        course = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(), write_only=True
+    )
+   
+        #Create course 
+        course = Course.objects.create(
+            course_id = "AH6666",
+            title="Test",
+            status="Active",
+            owner_instructor = self.instructor,
+            description = "test",
+            credits = 30
+        )
+        #Create lesson 
+        lesson = Lesson.objects.create(
+            course = course,
+            title = "None",
+            credits = 10,
+            duration_weeks = 3, 
+            description = "None",
+            objectives = "None"
+        )
+
+        #Create physical classroom 
+        classroom = Classroom.objects.create(
+            classroom_id = "AB0000",
+            director = self.instructor,
+            location = "test",
+            capacity = 10,
+            duration_weeks = 3, 
+            is_online = False,
+            is_active = True, 
+        )
+    #Link classroom to lessons 
+        LessonClassroom.objects.create(
+            lesson = lesson, 
+            classroom = classroom, 
+
+        )
+
+        
+
+        self.enroll_url = "/api/lessons/1/enroll/" 
+        self.lesson_classroom_url = "/student/lessons/enroll/" 
+        self.enroll_classroom_url = f"student/lessons/{lesson.lesson_id}/classrooms/enroll/{classroom.classroom_id}/"
+
+    def test_enroll_with_force_authenticate(self):
+        self.client.force_authenticate(user=self.student)  # <- bypasses auth
+        resp = self.client.post(self.enroll_url, {}, format="json")
+        self.assertIn(resp.status_code, (201, 200))

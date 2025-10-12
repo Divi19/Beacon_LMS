@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 import random
 import string
+from datetime import datetime, date 
 
 def generate_custom_id():
     letters = ''.join(random.choices(string.ascii_uppercase, k=2))
@@ -20,6 +21,7 @@ def generate_student_id():
     digits = ''.join(random.choices(string.digits, k=5))
     return f"3{digits}"
 
+
 class Classroom(models.Model):
     classroom_id = models.CharField(
         primary_key=True, max_length=6, unique=True,
@@ -29,25 +31,18 @@ class Classroom(models.Model):
     location = models.CharField(max_length=255, blank=True, null=True)
     duration_weeks = models.IntegerField(blank=True, null=True)
     capacity = models.IntegerField(blank=True, null=True)
-    is_online = models.BooleanField()
-    zoom_link = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField()
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
         db_table = 'classroom'
 
-
-class ClassroomEnrollment(models.Model):
-    classroom = models.ForeignKey(Classroom, models.DO_NOTHING)
-    student = models.ForeignKey('StudentProfile', models.DO_NOTHING)
-    enrolled_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        managed = True
-        db_table = 'classroom_enrollment'
-        unique_together = (('classroom', 'student'),)
+    def save(self, *args, **kwargs):
+        #If online classroom, no location and capacity fixed to 100
+        if self.is_online:
+            self.capacity =100
+        super().save(*args, **kwargs)
 
 
 class Course(models.Model):
@@ -55,6 +50,9 @@ class Course(models.Model):
         ACTIVE = "Active", "ACTIVE"
         INACTIVE = "Inactive", "INACTIVE"
         DRAFT = "Draft", "DRAFT"
+        COMPLETED = "Complete", "COMPLETED"
+        INCOMPLETE = "Incomplete", "INCOMPLETE"
+
     course_id = models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=True)
     title = models.CharField(max_length=255)
     status = models.CharField(max_length=50, choices=CourseStatus.choices, default=CourseStatus.ACTIVE)
@@ -142,15 +140,49 @@ class LessonAssignment(models.Model):
 
 
 class LessonClassroom(models.Model):
+    class Day(models.TextChoices):
+        MONDAY = "Monday", "MONDAY"
+        TUESDAY = "Tuesday", "TUESDAY"
+        WEDNESDAY = "Wednesday", "WEDNESDAY"
+        THURSDAY = "Thursday", "THURSDAY"
+        FRIDAY = "Friday", "FRIDAY"
+        SATURDAY = "Saturday", "SATURDAY"
+        SUNDAY = "Sunday", "SUNDAY"
     lesson_classroom_id =  models.AutoField(primary_key=True)
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     classroom = models.ForeignKey(Classroom, models.DO_NOTHING)
-    session_times_json = models.JSONField(blank=True, null=True)
+    #session_times_json = models.JSONField(blank=True, null=True)
+    day_of_week = models.CharField(blank=True, null=True, choices=Day.choices, default=Day.MONDAY)
+    time_start = models.TimeField(default=datetime.time(0, 0))
+    time_end = models.TimeField(default=datetime.time(0, 0))
+    duration_minutes = models.IntegerField(blank=True, null=True)
     linked_at = models.DateTimeField(auto_now_add=True)
+    director = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
+
 
     class Meta:
         managed = True
         db_table = 'lesson_classroom'
+
+    def save(self, *args, **kwargs):
+        if self.time_start and self.time_end:
+            delta = (
+                datetime.combine(date.min, self.time_end) -
+                datetime.combine(date.min, self.time_start)
+            )
+            self.duration_minutes = int(delta.total_seconds() / 60)
+        super().save(*args, **kwargs)
+
+    
+class ClassroomEnrollment(models.Model):
+    lesson_classroom = models.ForeignKey(LessonClassroom, models.DO_NOTHING)
+    student = models.ForeignKey('StudentProfile', models.DO_NOTHING)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'classroom_enrollment'
+        unique_together = (('classroom', 'student'),)
 
 
 class LessonEnrollment(models.Model):
