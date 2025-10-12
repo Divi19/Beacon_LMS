@@ -180,7 +180,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
               <input
                 id="director"
                 className={i.input}
-                placeholder="Default to current instructor if empty"
+                placeholder="Input Instructor email. Default to current instructor if empty"
                 type="text"
                 name="director"
                 value={formData.director}
