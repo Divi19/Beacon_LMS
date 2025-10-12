@@ -221,6 +221,20 @@ CREATE INDEX IF NOT EXISTS idx_student_reading_student   ON student_reading(stud
 CREATE INDEX IF NOT EXISTS idx_assignment_lesson         ON lesson_assignment(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_student_assignment_student ON student_assignment(student_id);
 
+-- Fast filter by assigned (director) instructor
+CREATE INDEX IF NOT EXISTS idx_lc_director
+  ON lesson_classroom(director_id);
+
+-- Common offering schedule queries
+CREATE INDEX IF NOT EXISTS idx_lc_day_time
+  ON lesson_classroom(day_of_week, time_start);
+
+-- Classroom enrollment by offering & by student
+CREATE INDEX IF NOT EXISTS idx_classroom_enr_lc
+  ON classroom_enrollment(lesson_classroom_id);
+
+
+
 -- =========================================================
 -- Notes:
 -- -> Business rule (Sprint 2 US5): student must be enrolled in the *lesson*
