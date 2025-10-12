@@ -26,7 +26,7 @@ DROP TABLE IF EXISTS "user"                  CASCADE;
 -- 2) CREATE TABLES
 -- =========================================================
 
--- USERS (renamed to quoted identifier "user")
+-- USERS
 CREATE TABLE "user" (
   user_id       SERIAL PRIMARY KEY,
   email         VARCHAR(255) UNIQUE NOT NULL,
@@ -40,13 +40,12 @@ CREATE TABLE "user" (
 CREATE TABLE student_profile (
   student_profile_id SERIAL PRIMARY KEY,
   user_id            INT NOT NULL REFERENCES "user"(user_id) ON DELETE RESTRICT,
-  -- name parts (keep full_name if you still need it)
-  first_name VARCHAR(120),
-  last_name  VARCHAR(120),
-  titled     VARCHAR(40),
-  full_name  VARCHAR(255),
-  student_no VARCHAR(50) UNIQUE NOT NULL,
-  locked_at  TIMESTAMP
+  first_name         VARCHAR(120),
+  last_name          VARCHAR(120),
+  titled             VARCHAR(40),
+  full_name          VARCHAR(255),
+  student_no         VARCHAR(50) UNIQUE NOT NULL,
+  locked_at          TIMESTAMP
 );
 
 -- INSTRUCTOR PROFILE
@@ -59,13 +58,11 @@ CREATE TABLE instructor_profile (
 
 -- COURSE
 CREATE TABLE course (
-  course_id            VARCHAR(32) PRIMARY KEY,     -- readable (e.g. AB1234)
+  course_id            VARCHAR(32) PRIMARY KEY,
   title                VARCHAR(255) NOT NULL,
   status               VARCHAR(50)  NOT NULL,
   owner_instructor_id  INT NOT NULL REFERENCES instructor_profile(instructor_profile_id) ON DELETE RESTRICT,
-  -- fields that were added later are now native
   credits              INT,
-  director             VARCHAR(50),
   description          TEXT
 );
 
@@ -94,19 +91,18 @@ CREATE TABLE lesson (
   updated_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- LESSON PREREQUISITE (surrogate key + uniqueness + self-check)
+-- LESSON PREREQUISITE
 CREATE TABLE lesson_prerequisite (
-  prereq_id         SERIAL PRIMARY KEY,
-  lesson_id         VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
-  prereq_lesson_id  VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE RESTRICT,
+  lesson_prerequisite_id SERIAL PRIMARY KEY,
+  lesson_id              VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
+  prereq_lesson_id       VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE RESTRICT,
   CONSTRAINT chk_no_self_prereq CHECK (lesson_id <> prereq_lesson_id),
   CONSTRAINT uq_lesson_prereq UNIQUE (lesson_id, prereq_lesson_id)
 );
 
--- CLASSROOM
+-- CLASSROOM (no schedule here; schedule is per offering)
 CREATE TABLE classroom (
   classroom_id   VARCHAR(32) PRIMARY KEY,
-  director       VARCHAR(255),
   location       VARCHAR(255),
   duration_weeks INT,
   capacity       INT,
@@ -116,17 +112,21 @@ CREATE TABLE classroom (
   created_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- LESSON_CLASSROOM (surrogate PK + keep pair unique)
+-- LESSON_CLASSROOM (offering)
 CREATE TABLE lesson_classroom (
   lesson_classroom_id SERIAL PRIMARY KEY,
   lesson_id           VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
   classroom_id        VARCHAR(32) NOT NULL REFERENCES classroom(classroom_id) ON DELETE RESTRICT,
-  session_times_json  JSONB,
+  director_id         INT NOT NULL REFERENCES instructor_profile(instructor_profile_id) ON DELETE RESTRICT,
+  day_of_week         VARCHAR(16),
+  time_start          TIME,
+  time_end            TIME,
+  duration_minutes    INT,
   linked_at           TIMESTAMP NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_lesson_classroom_pair UNIQUE (lesson_id, classroom_id)
 );
 
--- LESSON_ENROLLMENT (surrogate PK + uniqueness)
+-- LESSON_ENROLLMENT
 CREATE TABLE lesson_enrollment (
   lesson_enrollment_id SERIAL PRIMARY KEY,
   lesson_id            VARCHAR(32) NOT NULL REFERENCES lesson(lesson_id) ON DELETE CASCADE,
@@ -135,13 +135,13 @@ CREATE TABLE lesson_enrollment (
   CONSTRAINT uq_lesson_enrollment UNIQUE (lesson_id, student_id)
 );
 
--- CLASSROOM_ENROLLMENT (surrogate PK + uniqueness)
+-- CLASSROOM_ENROLLMENT (now links to offering)
 CREATE TABLE classroom_enrollment (
-  id           SERIAL PRIMARY KEY,
-  classroom_id VARCHAR(32) NOT NULL REFERENCES classroom(classroom_id) ON DELETE CASCADE,
-  student_id   INT         NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
-  enrolled_at  TIMESTAMP   NOT NULL DEFAULT NOW(),
-  CONSTRAINT uq_classroom_enrollment UNIQUE (classroom_id, student_id)
+  classroom_enrollment_id SERIAL PRIMARY KEY,
+  lesson_classroom_id     INT NOT NULL REFERENCES lesson_classroom(lesson_classroom_id) ON DELETE CASCADE,
+  student_id              INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
+  enrolled_at             TIMESTAMP NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_classroom_enrollment UNIQUE (lesson_classroom_id, student_id)
 );
 
 -- LESSON_READING
@@ -154,12 +154,12 @@ CREATE TABLE lesson_reading (
   updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- STUDENT_READING (surrogate PK + restore uniqueness)
+-- STUDENT_READING
 CREATE TABLE student_reading (
   student_reading_id SERIAL PRIMARY KEY,
-  reading_id   INT NOT NULL REFERENCES lesson_reading(reading_id) ON DELETE CASCADE,
-  student_id   INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
-  is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  reading_id         INT NOT NULL REFERENCES lesson_reading(reading_id) ON DELETE CASCADE,
+  student_id         INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
+  is_completed       BOOLEAN NOT NULL DEFAULT FALSE,
   CONSTRAINT uq_student_reading UNIQUE (reading_id, student_id)
 );
 
@@ -174,12 +174,12 @@ CREATE TABLE lesson_assignment (
   updated_at    TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- STUDENT_ASSIGNMENT (surrogate PK + restore uniqueness)
+-- STUDENT_ASSIGNMENT
 CREATE TABLE student_assignment (
   student_assignment_id SERIAL PRIMARY KEY,
-  assignment_id INT NOT NULL REFERENCES lesson_assignment(assignment_id) ON DELETE CASCADE,
-  student_id    INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
-  is_completed  BOOLEAN NOT NULL DEFAULT FALSE,
+  assignment_id         INT NOT NULL REFERENCES lesson_assignment(assignment_id) ON DELETE CASCADE,
+  student_id            INT NOT NULL REFERENCES student_profile(student_profile_id) ON DELETE CASCADE,
+  is_completed          BOOLEAN NOT NULL DEFAULT FALSE,
   CONSTRAINT uq_student_assignment UNIQUE (assignment_id, student_id)
 );
 
@@ -187,122 +187,46 @@ CREATE TABLE student_assignment (
 -- 3) INDEXES
 -- =========================================================
 
--- lookup / filtering helpers
-CREATE INDEX IF NOT EXISTS idx_student_user_id           ON student_profile(user_id);
-CREATE INDEX IF NOT EXISTS idx_instructor_user_id        ON instructor_profile(user_id);
+-- lookups
+CREATE INDEX IF NOT EXISTS idx_student_user_id            ON student_profile(user_id);
+CREATE INDEX IF NOT EXISTS idx_instructor_user_id         ON instructor_profile(user_id);
 
 -- course
-CREATE INDEX IF NOT EXISTS idx_course_owner              ON course(owner_instructor_id);
+CREATE INDEX IF NOT EXISTS idx_course_owner               ON course(owner_instructor_id);
 
 -- lesson
-CREATE INDEX IF NOT EXISTS idx_lesson_course             ON lesson(course_id);
-CREATE INDEX IF NOT EXISTS idx_lesson_status             ON lesson(status);
-CREATE INDEX IF NOT EXISTS idx_lesson_created_by         ON lesson(created_by);
-CREATE INDEX IF NOT EXISTS idx_lesson_designer           ON lesson(designer_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_course              ON lesson(course_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_status              ON lesson(status);
+CREATE INDEX IF NOT EXISTS idx_lesson_created_by          ON lesson(created_by);
+CREATE INDEX IF NOT EXISTS idx_lesson_designer            ON lesson(designer_id);
 
--- lesson prerequisites (for fast graph queries)
-CREATE INDEX IF NOT EXISTS idx_prereq_lesson             ON lesson_prerequisite(lesson_id);
-CREATE INDEX IF NOT EXISTS idx_prereq_requires           ON lesson_prerequisite(prereq_lesson_id);
+-- lesson prerequisites
+CREATE INDEX IF NOT EXISTS idx_prereq_lesson              ON lesson_prerequisite(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_prereq_requires            ON lesson_prerequisite(prereq_lesson_id);
 
 -- enrollments
-CREATE INDEX IF NOT EXISTS idx_enrollment_course         ON enrollment(course_id);
-CREATE INDEX IF NOT EXISTS idx_enrollment_student        ON enrollment(student_id);
-CREATE INDEX IF NOT EXISTS idx_lesson_enr_student        ON lesson_enrollment(student_id);
-CREATE INDEX IF NOT EXISTS idx_classroom_enr_student     ON classroom_enrollment(student_id);
+CREATE INDEX IF NOT EXISTS idx_enrollment_course          ON enrollment(course_id);
+CREATE INDEX IF NOT EXISTS idx_enrollment_student         ON enrollment(student_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_enr_student         ON lesson_enrollment(student_id);
 
--- classroom & linkage
-CREATE INDEX IF NOT EXISTS idx_classroom_active          ON classroom(is_active);
-CREATE INDEX IF NOT EXISTS idx_lc_lesson                 ON lesson_classroom(lesson_id);
-CREATE INDEX IF NOT EXISTS idx_lc_classroom              ON lesson_classroom(classroom_id);
+-- offering & classroom enrollment
+CREATE INDEX IF NOT EXISTS idx_lc_lesson                  ON lesson_classroom(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_lc_classroom               ON lesson_classroom(classroom_id);
+CREATE INDEX IF NOT EXISTS idx_lc_director                ON lesson_classroom(director_id);
+CREATE INDEX IF NOT EXISTS idx_lc_day_time                ON lesson_classroom(day_of_week, time_start);
+
+CREATE INDEX IF NOT EXISTS idx_classroom_enr_lc           ON classroom_enrollment(lesson_classroom_id);
+CREATE INDEX IF NOT EXISTS idx_classroom_enr_student      ON classroom_enrollment(student_id);
 
 -- readings & assignments
-CREATE INDEX IF NOT EXISTS idx_reading_lesson            ON lesson_reading(lesson_id);
-CREATE INDEX IF NOT EXISTS idx_student_reading_student   ON student_reading(student_id);
-CREATE INDEX IF NOT EXISTS idx_assignment_lesson         ON lesson_assignment(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_reading_lesson             ON lesson_reading(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_student_reading_student    ON student_reading(student_id);
+CREATE INDEX IF NOT EXISTS idx_assignment_lesson          ON lesson_assignment(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_student_assignment_student ON student_assignment(student_id);
-
--- Fast filter by assigned (director) instructor
-CREATE INDEX IF NOT EXISTS idx_lc_director
-  ON lesson_classroom(director_id);
-
--- Common offering schedule queries
-CREATE INDEX IF NOT EXISTS idx_lc_day_time
-  ON lesson_classroom(day_of_week, time_start);
-
--- Classroom enrollment by offering & by student
-CREATE INDEX IF NOT EXISTS idx_classroom_enr_lc
-  ON classroom_enrollment(lesson_classroom_id);
-
-
 
 -- =========================================================
 -- Notes:
--- -> Business rule (Sprint 2 US5): student must be enrolled in the *lesson*
---    before enrolling in any *classroom* of that lesson.
---    Enforce via trigger or app logic later.
+-- -> Business rule: student must be enrolled in the *lesson*
+--    before enrolling in a *lesson_classroom* of that lesson.
+--    Enforce via trigger or application logic.
 -- =========================================================
-
-
--- COURSE: drop stray director (not in ERD)
-ALTER TABLE course
-  DROP COLUMN IF EXISTS director;
-
--- CLASSROOM: drop director (moved responsibility to LESSON_CLASSROOM)
-ALTER TABLE classroom
-  DROP COLUMN IF EXISTS director;
-
--- LESSON_CLASSROOM: remove legacy JSON schedule blob
-ALTER TABLE lesson_classroom
-  DROP COLUMN IF EXISTS session_times_json;
-
---Add misisng columns
-ALTER TABLE lesson_classroom
-  ADD COLUMN IF NOT EXISTS day_of_week       VARCHAR(16),
-  ADD COLUMN IF NOT EXISTS time_start        TIME,
-  ADD COLUMN IF NOT EXISTS time_end          TIME,
-  ADD COLUMN IF NOT EXISTS duration_minutes  INT;
-
-ALTER TABLE lesson_classroom
-  ADD COLUMN IF NOT EXISTS director_id INT
-    REFERENCES instructor_profile(instructor_profile_id)
-    ON DELETE RESTRICT
-    NOT NULL;
-
-
--- 1) Add new FK column to point at offerings
-ALTER TABLE classroom_enrollment
-  ADD COLUMN IF NOT EXISTS lesson_classroom_id INT;
-
--- 2) Backfill (if migrating data): map each existing classroom_enrollment
---    to the correct offering row in lesson_classroom (app/data step).
---    Example (pseudo):
---    UPDATE classroom_enrollment ce
---    SET lesson_classroom_id = lc.lesson_classroom_id
---    FROM lesson_classroom lc
---    WHERE lc.classroom_id = ce.classroom_id
---      AND <join to the correct lesson as per your app rules>;
-
--- 3) Enforce FK & NOT NULL once backfilled
-ALTER TABLE classroom_enrollment
-  ADD CONSTRAINT fk_ce_lc
-    FOREIGN KEY (lesson_classroom_id)
-    REFERENCES lesson_classroom(lesson_classroom_id)
-    ON DELETE CASCADE;
-
-ALTER TABLE classroom_enrollment
-  ALTER COLUMN lesson_classroom_id SET NOT NULL;
-
--- 4) Replace uniqueness to use lesson_classroom_id instead of classroom_id
-ALTER TABLE classroom_enrollment
-  DROP CONSTRAINT IF EXISTS uq_classroom_enrollment;
-
-ALTER TABLE classroom_enrollment
-  ADD CONSTRAINT uq_classroom_enrollment
-    UNIQUE (lesson_classroom_id, student_id);
-
--- 5) Drop old classroom_id if no longer needed
-ALTER TABLE classroom_enrollment
-  DROP COLUMN IF EXISTS classroom_id;
-
-
-
