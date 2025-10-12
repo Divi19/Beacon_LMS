@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentMyLessonsPage.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
@@ -29,8 +29,8 @@ export default function StudentMyLessonsPage() {
     }
   }, [course, courseId]);
 
-  useEffect(() => {
-    let cancelled = false;
+    useEffect(() => {
+        let cancelled = false;
 
     async function checkLessons() {
       try {
@@ -150,3 +150,5 @@ export default function StudentMyLessonsPage() {
     </div>
   );
 }
+
+///student//student/course/${course.course_id}/lesson-creation/${course.course_id}

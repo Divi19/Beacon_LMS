@@ -3,6 +3,7 @@ import EntryPage from "./pages/EntryPage/EntryPage";
 import StudentMyCourses from "./pages/Student/StudentMyCourses/StudentMyCourses";
 import CourseDetailEnrolled from "./pages/Student/StudentMyCourses/CourseDetailEnrolled";
 import StudentEnrollment from "./pages/Student/StudentEnrollment/StudentEnrollment";
+import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
 
 import CourseDetail from "./pages/Student/StudentEnrollment/CourseDetail";
 
@@ -94,8 +95,9 @@ export default function App(){
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
       <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
-      <Route path="/trial" element={<StudentLessonEnroll />}/>
-      {/* <Route path="/" element={<StudentOwnLessons />}/> */}
+      <Route path="/student/own-lessons" element={<StudentOwnLessons />}/>
+      <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>
+      <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
 
       
 
