@@ -251,7 +251,7 @@ class CourseSerializer(serializers.ModelSerializer):
     lessons = LessonOutSerializer(many=True, read_only=True, source="lesson_set")
     enrolled_count = serializers.IntegerField(read_only=True)
 
-    # Client sends a PK here (optional). DRF resolves it to an InstructorProfile instance
+    # Option 1: allow PK
     owner_instructor_id = serializers.PrimaryKeyRelatedField(
         source="owner_instructor",
         queryset=InstructorProfile.objects.all(),
@@ -260,10 +260,14 @@ class CourseSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
 
-    # What you return in responses (string or nested serializer)
+    # Option 2: allow email
+    owner_instructor_email = serializers.EmailField(
+        write_only=True, required=False, allow_null=True
+    )
+
+    # What you return in responses
     owner_instructor = serializers.CharField(
-        source="owner_instructor.full_name",
-        read_only=True,
+        source="owner_instructor.full_name", read_only=True
     )
 
     course_id = serializers.CharField(required=False, allow_blank=True)
@@ -275,41 +279,54 @@ class CourseSerializer(serializers.ModelSerializer):
             "course_id",
             "title",
             "status",
-            "owner_instructor_id",  # write-only input
-            "owner_instructor",     # read-only output
+            "owner_instructor_id",     # accepts PK
+            "owner_instructor_email",  # accepts email
+            "owner_instructor",        # returns full name
             "description",
             "credits",
-            "lessons"
+            "lessons",
         ]
-        read_only_fields = ["owner_instructor", "credits"]
+        read_only_fields = ["credits"]
+
+    def _resolve_owner_from_email(self, email: str):
+        try:
+            user = User.objects.get(email=email)
+            return InstructorProfile.objects.get(user=user)
+        except (User.DoesNotExist, InstructorProfile.DoesNotExist):
+            raise serializers.ValidationError(
+                {"owner_instructor_email": "Instructor with this email does not exist."}
+            )
+
+    def validate(self, attrs):
+        # Prefer email over PK if both provided (or raise if you want to forbid both)
+        email = attrs.pop("owner_instructor_email", None)
+
+        if email:
+            attrs["owner_instructor"] = self._resolve_owner_from_email(email)
+        # else: if owner_instructor_id was provided, DRF already put the instance in attrs["owner_instructor"]
+        # else: neither provided → will default in create()
+
+        return attrs
 
     def create(self, validated_data):
-        # If client didn’t provide owner_instructor_id, default to request.user’s profile
-        owner_email = validated_data.pop('owner_instructor', None)
-        
-        if owner_email:
-            #resolve by using instructor email
-            try:
-                user = User.objects.get(email=owner_email)
-                instructor = InstructorProfile.objects.get(user=user)
-                validated_data['owner_instructor'] = instructor
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError({"owner_instructor": "Instructor with this email does not exist."})
-        else:
-            #No email given, default to current logged in instructor 
+        # Default to current logged-in instructor if none provided
+        if "owner_instructor" not in validated_data or validated_data["owner_instructor"] is None:
             req = self.context.get("request")
             if req and getattr(req.user, "is_authenticated", False):
                 owner = InstructorProfile.objects.filter(user=req.user).first()
                 if owner:
                     validated_data["owner_instructor"] = owner
 
+        # Autogenerate course_id if blank
         cid = (validated_data.get("course_id") or "").strip()
         if not cid:
             validated_data["course_id"] = generate_custom_id()
-            pass
 
         return super().create(validated_data)
 
+    def update(self, instance, validated_data):
+        # Support updating owner via email or PK as in validate()
+        return super().update(instance, validated_data)
 """
 Lesson Classroom 
 
