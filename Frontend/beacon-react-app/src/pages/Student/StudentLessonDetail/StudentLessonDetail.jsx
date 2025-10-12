@@ -3,10 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentLessonDetail.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
-
+import { api } from "../../../api";
 export default function StudentLessonDetail() {
   const navigate = useNavigate();
   const { courseId, lessonId } = useParams();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const reload = () => setRefreshKey(k => k + 1);
 
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
@@ -21,156 +23,45 @@ export default function StudentLessonDetail() {
   const [showModal, setShowModal] = useState(false);
   const [modalText, setModalText] = useState("");
 
-  /* 
-     TEMP “API” – replace these with real endpoints when ready
- */
   async function apiGetLesson() {
-    // GET /student/courses/:courseId/lessons/:lessonId
-    return new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            lesson_id: lessonId ?? "TEMP_LESSON",
-            course_id: courseId ?? "TEMP_COURSE",
-            title: "Mathematics",
-            description: "",
-            objectives:
-              "Lorem ipsum dolor sit amet.\nconsectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-            duration_weeks: 4,
-            credit: 4,
-            status: "Active",
-          }),
-        200
-      )
-    );
+    //GET
+    const res = await api.get(`/student/courses/lesson/detail/${lessonId}/`);
+    return res.data; // return parsed json
   }
-
-  async function apiGetLessonEnrollment() {
-    // GET /student/lessons/:lessonId/enrollment (or included in lesson detail)
-    // Return whether the current student is enrolled and selected class if exists
-    // For now, simulate “not enrolled”
-    return new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            is_enrolled: false,
-            chosen_classroom: null,
-          }),
-        150
-      )
-    );
-  }
-
-  async function apiEnrollLesson() {
-    // POST /student/lessons/:lessonId/enroll
-    return new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 250));
-  }
-
+  
   async function apiGetClassrooms() {
-    // GET /student/lessons/:lessonId/classrooms
-    // Use backend fields so it plugs in cleanly later, to be removed after backedn integration
-    return new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve([
-            {
-              classroom_id: "347821",
-              day_of_week: "Monday",
-              time_start: "08:00",
-              time_end: "10:00",
-              duration_minutes: 120,
-              capacity: 10,
-              enrolled_count: 8,
-              is_active: true,
-            },
-            {
-              classroom_id: "38752",
-              day_of_week: "Monday",
-              time_start: "12:00",
-              time_end: "14:00",
-              duration_minutes: 120,
-              capacity: 10,
-              enrolled_count: 4,
-              is_active: true,
-            },
-            {
-              classroom_id: "35781",
-              day_of_week: "Tuesday",
-              time_start: "12:00",
-              time_end: "14:00",
-              duration_minutes: 120,
-              capacity: 10,
-              enrolled_count: 8,
-              is_active: true,
-            },
-            {
-              classroom_id: "34578",
-              day_of_week: "Wednesday",
-              time_start: "08:00",
-              time_end: "10:00",
-              duration_minutes: 120,
-              capacity: 10,
-              enrolled_count: 10, // full
-              is_active: true,
-            },
-            {
-              classroom_id: "39485",
-              day_of_week: "Thursday",
-              time_start: "16:00",
-              time_end: "17:00",
-              duration_minutes: 60,
-              capacity: 10,
-              enrolled_count: 0,
-              is_active: true,
-            },
-            {
-              classroom_id: "314759",
-              day_of_week: "Friday",
-              time_start: "18:00",
-              time_end: "20:00",
-              duration_minutes: 120,
-              capacity: 10,
-              enrolled_count: 3,
-              is_active: true,
-            },
-          ]),
-        220
-      )
-    );
+    //GET
+    const res = await api.get(`/student/lessons/${lessonId}/classrooms/unenrolled/`);
+    return res.data;
   }
-
+  
   async function apiEnrollClassroom(classroom_id) {
-    // POST /student/classrooms/:classroom_id/enroll
-    return new Promise((resolve) =>
-      setTimeout(() => resolve({ ok: true }), 250)
-    );
+    //POST
+    const res = await api.post(`/student/lessons/${lessonId}/classrooms/enroll/${classroom_id}/`);
+    return res.data;
   }
-
+  
   async function apiLeaveClassroom(classroom_id) {
-    // DELETE /student/classrooms/:classroom_id/enroll
-    return new Promise((resolve) =>
-      setTimeout(() => resolve({ ok: true }), 250)
-    );
+    // DELETE
+    const res = await api.delete(`/student/lessons/${lessonId}/classrooms/enrolled/${classroom_id}/`);
+    return res.data;
   }
-
+  
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const [lessonData, enrollData] = await Promise.all([
-          apiGetLesson(),
-          apiGetLessonEnrollment(),
-        ]);
+        const lessonData = await apiGetLesson();
+  
         setLesson(lessonData);
-        setIsLessonEnrolled(!!enrollData?.is_enrolled);
-        setChosenClassroom(enrollData?.chosen_classroom || null);
-
-        if (enrollData?.is_enrolled && !enrollData?.chosen_classroom) {
-          // enrolled to lesson but hasn't picked a class yet:
+        setIsLessonEnrolled(lessonData.is_enrolled);
+        setChosenClassroom(lessonData.chosen_classroom || null);
+  
+        // If enrolled but NO chosen classroom yet → fetch options
+        if (lessonData.is_enrolled && !lessonData.chosen_classroom) {
           const cls = await apiGetClassrooms();
           setClassrooms(cls);
-        } else if (enrollData?.chosen_classroom) {
-          // enrolled + chosen classroom
+        } else {
           setClassrooms([]);
         }
       } catch (e) {
@@ -179,9 +70,7 @@ export default function StudentLessonDetail() {
         setLoading(false);
       }
     })();
-
-  }, [courseId, lessonId]);
-
+  }, [courseId, lessonId, refreshKey]);
 
   const objectiveItems = useMemo(() => {
     if (!lesson) return [];
@@ -198,8 +87,10 @@ export default function StudentLessonDetail() {
     const h = Math.floor(mins / 60);
     return h <= 1 ? `${h || 1} Hour` : `${h} Hours`;
   }
-
-
+  async function apiEnrollLesson() {
+    const res = await api.post(`/student/courses/${courseId}/lessons/enroll/${lessonId}/`);
+    return res.data;
+  }
 
   async function handleEnrollLesson() {
     try {
@@ -208,6 +99,7 @@ export default function StudentLessonDetail() {
       // fetch classrooms after enrollment
       const cls = await apiGetClassrooms();
       setClassrooms(cls);
+      reload();
     } catch {
       
     }
@@ -224,8 +116,13 @@ export default function StudentLessonDetail() {
         `Enrolled to classroom:\n${c.day_of_week} ${c.time_start} - ${c.time_end}`
       );
       setShowModal(true);
-    } catch {
-      
+      reload();
+    } catch (err) {
+      console.error("Enroll classroom failed", err?.response || err);
+      setModalText(
+        err?.response?.data?.detail || "Could not enroll to this classroom."
+      );
+      setShowModal(true);
     }
   }
 
@@ -237,6 +134,7 @@ export default function StudentLessonDetail() {
       // re-list all classrooms
       const cls = await apiGetClassrooms();
       setClassrooms(cls);
+      reload();
     } catch {
       
     }
@@ -282,12 +180,14 @@ export default function StudentLessonDetail() {
             <div className={i.courseHeader}>
               <div className={i.courseCode}>{lesson.lesson_id}</div>
               <div className={i.courseMeta}>
-                {lesson.credit} Credits ~ {lesson.duration_weeks} Weeks
+                {lesson.credits} Credits ~ {lesson.duration_week} Weeks
               </div>
             </div>
 
             <div className={i.courseName}>{lesson.title || "Untitled Lesson"}</div>
-            <div className={i.courseDesigner}>Lesson Designer: Ms. Wong</div>
+            <div className={i.courseDesigner}>
+              Lesson Designer: {lesson.designer || "Unknown"}
+              </div>
             <div className={i.courseDesigner}>
               Description: {lesson.description || ""}
             </div>
@@ -368,8 +268,10 @@ export default function StudentLessonDetail() {
             <div className={i.noChosenText}>No Chosen Classroom yet</div>
             <div className={i.clsList}>
               {classrooms.map((c) => {
-                const available = Math.max((c.capacity ?? 0) - (c.enrolled_count ?? 0), 0);
-                const full = available <= 0 || !c.is_active;
+                const occupied = Math.max(c.enrolled_count ?? 0, 0);
+                const capacity = Number.isFinite(c.capacity) ? c.capacity : 0;
+                const isActive = c.is_active !== false;
+                const full = occupied >= capacity || !isActive;
 
                 return (
                   <div className={i.clsCard} key={c.classroom_id}>
@@ -385,7 +287,7 @@ export default function StudentLessonDetail() {
                       <div className={i.clsMetaRow}>
                         <span>10 students</span>
                         <span>
-                          Availability: {available}/{c.capacity}
+                          Availability: {occupied}/{c.capacity}
                         </span>
                         <span>ID: {c.classroom_id}</span>
                       </div>
@@ -440,8 +342,7 @@ export default function StudentLessonDetail() {
                   <span>
                     Availability:{" "}
                     {Math.max(
-                      (chosenClassroom.capacity ?? 0) -
-                        (chosenClassroom.enrolled_count ?? 0),
+                      (chosenClassroom.enrolled_count ?? 0), 
                       0
                     )}
                     /{chosenClassroom.capacity}

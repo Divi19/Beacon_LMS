@@ -339,8 +339,8 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
     start_time = serializers.TimeField(source="time_start", write_only=True,)
     end_time = serializers.TimeField(source="time_end", write_only=True,)
     duration_minutes = serializers.IntegerField(required=False)
-    classroom = serializers.PrimaryKeyRelatedField(queryset=Classroom.objects.all(), write_only=True, required=False, allow_blank=True)
-    lesson = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all(), write_only=True, required=False, allow_blank=True)
+    classroom = serializers.PrimaryKeyRelatedField(queryset=Classroom.objects.all(), write_only=True, required=True)
+    lesson = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all(), write_only=True, required=True)
     
 
     #Responses 
@@ -432,15 +432,21 @@ class ClassroomSerializer(serializers.ModelSerializer):
 class LessonClassroomSerializer(serializers.ModelSerializer):
     time_start = serializers.TimeField(format="%H:%M")  # 24-hour, HH:MM only
     time_end   = serializers.TimeField(format="%H:%M")
-    lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
-    classroom = models.ForeignKey(Classroom, models.DO_NOTHING)
+    lesson = serializers.PrimaryKeyRelatedField(
+        queryset=Lesson.objects.all(), write_only=True
+    )
+    classroom = course = serializers.PrimaryKeyRelatedField(
+        queryset=Classroom.objects.all(), write_only=True
+    )
     #session_times_json = models.JSONField(blank=True, null=True)
-    day_of_week = models.CharField(blank=True, null=True, required=True)
-    time_start = models.TimeField(default=datetime.time(0, 0), required=True)
-    time_end = models.TimeField(default=datetime.time(0, 0), required=True)
-    duration_minutes = models.IntegerField(blank=True, null=True)
-    linked_at = models.DateTimeField(auto_now_add=True)
-    director = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
+    day_of_week = serializers.CharField(required=True)
+    time_start = serializers.TimeField(required=True)
+    time_end = serializers.TimeField(required=True)
+    duration_minutes = serializers.IntegerField(required=True)
+    linked_at = serializers.DateTimeField()
+    director = serializers.PrimaryKeyRelatedField(
+        queryset=InstructorProfile.objects.all(), write_only=True
+    )
 
     class Meta:
         model = LessonClassroom
@@ -484,10 +490,11 @@ class LessonSerializer(serializers.ModelSerializer):
     designer = serializers.PrimaryKeyRelatedField(
         queryset=InstructorProfile.objects.all(), write_only=True
     ) 
+    status = serializers.CharField(required=True)
    
     class Meta:
         model = Lesson
-        fields = ["objectives", "lesson_id", "enrolled_count", "credits", "course", "title", "description", "objectives", "duration_weeks", "status", "created_by"]
+        fields = ["designer", "objectives", "lesson_id", "enrolled_count", "credits", "course", "title", "description", "objectives", "duration_weeks", "status", "created_by"]
         read_only_fields = ["lesson_id", "owner_instructor", "created_by"] 
 
     def update(self, instance, validated_data):

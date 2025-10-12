@@ -121,9 +121,9 @@ export default function StudentMyLessonsPage() {
                 <div className={i.grid1}>
                     {lessons.map(lesson => (
                         <LessonDisplay
-                            key={lesson.id}
+                            key={lesson.lesson_id}
                             lesson={{
-                                code: lesson.code,
+                                code: lesson.lesson_id,
                                 title: lesson.title,
                                 credit: lesson.credit,
                                 director: lesson.director,

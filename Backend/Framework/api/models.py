@@ -8,9 +8,11 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ValidationError
 import random
 import string
-from datetime import datetime, date 
+import datetime
+from datetime import date, datetime, time as dtime
 
 def generate_custom_id():
     letters = ''.join(random.choices(string.ascii_uppercase, k=2))
@@ -27,12 +29,12 @@ class Classroom(models.Model):
         primary_key=True, max_length=6, unique=True,
         default=generate_custom_id, editable=False
     )
-    director = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     duration_weeks = models.IntegerField(blank=True, null=True)
     capacity = models.IntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_online = models.BooleanField(default=False)
 
     class Meta:
         managed = True
@@ -97,6 +99,14 @@ class InstructorProfile(models.Model):
         managed = True
         db_table = 'instructor_profile'
 
+    def clean(self):
+        if self.user and self.user.role != "instructor":
+            raise ValidationError("Linked user must have role='instructor'.")
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()  # ensures `clean()` runs
+        super().save(*args, **kwargs)
+
 
 class Lesson(models.Model):
     class LessonStatus(models.TextChoices):
@@ -153,8 +163,8 @@ class LessonClassroom(models.Model):
     classroom = models.ForeignKey(Classroom, models.DO_NOTHING)
     #session_times_json = models.JSONField(blank=True, null=True)
     day_of_week = models.CharField(blank=True, null=True, choices=Day.choices, default=Day.MONDAY)
-    time_start = models.TimeField(default=datetime.time(0, 0))
-    time_end = models.TimeField(default=datetime.time(0, 0))
+    time_start = models.TimeField(default=dtime(0, 0))
+    time_end   = models.TimeField(default=dtime(0, 0))
     duration_minutes = models.IntegerField(blank=True, null=True)
     linked_at = models.DateTimeField(auto_now_add=True)
     director = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
@@ -166,11 +176,8 @@ class LessonClassroom(models.Model):
 
     def save(self, *args, **kwargs):
         if self.time_start and self.time_end:
-            delta = (
-                datetime.combine(date.min, self.time_end) -
-                datetime.combine(date.min, self.time_start)
-            )
-            self.duration_minutes = int(delta.total_seconds() / 60)
+             delta = datetime.combine(date.min, self.time_end) - datetime.combine(date.min, self.time_start)
+             self.duration_minutes = int(delta.total_seconds() / 60)
         super().save(*args, **kwargs)
 
     
@@ -182,7 +189,7 @@ class ClassroomEnrollment(models.Model):
     class Meta:
         managed = True
         db_table = 'classroom_enrollment'
-        unique_together = (('classroom', 'student'),)
+        unique_together = (('lesson_classroom', 'student'),)
 
 
 class LessonEnrollment(models.Model):
@@ -237,7 +244,6 @@ class StudentProfile(models.Model):
     first_name = models.CharField(max_length=120, blank=True, null=True)
     last_name = models.CharField(max_length=120, blank=True, null=True)
     title = models.CharField(max_length=40, blank=True, null=True)
-    full_name = models.CharField(max_length=255, blank=True, null=True)
     student_no = models.CharField(unique=True, max_length=50, default = generate_student_id, editable = True)
     locked_at = models.DateTimeField(auto_now_add=True)
 
@@ -258,10 +264,15 @@ class StudentReading(models.Model):
 
 
 class User(models.Model):
+    class Roles(models.TextChoices):
+        INSTRUCTOR = "instructor", "instructor"
+        STUDENT = "student", "student"
+        ADMIN = "admin", "admin"
+
     user_id = models.AutoField(primary_key=True)
     email = models.CharField(unique=True, max_length=255)
     password_hash = models.CharField(max_length=255)
-    role = models.CharField(max_length=50)
+    role = models.CharField(max_length=50,choices=Roles.choices, default=Roles.INSTRUCTOR)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 

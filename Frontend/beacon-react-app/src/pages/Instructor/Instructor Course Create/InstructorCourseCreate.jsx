@@ -105,7 +105,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         base_title: "Lesson",
         starting_number: 1,
         duration_weeks: 4,
-        status: "Active",
+        status: "Inactive",
         description: "",
         objectives: ""
       });
