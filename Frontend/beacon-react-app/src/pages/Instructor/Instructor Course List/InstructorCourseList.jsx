@@ -132,7 +132,7 @@ export default function InstructorCourseList() {
                             isEnrolled={true}
                             ctaText="View"
                             onClick={() =>
-                                navigate(`/student/course/${course.course_id}`)
+                                navigate(`/instructor/course/${course.course_id}`)
                             }
                         />
                     );})}

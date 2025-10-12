@@ -116,7 +116,37 @@ export default function StudentMyLessonsPage() {
             </header>
 
             {lessons.length === 0 ? (
-                <div className={i.noLessons}>No lessons yet.</div>
+                <section className={i.card}>
+                                <p className={i.emptyText}>
+                                    No enrolled lessons in this course yet.
+                                    <br />
+                                </p>
+                
+                                <div className={i.ctaRow}>
+                                    <Button
+                                        variant="blue"
+                                        className={i.enrollBtn}
+                                        onClick={() => navigate(`/student/course/:courseId/lesson-creation/:lessonId`)}
+                                    >
+                                        <span>First time enrollment</span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="22"
+                                            height="22"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="white"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        >
+                                            <circle cx="12" cy="12" r="10" />
+                                            <polyline points="12 8 16 12 12 16" />
+                                            <line x1="8" y1="12" x2="16" y2="12" />
+                                        </svg>
+                                    </Button>
+                                </div>
+                            </section>
             ) : (
                 <div className={i.grid1}>
                     {lessons.map(lesson => (

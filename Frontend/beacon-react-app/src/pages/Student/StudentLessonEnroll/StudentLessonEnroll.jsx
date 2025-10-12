@@ -7,7 +7,7 @@ import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 import { api } from "../../../api";
 import LessonCard from "../../../components/LessonCard/LessonCard";
 
-export default function StudentMyLessonsPage() {
+export default function StudentLessonEnroll() {
     const navigate = useNavigate();
 
     const [lessons, setLessons] = useState([
@@ -132,7 +132,7 @@ export default function StudentMyLessonsPage() {
                             isEnrolled={true}
                             ctaText="View"
                             onClick={() =>
-                                navigate(`/student/lesson/${lesson.id}`)
+                                navigate(`/student/course/:courseId/lesson/:lessonId`)
                             }
                         />
                     ))}
