@@ -255,4 +255,40 @@ ALTER TABLE lesson_classroom
     NOT NULL;
 
 
+-- 1) Add new FK column to point at offerings
+ALTER TABLE classroom_enrollment
+  ADD COLUMN IF NOT EXISTS lesson_classroom_id INT;
+
+-- 2) Backfill (if migrating data): map each existing classroom_enrollment
+--    to the correct offering row in lesson_classroom (app/data step).
+--    Example (pseudo):
+--    UPDATE classroom_enrollment ce
+--    SET lesson_classroom_id = lc.lesson_classroom_id
+--    FROM lesson_classroom lc
+--    WHERE lc.classroom_id = ce.classroom_id
+--      AND <join to the correct lesson as per your app rules>;
+
+-- 3) Enforce FK & NOT NULL once backfilled
+ALTER TABLE classroom_enrollment
+  ADD CONSTRAINT fk_ce_lc
+    FOREIGN KEY (lesson_classroom_id)
+    REFERENCES lesson_classroom(lesson_classroom_id)
+    ON DELETE CASCADE;
+
+ALTER TABLE classroom_enrollment
+  ALTER COLUMN lesson_classroom_id SET NOT NULL;
+
+-- 4) Replace uniqueness to use lesson_classroom_id instead of classroom_id
+ALTER TABLE classroom_enrollment
+  DROP CONSTRAINT IF EXISTS uq_classroom_enrollment;
+
+ALTER TABLE classroom_enrollment
+  ADD CONSTRAINT uq_classroom_enrollment
+    UNIQUE (lesson_classroom_id, student_id);
+
+-- 5) Drop old classroom_id if no longer needed
+ALTER TABLE classroom_enrollment
+  DROP COLUMN IF EXISTS classroom_id;
+
+
 
