@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentMyLessonsPage.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";

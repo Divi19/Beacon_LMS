@@ -185,7 +185,7 @@ export default function StudentLessonDetail() {
             </div>
 
             <div className={i.courseName}>{lesson.title || "Untitled Lesson"}</div>
-            <div className={i.courseDesigner}>Lesson Designer: {lesson.designer || " "}</div>
+            <div className={i.courseDesigner}>Lesson Designer: Ms. Wong</div>
             <div className={i.courseDesigner}>
               Description: {lesson.description || ""}
             </div>

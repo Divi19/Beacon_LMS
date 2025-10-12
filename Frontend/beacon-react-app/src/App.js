@@ -3,7 +3,6 @@ import EntryPage from "./pages/EntryPage/EntryPage";
 import StudentMyCourses from "./pages/Student/StudentMyCourses/StudentMyCourses";
 import CourseDetailEnrolled from "./pages/Student/StudentMyCourses/CourseDetailEnrolled";
 import StudentEnrollment from "./pages/Student/StudentEnrollment/StudentEnrollment";
-import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
 
 import CourseDetail from "./pages/Student/StudentEnrollment/CourseDetail";
 
@@ -14,7 +13,7 @@ import InstructorCourseDescription from "./pages/Instructor/Instructor Course De
 import InstructorLogin from "./pages/Instructor/Instructor Login/InstructorLogin";
 
 import InstructorLessonDetail from "./pages/Instructor/Instructor Lesson Detail/InstructorLessonDetail";
-import InstructorLessonCreation from "./pages/Instructor/Instructor Lesson Creation/InstructorLessonCreation";
+//Deleted Instructor
 import InstructorLessonCreate from "./pages/Instructor/Instructor Lesson Create/InstructorLessonCreate";
 import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/InstructorLessonList";
 
@@ -28,7 +27,7 @@ import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLess
 import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
-import StudentOwnLessons from "./pages/Student/StudentOwnLessons/StudentOwnLessons";
+//Deleted StudentOwnLessons
 import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
 
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
@@ -95,8 +94,10 @@ export default function App(){
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
       <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
-      <Route path="/student/own-lessons" element={<StudentOwnLessons />}/>
-      <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>
+
+     {/*<Route path="/student/own-lessons" element={<StudentMyLessonsPage />}/>
+      <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>/*/}
+
       <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
 
       
