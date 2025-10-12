@@ -101,7 +101,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         duration_weeks: formData.duration_weeks,
         credits: formData.credits,
         description: formData.description,
-        objectives: formData.description
+        objectives: formData.description,
+        status: "Active" //After done updating 
       };
 
             // Send to Django backend
