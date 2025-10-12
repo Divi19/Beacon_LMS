@@ -129,20 +129,7 @@ export default function CourseDetailEnrolled() {
                 <polyline points="12 8 8 12 12 16" />
                 <line x1="8" y1="12" x2="16" y2="12" />
               </svg>
-            </Button>
-
-            
-            <Button
-              className={s.cta} // To remove after integration just to access lesson detail without actual lesson list page.
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/student/course/${courseId}/lesson/${getLessonId(course)}`
-                )
-              }
-            >
-              Go to my course lessons →
-            </Button>
+            </Button>            
           </div>
         </div>
       </div>
