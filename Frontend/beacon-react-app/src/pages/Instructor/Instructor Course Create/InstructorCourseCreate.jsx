@@ -80,7 +80,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         const courseData = {
           title: formData.title,
           credits: 30,
-          owner_instructor_id: Number(formData.director) || undefined,
+          owner_instructor_email: (formData.director) || undefined,
           description: formData.description,
           status: formData.status, //Newly added here, check serializer again
           ...(code ? { course_id: code } : {}),
