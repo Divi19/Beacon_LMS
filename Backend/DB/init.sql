@@ -241,3 +241,11 @@ ALTER TABLE classroom
 ALTER TABLE lesson_classroom
   DROP COLUMN IF EXISTS session_times_json;
 
+--Add misisng columns
+ALTER TABLE lesson_classroom
+  ADD COLUMN IF NOT EXISTS day_of_week       VARCHAR(16),
+  ADD COLUMN IF NOT EXISTS time_start        TIME,
+  ADD COLUMN IF NOT EXISTS time_end          TIME,
+  ADD COLUMN IF NOT EXISTS duration_minutes  INT;
+
+
