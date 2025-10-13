@@ -7,7 +7,7 @@ import { api } from "../../../api";
 
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { lessonId, courseId } = useParams();
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
@@ -165,7 +165,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       <header className={i.header}>
         <h1 className={i.title}>LESSON CREATION</h1>
       </header>
-      <div>
+  
+        <main className={i.main}>
         <div className={i.formContainer}>
           <form className={i.form} onSubmit={handleSubmit}>
             <div className={i.row}>
@@ -322,40 +323,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               />
             </div>
 
-                        {showOptionalModal && (
-                            <div className={i.modalOverlay}>
-                                <div className={i.modalContent}>
-                                    <h3>Lesson Created Successfully!</h3>
-                                    <div className={i.modalButtons}>
-                                        <button
-                                            className={i.selectButton}
-                                            onClick={goToCoursePage}
-                                        >
-                                            Go to lesson page
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
-                        <div className={i.buttonRow}>
-                            <button
-                                className={i.discardbutton}
-                                type="button"
-                                onClick={resetForm}
-                            >
-                                Discard
-                            </button>
-                            <button className={i.createbutton} type="submit">
-                                Create
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-            <div className={i.row}>
+              <div className={i.row}>
               <label className={i.label}>Physical Classroom:</label>
               <button type="button" className={i.linkButton}>
                 Link Classroom
@@ -368,8 +337,13 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                 Create Classroom
               </button>
             </div>
+
             <div className={i.buttonRow}>
-              <button type="button" className={i.discardbutton}>
+              <button
+                type="button"
+                className={i.discardbutton}
+                onClick={resetForm}
+              >
                 Discard
               </button>
               <button type="submit" className={i.createbutton}>
@@ -378,8 +352,20 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
             </div>
           </form>
         </div>
-      </div>
+      </main>
+
+      {showOptionalModal && (
+        <div className={i.modalOverlay}>
+          <div className={i.modalContent}>
+            <h3>Lesson saved successfully!</h3>
+            <div className={i.modalButtons}>
+              <button className={i.selectButton} onClick={goToCoursePage}>
+                Go to lesson page
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
