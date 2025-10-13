@@ -51,13 +51,13 @@
   }
   .chip {
     background: #6dc7d3;
-    color: #09323a;
+    color: #ffffff;
     font-weight: 700;
     border-radius: 10px;
     padding: 8px 14px;
   }
   .noLessons {
-    color: #0e5f6b;
+    color: #ffffff;
     font-weight: 700;
     background: #9fdbe3;
     padding: 8px 14px;

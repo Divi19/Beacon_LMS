@@ -13,7 +13,7 @@ import InstructorCourseDescription from "./pages/Instructor/Instructor Course De
 import InstructorLogin from "./pages/Instructor/Instructor Login/InstructorLogin";
 
 import InstructorLessonDetail from "./pages/Instructor/Instructor Lesson Detail/InstructorLessonDetail";
-import InstructorLessonCreation from "./pages/Instructor/Instructor Lesson Creation/InstructorLessonCreation";
+//Deleted Instructor
 import InstructorLessonCreate from "./pages/Instructor/Instructor Lesson Create/InstructorLessonCreate";
 import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/InstructorLessonList";
 
@@ -27,6 +27,13 @@ import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLess
 import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
+//Deleted StudentOwnLessons
+import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
+
+import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
+import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
+import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
+import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
 
 export default function App(){
   const [details, setDetails] = useState([]);
@@ -71,6 +78,8 @@ export default function App(){
       
       {/* Lessons */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId" element={<InstructorLessonDetail />}/>
+      <Route path="/student/course/:courseId/my-lessons" element={<StudentMyLessonsPage />}/>
+      <Route path="/student/course/:courseId/lesson-enroll" element={<StudentLessonEnroll />}/>
       <Route path="/student/course/:courseId/lesson/:lessonId" element={<StudentLessonDetail />}/>
       {/*<Route path="/instructor/course/:courseId/lessons/:lessonId" element={<InstructorLessonCreation />} />*/}
       <Route path="/instructor/course/:courseId/lesson-list" element={<InstructorLessonList />} />
@@ -81,6 +90,15 @@ export default function App(){
 
       {/* Classrooms */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassCreation />}/>
+      <Route path="/admin/log-in" element={<AdminLogIn />}/>
+      <Route path="/admin/main-page" element={<AdminMainPage />}/>
+      <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
+      <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
+
+     {/*<Route path="/student/own-lessons" element={<StudentMyLessonsPage />}/>
+      <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>/*/}
+
+      <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
 
       
 

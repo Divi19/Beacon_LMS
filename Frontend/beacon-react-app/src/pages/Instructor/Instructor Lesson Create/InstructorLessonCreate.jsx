@@ -7,7 +7,7 @@ import { api } from "../../../api";
 
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
-  const { courseId, lessonId } = useParams();
+  const { lessonId } = useParams();
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
@@ -16,119 +16,70 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const [readingListInput, setReadingListInput] = useState("");
   const [assignmentsInput, setAssignmentsInput] = useState("");
 
-  const submitPrereqs = async () => {
-    /**Handle prerequisites submission */
-    // split by commas / whitespace / newlines
+    const submitPrereqs = async () => {
+        /**Handle prerequisites submission */
+        // split by commas / whitespace / newlines
 
-    const prereqIds = prereqInput
-      .split(/[\s,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+        const prereqIds = prereqInput
+            .split(/[\s,]+/)
+            .map(s => s.trim())
+            .filter(Boolean);
 
-    if (prereqIds.length === 0) {
-      return;
-    } //Nothing entered --> Just leave
+        if (prereqIds.length === 0) {
+            return;
+        } //Nothing entered --> Just leave
 
-    try {
-      const res = await api.post(
-        `instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
-        { prerequisites: prereqIds, mode: "merge" } // or "replace"
-      );
-      console.log("Created:", res.data);
-    } catch (err) {
-      console.error("Server error:", err?.response?.data || err);
-      alert("Failed to set prerequisites.");
-    }
-  };
-
-  useEffect(() => {
-    const fetchLesson = async () => {
-      if (!lessonId) return; // skip if creating new
-
-      try {
-        const { data } = await api.get(`/instructor/lessons/${lessonId}/`);
-        setFormData({
-          lesson_id: data.lesson_id,
-          title: data.title,
-          credits: data.credits || "",
-          duration_weeks: data.duration_weeks || "",
-          estimated_effort: data.estimated_effort || "",
-          designer: data.designer || "",
-          description: data.description || "",
-          objectives: data.objectives || "",
-          status: data.status || "Active",
-          updated_at: new Date(data.updated_at).toLocaleString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
-          course: data.course,
-        });
-
-        // handle related tables (optional)
-        setPrereqInput(
-          (data.prerequisites || []).map((p) => p.prereq_lesson_id).join(", ")
-        );
-        setReadingListInput(
-          (data.readings || []).map((r) => r.title).join("\n")
-        );
-        setAssignmentsInput(
-          (data.assignments || []).map((a) => a.title).join("\n")
-        );
-      } catch (err) {
-        console.error("Failed to fetch lesson", err);
-      }
+        try {
+            const res = await api.post(
+                `instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
+                { prerequisites: prereqIds, mode: "merge" }, // or "replace"
+            );
+            console.log("Created:", res.data);
+        } catch (err) {
+            console.error("Server error:", err?.response?.data || err);
+            alert("Failed to set prerequisites.");
+        }
     };
 
-    fetchLesson();
-  }, [lessonId]);
-  
-  const [formData, setFormData] = useState({
-    lesson_id: lessonId,
-    title: "",
-    credits: "",
-    duration_weeks: "",
-    estimated_effort: "",
-    designer: "",
-    description: "",
-    objectives: "",
-    status: "Active",
-    updated_at: "",
-    course_id: courseId,
-  });
+    const [formData, setFormData] = useState({
+        title: "",
+        credits: "",
+        duration_weeks: "",
+        director: "",
+        description: "",
+        objectives: "",
+    });
 
-  const openModal = () => {
-    setShowModal(true);
-  };
+    const openModal = () => {
+        setShowModal(true);
+    };
 
-  const openModal1 = (e) => {
-    e.preventDefault();
-    setShowOptionalModal(true);
-  };
+    const openModal1 = e => {
+        e.preventDefault();
+        setShowOptionalModal(true);
+    };
 
-  const closeModal = () => {
-    setLessonInput("");
-    setShowModal(false);
-  };
+    const closeModal = () => {
+        setLessonInput("");
+        setShowModal(false);
+    };
 
-  const addLesson = () => {
-    if (lessonInput.trim() !== "") {
-      setLessons([...lessons, lessonInput.trim()]);
-      closeModal();
-    }
-  };
+    const addLesson = () => {
+        if (lessonInput.trim() !== "") {
+            setLessons([...lessons, lessonInput.trim()]);
+            closeModal();
+        }
+    };
 
   const goToCoursePage = () => {
-    setShowOptionalModal(false);
-    navigate(`/instructor/course/${courseId}`);
+    setShowOptionalModal(false); 
+    navigate("/instructor/course-list"); 
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+    const handleChange = e => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
 
   const resetForm = () => {
     setFormData({
@@ -371,6 +322,39 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               />
             </div>
 
+                        {showOptionalModal && (
+                            <div className={i.modalOverlay}>
+                                <div className={i.modalContent}>
+                                    <h3>Lesson Created Successfully!</h3>
+                                    <div className={i.modalButtons}>
+                                        <button
+                                            className={i.selectButton}
+                                            onClick={goToCoursePage}
+                                        >
+                                            Go to lesson page
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={i.buttonRow}>
+                            <button
+                                className={i.discardbutton}
+                                type="button"
+                                onClick={resetForm}
+                            >
+                                Discard
+                            </button>
+                            <button className={i.createbutton} type="submit">
+                                Create
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
             <div className={i.row}>
               <label className={i.label}>Physical Classroom:</label>
               <button type="button" className={i.linkButton}>
@@ -398,3 +382,4 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     </div>
   );
 }
+
