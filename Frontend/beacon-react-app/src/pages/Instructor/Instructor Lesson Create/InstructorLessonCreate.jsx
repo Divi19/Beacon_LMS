@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import i from "./InstructorLessonCreate.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import { useNavigate, useParams } from "react-router-dom";
@@ -49,6 +49,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     description: "",
     objectives: "",
     status: "Draft",
+    updated_at: "",
   });
 
   const openModal = () => {
@@ -94,6 +95,19 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     setLessons([]);
     setLessonInput("");
   };
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      updated_at: new Date().toLocaleString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+    }));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -222,6 +236,15 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           </div>
 
           <div className={i.row}>
+            <label className={i.label}>Last Updated On:</label>
+            <input
+              className={`${i.input} ${i.readOnly}`}
+              value={formData.updated_at}
+              readOnly
+            />
+          </div>
+
+          <div className={i.row}>
             <label className={i.label}>Status:</label>
             <select
               className={i.input}
@@ -247,12 +270,22 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
           <div className={i.row}>
             <label className={i.label}>Reading List:</label>
-            <textarea className={i.input} name="reading_list" />
+            <textarea
+              className={i.input}
+              name="reading_list"
+              placeholder="Enter reading materials or URLs"
+              onChange={handleChange}
+            />
           </div>
 
           <div className={i.row}>
             <label className={i.label}>Assignments:</label>
-            <textarea className={i.input} name="assignments" />
+            <textarea
+              className={i.input}
+              name="assignments"
+              placeholder="Enter assignment details"
+              onChange={handleChange}
+            />
           </div>
 
           <div className={i.row}>
@@ -266,6 +299,14 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
             <label className={i.label}>Online Classroom:</label>
             <button type="button" className={i.createClassroomButton}>
               Create Classroom
+            </button>
+          </div>
+          <div className={i.buttonRow}>
+            <button type="button" className={i.discardbutton}>
+              Discard
+            </button>
+            <button type="submit" className={i.createbutton}>
+              Create
             </button>
           </div>
         </form>
