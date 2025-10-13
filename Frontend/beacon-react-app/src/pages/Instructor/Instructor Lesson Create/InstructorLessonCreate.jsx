@@ -105,6 +105,9 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         credits: formData.credits,
         description: formData.description,
         objectives: formData.description,
+        estimated_effort: formData.estimated_effort,
+        director: formData.director,
+        status: formData.status,
       };
 
       if (lessonData.duration_weeks < 2 || lessonData.duration_weeks > 4) {
