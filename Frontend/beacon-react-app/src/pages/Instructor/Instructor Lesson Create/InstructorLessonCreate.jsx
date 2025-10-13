@@ -40,16 +40,17 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   };
 
   const [formData, setFormData] = useState({
-    lesson_id: "",
+    lesson_id: lessonId,
     title: "",
     credits: "",
     duration_weeks: "",
     estimated_effort: "",
-    director: "",
+    designer: "",
     description: "",
     objectives: "",
     status: "Draft",
     updated_at: "",
+    course_id: courseId,
   });
 
   const openModal = () => {
@@ -120,7 +121,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         description: formData.description,
         objectives: formData.description,
         estimated_effort: formData.estimated_effort,
-        director: formData.director,
+        designer: formData.designer,
         status: formData.status,
       };
 
@@ -156,6 +157,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         <h1 className={i.title}>LESSON CREATION</h1>
       </header>
       <div>
+        <div className={i.formContainer}>
         <form className={i.form} onSubmit={handleSubmit}>
           <div className={i.row}>
             <label className={i.label}>Lesson Title:</label>
@@ -177,7 +179,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               name="lesson_id"
               value={formData.lesson_id}
               onChange={handleChange}
-              required
+              readOnly
             />
           </div>
 
@@ -259,6 +261,28 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           </div>
 
           <div className={i.row}>
+            <label className={i.label}>Course Description:</label>
+            <textarea
+              className={i.input}
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={3}
+            />
+          </div>
+
+          <div className={i.row}>
+            <label className={i.label}>Objectives:</label>
+            <textarea
+              className={i.input}
+              name="objectives"
+              value={formData.objectives}
+              onChange={handleChange}
+              rows={3}
+            />
+          </div>
+
+          <div className={i.row}>
             <label className={i.label}>Prerequisite Lessons:</label>
             <textarea
               className={i.input}
@@ -306,10 +330,11 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               Discard
             </button>
             <button type="submit" className={i.createbutton}>
-              Create
+              Update
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

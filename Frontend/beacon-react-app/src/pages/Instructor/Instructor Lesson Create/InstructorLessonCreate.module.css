@@ -12,14 +12,14 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(20px, 3vw, 35px);
-  color: #e4973f; /* headline teal like your mock */
+  color: #e4973f; 
 }
 .formContainer {
-  background: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%); /* big gradient */
+  background: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%); 
   padding: 30px;
   border-radius: 20px;
   box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-  max-width: 700px;
+  max-width: 1000px;
   margin: 20px auto;
 }
 
@@ -34,6 +34,7 @@
   font-weight: 500;
   text-align: right;
   margin-right: 20px;
+  color: #431a01;
 }
 
 .input {
@@ -43,6 +44,11 @@
   border: 1px solid #ccc;
   outline: none;
 }
+
+.input:focus {
+  box-shadow: inset 0 0 0 2px #66c9d7;
+}
+
 
 textarea.input {
   height: 80px;
@@ -71,32 +77,16 @@ textarea.input {
   margin-right: 20px;
 }
 
-.input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
 textarea.input {
   height: 80px;
   resize: none;
 }
 
+
 .createbutton {
   margin-left: 20px; 
   padding: 10px 20px;
   background-color: #197a87;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.discardbutton {
-  margin-left: 20px; 
-  padding: 10px 20px;
-  background-color: #c62e2e;
   color: white;
   border: none;
   border-radius: 5px;
@@ -198,7 +188,7 @@ textarea.input {
   background-color: #0c7a88;
 }
 
-.cancelButton {
+.discardbutton {
   background-color: #f44336;
   color: white;
   padding: 8px 16px;
@@ -207,9 +197,18 @@ textarea.input {
   cursor: pointer;
 }
 
-.cancelButton:hover {
-  background-color: #d32f2f;
+.discardbutton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #ab1616;
+} 
+
+.createbutton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #1cb17b;
 }
+
 
 .topBar {
   width: 100vw;  
