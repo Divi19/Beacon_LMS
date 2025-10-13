@@ -224,3 +224,29 @@ textarea.input {
   font-weight: 600;
   margin-left: 8px; 
 }
+
+.linkButton {
+  padding: 10px 20px;
+  background-color: #d4550c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  background-color: #a73f09;
+}
+
+.createClassroomButton {
+  padding: 10px 20px;
+  background-color: #d4550c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.createClassroomButton:hover {
+  background-color: #a73f09;
+}
