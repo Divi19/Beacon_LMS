@@ -13,6 +13,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const [lessonInput, setLessonInput] = useState("");
   const [showOptionalModal, setShowOptionalModal] = useState(false);
   const [prereqInput, setPrereqInput] = useState("");
+  const [readingListInput, setReadingListInput] = useState("");
+  const [assignmentsInput, setAssignmentsInput] = useState("");
 
   const submitPrereqs = async () => {
     /**Handle prerequisites submission */
@@ -39,6 +41,50 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }
   };
 
+  useEffect(() => {
+    const fetchLesson = async () => {
+      if (!lessonId) return; // skip if creating new
+
+      try {
+        const { data } = await api.get(`/instructor/lessons/${lessonId}/`);
+        setFormData({
+          lesson_id: data.lesson_id,
+          title: data.title,
+          credits: data.credits || "",
+          duration_weeks: data.duration_weeks || "",
+          estimated_effort: data.estimated_effort || "",
+          designer: data.designer || "",
+          description: data.description || "",
+          objectives: data.objectives || "",
+          status: data.status || "Active",
+          updated_at: new Date(data.updated_at).toLocaleString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
+          course: data.course,
+        });
+
+        // handle related tables (optional)
+        setPrereqInput(
+          (data.prerequisites || []).map((p) => p.prereq_lesson_id).join(", ")
+        );
+        setReadingListInput(
+          (data.readings || []).map((r) => r.title).join("\n")
+        );
+        setAssignmentsInput(
+          (data.assignments || []).map((a) => a.title).join("\n")
+        );
+      } catch (err) {
+        console.error("Failed to fetch lesson", err);
+      }
+    };
+
+    fetchLesson();
+  }, [lessonId]);
+  
   const [formData, setFormData] = useState({
     lesson_id: lessonId,
     title: "",
@@ -48,7 +94,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     designer: "",
     description: "",
     objectives: "",
-    status: "Draft",
+    status: "Active",
     updated_at: "",
     course_id: courseId,
   });
@@ -111,42 +157,54 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Prepare data for Django backend
-      const lessonData = {
-        title: formData.title,
-        duration_weeks: formData.duration_weeks,
-        credits: formData.credits,
-        description: formData.description,
-        objectives: formData.description,
-        estimated_effort: formData.estimated_effort,
-        designer: formData.designer,
-        status: formData.status,
-      };
+  e.preventDefault();
 
-      if (lessonData.duration_weeks < 2 || lessonData.duration_weeks > 4) {
-        alert("Duration weeks must be between 2 to 4 weeks.");
-        return;
-      }
+  const durationNum = Number(formData.duration_weeks);
+  const creditsNum = formData.credits === "" ? null : Number(formData.credits);
 
-      // Send to Django backend
-      submitPrereqs(); //creating prereqs
-      await api.patch(`/instructor/lessons/${lessonId}/create/`, lessonData);
-      console.log("Course created successfully:", lessonData);
+  if (Number.isFinite(durationNum) && (durationNum < 2 || durationNum > 4)) {
+    alert("Duration weeks must be 2–4.");
+    return;
+  }
 
-      // Refresh the course list in parent component
-      if (onCourseCreated) {
-        onCourseCreated();
-      }
-
-      // Show success modal
-      setShowOptionalModal(true);
-    } catch (error) {
-      console.error("Error creating lesson:", error);
-      alert("Error creating lesson. Please try again.");
-    }
+  const payload = {
+    lesson_id: formData.lesson_id || lessonId,
+    course: courseId,
+    title: formData.title,
+    description: formData.description,
+    objectives: formData.objectives,
+    duration_weeks: durationNum || null,
+    credits: creditsNum,
+    status: formData.status,
+    designer: formData.designer || null,
   };
+
+  try {
+    if (lessonId) {
+      // Update existing
+      await api.patch(`/instructor/lessons/${lessonId}/`, payload);
+      await api.post(`/instructor/lessons/${lessonId}/prerequisites/bulk-create/`, {
+        prerequisites: prereqInput.split(/[\s,]+/).filter(Boolean),
+        mode: "replace",
+      });
+    } else {
+      // Create new
+      const { data } = await api.post(`/instructor/lessons/`, payload);
+      await api.post(`/instructor/lessons/${data.lesson_id}/prerequisites/bulk-create/`, {
+        prerequisites: prereqInput.split(/[\s,]+/).filter(Boolean),
+        mode: "replace",
+      });
+    }
+
+    // TODO: Save reading list & assignments via backend endpoints
+
+    alert("Lesson saved successfully!");
+    navigate(`/instructor/course/${courseId}`);
+  } catch (error) {
+    console.error("Error saving lesson:", error);
+    alert("Error saving lesson. Please try again.");
+  }
+};
 
   return (
     <div className={i.wrap}>
@@ -158,182 +216,183 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       </header>
       <div>
         <div className={i.formContainer}>
-        <form className={i.form} onSubmit={handleSubmit}>
-          <div className={i.row}>
-            <label className={i.label}>Lesson Title:</label>
-            <input
+          <form className={i.form} onSubmit={handleSubmit}>
+            <div className={i.row}>
+              <label className={i.label}>Lesson Title:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Lesson ID:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="lesson_id"
+                value={formData.lesson_id}
+                onChange={handleChange}
+                readOnly
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Lesson Credits:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="credits"
+                value={formData.credits}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Lesson Duration:</label>
+              <select
+                className={i.input}
+                name="duration_weeks"
+                value={formData.duration_weeks}
+                onChange={handleChange}
+              >
+                <option value="">Select duration</option>
+                <option value="2">2 Weeks</option>
+                <option value="3">3 Weeks</option>
+                <option value="4">4 Weeks</option>
+              </select>
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Estimated Effort:</label>
+              <input
+                className={i.input}
+                type="text"
+                name="estimated_effort"
+                value={formData.estimated_effort}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Lesson Designer:</label>
+              <select
+                className={i.input}
+                name="director"
+                value={formData.director}
+                onChange={handleChange}
+              >
+                <option value="">Select Instructor</option>
+                {/* Later map instructors from backend */}
+                <option value="Dr Charles Xavier">Dr Charles Xavier</option>
+                <option value="Mr La Pa Ta O Rulwena">
+                  Mr La Pa Ta O Rulwena
+                </option>
+              </select>
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Last Updated On:</label>
+              <input
+                className={`${i.input} ${i.readOnly}`}
+                value={formData.updated_at}
+                readOnly
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Status:</label>
+              <select
+                className={i.input}
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+              >
+                <option value="Inactive">Inactive</option>
+                <option value="Active">Active</option>
+                <option value="Archived">Archived</option>
+              </select>
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Course Description:</label>
+              <textarea
+                className={i.input}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Objectives:</label>
+              <textarea
+                className={i.input}
+                name="objectives"
+                value={formData.objectives}
+                onChange={handleChange}
+                rows={3}
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Prerequisite Lessons:</label>
+              <textarea
+                className={i.input}
+                name="prerequisite"
+                value={prereqInput}
+                onChange={(e) => setPrereqInput(e.target.value)}
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Reading List:</label>
+              <textarea
+                className={i.input}
+                name="reading_list"
+                value={readingListInput}
+                onChange={(e) => setReadingListInput(e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className={i.row}>
+              <label className={i.label}>Assignments:</label>
+              <textarea
               className={i.input}
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-            />
-          </div>
+              name="assignments" value={assignmentsInput}
+              onChange={(e) => setAssignmentsInput(e.target.value)}
+              rows={2}
+              />
+            </div>
 
-          <div className={i.row}>
-            <label className={i.label}>Lesson ID:</label>
-            <input
-              className={i.input}
-              type="text"
-              name="lesson_id"
-              value={formData.lesson_id}
-              onChange={handleChange}
-              readOnly
-            />
-          </div>
+            <div className={i.row}>
+              <label className={i.label}>Physical Classroom:</label>
+              <button type="button" className={i.linkButton}>
+                Link Classroom
+              </button>
+            </div>
 
-          <div className={i.row}>
-            <label className={i.label}>Lesson Credits:</label>
-            <input
-              className={i.input}
-              type="text"
-              name="credits"
-              value={formData.credits}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Lesson Duration:</label>
-            <select
-              className={i.input}
-              name="duration_weeks"
-              value={formData.duration_weeks}
-              onChange={handleChange}
-            >
-              <option value="">Select duration</option>
-              <option value="2">2 Weeks</option>
-              <option value="3">3 Weeks</option>
-              <option value="4">4 Weeks</option>
-            </select>
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Estimated Effort:</label>
-            <input
-              className={i.input}
-              type="text"
-              name="estimated_effort"
-              value={formData.estimated_effort}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Lesson Designer:</label>
-            <select
-              className={i.input}
-              name="director"
-              value={formData.director}
-              onChange={handleChange}
-            >
-              <option value="">Select Instructor</option>
-              {/* Later map instructors from backend */}
-              <option value="Dr Charles Xavier">Dr Charles Xavier</option>
-              <option value="Mr La Pa Ta O Rulwena">
-                Mr La Pa Ta O Rulwena
-              </option>
-            </select>
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Last Updated On:</label>
-            <input
-              className={`${i.input} ${i.readOnly}`}
-              value={formData.updated_at}
-              readOnly
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Status:</label>
-            <select
-              className={i.input}
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-            >
-              <option value="Draft">Draft</option>
-              <option value="Active">Active</option>
-              <option value="Archived">Archived</option>
-            </select>
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Course Description:</label>
-            <textarea
-              className={i.input}
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Objectives:</label>
-            <textarea
-              className={i.input}
-              name="objectives"
-              value={formData.objectives}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Prerequisite Lessons:</label>
-            <textarea
-              className={i.input}
-              name="prerequisite"
-              value={prereqInput}
-              onChange={(e) => setPrereqInput(e.target.value)}
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Reading List:</label>
-            <textarea
-              className={i.input}
-              name="reading_list"
-              placeholder="Enter reading materials or URLs"
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Assignments:</label>
-            <textarea
-              className={i.input}
-              name="assignments"
-              placeholder="Enter assignment details"
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Physical Classroom:</label>
-            <button type="button" className={i.linkButton}>
-              Link Classroom
-            </button>
-          </div>
-
-          <div className={i.row}>
-            <label className={i.label}>Online Classroom:</label>
-            <button type="button" className={i.createClassroomButton}>
-              Create Classroom
-            </button>
-          </div>
-          <div className={i.buttonRow}>
-            <button type="button" className={i.discardbutton}>
-              Discard
-            </button>
-            <button type="submit" className={i.createbutton}>
-              Update
-            </button>
-          </div>
-        </form>
+            <div className={i.row}>
+              <label className={i.label}>Online Classroom:</label>
+              <button type="button" className={i.createClassroomButton}>
+                Create Classroom
+              </button>
+            </div>
+            <div className={i.buttonRow}>
+              <button type="button" className={i.discardbutton}>
+                Discard
+              </button>
+              <button type="submit" className={i.createbutton}>
+                Update
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
