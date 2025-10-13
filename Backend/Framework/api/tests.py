@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase, APIClient
 from .models import *
 from .serializers import *
 import datetime
@@ -73,8 +73,10 @@ class LessonTests(TestCase):
         self.course = Course.objects.create(title="Biology", owner_instructor=self.inst)
 
     def test_lesson_creation(self):
-        lesson = Lesson.objects.create(course=self.course, created_by=self.inst, title="Cells")
+        lesson = Lesson.objects.create(course=self.course, designer=self.inst, created_by=self.inst, title="Cells")
         self.assertIsNotNone(lesson.lesson_id)
+        self.assertIsNotNone(lesson.designer)
+        self.assertIsNotNone(lesson.duration_weeks)
         self.assertEqual(lesson.status, Lesson.LessonStatus.ACTIVE)
 
 
@@ -412,6 +414,10 @@ def test_register_success_creates_user_and_student(api, url, db):
     assert user.password_hash == "PlainPw123!"  
     assert user.role == "student"  
 
+def test_register_existing_email(api, url, db):
+    res = api.post(url, valid_payload(), format="json")
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
 def test_missing_required_fields(api, url, db):
     # Missing email
     res = api.post(url, valid_payload(email=None), format="json")
@@ -480,4 +486,4 @@ def test_wrong_email(api, url, db):
     mutated_payload = valid_payload(email="mister@student.com")
     res = api.post(url, mutated_payload, format="json")
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
-    
+

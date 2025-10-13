@@ -68,7 +68,7 @@ export default function InstructorCourseDescription() {
 
       //Active classrooms 
       api
-        .get(`instructor/courses/${courseId}/`)
+        .get(`/instructor/courses/${courseId}/`)
         .then((res) => setActiveClassrooms(res.data))
         .catch(() => setActiveClassrooms([]))
 
