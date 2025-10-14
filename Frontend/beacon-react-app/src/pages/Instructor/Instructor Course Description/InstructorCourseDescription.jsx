@@ -48,18 +48,11 @@ export default function InstructorCourseDescription() {
    */
   useEffect(() => {
     try {
-      axios
-        .get(`http://localhost:8000/courses/${courseId}/detail/`)
-        .then((res) => setCourse(res.data))
-        .catch(() => setCourse(null));
-      
-       /**
       api
         .get(`/courses/${courseId}/detail/`)
         .then((res) => setCourse(res.data))
         .catch(() => setCourse(null));
-       */ 
-
+      
       //Fetching placeholders
       api
         .get(`/instructor/courses/${courseId}/lessons/`)
@@ -68,7 +61,7 @@ export default function InstructorCourseDescription() {
 
       //Active classrooms 
       api
-        .get(`instructor/courses/${courseId}/`)
+        .get(`instructor/course/classrooms/`, {params:{course_id: courseId}})
         .then((res) => setActiveClassrooms(res.data))
         .catch(() => setActiveClassrooms([]))
 
@@ -116,7 +109,7 @@ export default function InstructorCourseDescription() {
               Course Director: <strong>{course.course_director}</strong>
             </span>
             <span>
-              Enrolled Student: <strong>{course.enrolled_count}</strong>
+              Enrolled Students: <strong>{course.enrolled_count}</strong>
             </span>
           </div>
 
@@ -240,15 +233,19 @@ export default function InstructorCourseDescription() {
                   </div>
                   <div className={s.cardDesc2}>
                     <span>Course Director:</span>
-                    <span>{course.course_director}</span>
+                    <span> {course.course_director}</span>
+                  </div>
+                  <div className={s.cardDesc2}>
+                    <span>Lesson Designer:</span>
+                    <span> {lesson.designer}</span>
                   </div>
                   <div className={s.cardDesc3}>
                     <span>Duration:</span>
-                    <span>{lesson.duration_weeks}</span>
+                    <span> {lesson.duration_weeks} weeks</span>
                   </div>
                   <div className={s.cardDesc3}>
                     <span>Enrolled Students:</span>
-                    <span>{lesson.enrolled_count}</span>
+                    <span> {lesson.enrolled_count}</span>
                   </div>
                   <Button
                     variant="orange"

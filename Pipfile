@@ -5,16 +5,10 @@ name = "pypi"
 
 [packages]
 dotenv = "*"
+axios = "*"
 asgiref = "==3.9.1"
 django = "==5.2.6"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 djangorestframework = "==3.16.1"
->>>>>>> origin/Frontend_Isabella
-=======
-djangorestframework = "==3.16.1"
->>>>>>> origin/backend_divieleisch
 django-cors-headers = "*"
 djangorestframework-simplejwt = "*"
 pyjwt = "*"
@@ -23,17 +17,9 @@ sqlparse = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
 django-environ = "*"
-<<<<<<< HEAD
-<<<<<<< HEAD
-djangorestframework = "*"
-=======
-axios = "*"
->>>>>>> origin/Frontend_Isabella
-=======
-axios = "*"
->>>>>>> origin/backend_divieleisch
 
 [dev-packages]
 
 [requires]
-python_version = "3.12"
+python_version = "3.13"
+python_version = "3.13"

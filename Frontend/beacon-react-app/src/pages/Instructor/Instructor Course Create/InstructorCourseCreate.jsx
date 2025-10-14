@@ -19,7 +19,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     course_id: "",
     director: "",
     description: "",
-    status: "Active", //Newly added here, check serializer again
+    status: "Active", 
   });
 
 
@@ -80,7 +80,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         const courseData = {
           title: formData.title,
           credits: 30,
-          owner_instructor_id: Number(formData.director) || undefined,
+          owner_instructor_email: (formData.director) || undefined,
           description: formData.description,
           status: formData.status, //Newly added here, check serializer again
           ...(code ? { course_id: code } : {}),
@@ -105,7 +105,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
         base_title: "Lesson",
         starting_number: 1,
         duration_weeks: 4,
-        status: "Active",
+        status: "Inactive",
         description: "",
         objectives: ""
       });
@@ -180,7 +180,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
               <input
                 id="director"
                 className={i.input}
-                placeholder="Default to current instructor if empty"
+                placeholder="Input Instructor email. Default to current instructor if empty"
                 type="text"
                 name="director"
                 value={formData.director}

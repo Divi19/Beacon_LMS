@@ -14,9 +14,9 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   background: linear-gradient(
     180deg,
-    var(--bg-right-bot) 0%,
+    var(--bg-right-top) 0%,
     var(--bg-right-mid) 60%,
-    var(--bg-right-top) 100%
+    var(--bg-right-bot) 100%
   );
   backdrop-filter: blur(2px);
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -50,7 +50,7 @@
 .label {
   font-size: clamp(16px, 1.6vw, 18px);
   font-weight: 600;
-  color: #9c440c;
+  color: #005b70;
   margin-top: 6px;
 }
 
@@ -108,8 +108,8 @@
   height: clamp(46px, 6.2vw, 58px);
   border-radius: 1000px;
   border: none;
-  background:#f29907;
-  color:#9c440c;
+  background:#0097b2;
+  color:#d1dfe2;
   font-weight: 700;
   font-size: clamp(16px, 1.6vw, 18px);
   cursor: pointer;

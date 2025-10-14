@@ -127,6 +127,7 @@ DATABASES = {
     }
 }
 
+
 if 'test' in sys.argv:
     DATABASES = {
         'default': {
