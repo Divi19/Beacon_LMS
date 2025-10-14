@@ -6,13 +6,20 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
 import random
 import string
-import datetime
-from datetime import date, datetime, time as dtime
+from datetime import date, datetime, time as dtime, timedelta
+
+class ActiveLessonClassroomManager(models.Manager):
+    def get_queryset(self):
+        now = timezone.now()
+        return (super().get_queryset()
+                .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now)))
+
 
 def generate_custom_id():
     letters = ''.join(random.choices(string.ascii_uppercase, k=2))
@@ -30,11 +37,11 @@ class Classroom(models.Model):
         default=generate_custom_id, editable=False
     )
     location = models.CharField(max_length=255, blank=True, null=True)
-    duration_weeks = models.IntegerField(blank=True, null=True)
     capacity = models.IntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_online = models.BooleanField(default=False)
+    zoom_link = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = True
@@ -59,7 +66,7 @@ class Course(models.Model):
     title = models.CharField(max_length=255)
     status = models.CharField(max_length=50, choices=CourseStatus.choices, default=CourseStatus.ACTIVE)
     owner_instructor = models.ForeignKey('InstructorProfile', models.DO_NOTHING)
-    credits = models.IntegerField(blank=True, null=True)
+    credits = models.IntegerField(blank=True, null=True, default=30)
     director = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
@@ -140,7 +147,7 @@ class LessonAssignment(models.Model):
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    points = models.IntegerField(blank=True, null=True)
+    #points = models.IntegerField(blank=True, null=True) #not needed
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -158,6 +165,10 @@ class LessonClassroom(models.Model):
         FRIDAY = "Friday", "FRIDAY"
         SATURDAY = "Saturday", "SATURDAY"
         SUNDAY = "Sunday", "SUNDAY"
+    class Weeks(models.IntegerChoices):
+        TWO = 2, "2"
+        THREE = 3, "3"
+        FOUR = 4, "4"
     lesson_classroom_id =  models.AutoField(primary_key=True)
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     classroom = models.ForeignKey(Classroom, models.DO_NOTHING)
@@ -166,19 +177,66 @@ class LessonClassroom(models.Model):
     time_start = models.TimeField(default=dtime(0, 0))
     time_end   = models.TimeField(default=dtime(0, 0))
     duration_minutes = models.IntegerField(blank=True, null=True)
+    duration_weeks = models.IntegerField(choices=Weeks.choices, default=Weeks.TWO)
     linked_at = models.DateTimeField(auto_now_add=True)
     director = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
+    expires_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    objects = models.Manager()                
+    active  = ActiveLessonClassroomManager()
 
 
     class Meta:
         managed = True
         db_table = 'lesson_classroom'
 
+    def clean(self):
+        # sanity
+        if self.time_end <= self.time_start:
+            raise ValidationError({"time_end": "time_end must be after time_start."})
+        if not (self.classroom_id and self.director_id and self.day_of_week):
+            return  # skip until essentials present
+
+        # only consider active rows (remove this if expired rows should still block)
+        now = timezone.now()
+        active_q = Q(expires_at__isnull=True) | Q(expires_at__gt=now)
+
+        # real overlap (back-to-back OK): start < other_end AND end > other_start
+        overlap = Q(time_start__lt=self.time_end) & Q(time_end__gt=self.time_start)
+
+        base = (LessonClassroom.objects
+                .filter(active_q, day_of_week=self.day_of_week)
+                .exclude(pk=self.pk))
+
+        # same classroom clash?
+        if base.filter(classroom_id=self.classroom_id).filter(overlap).exists():
+            raise ValidationError("Overlaps an existing session in this classroom.")
+
+        # same director clash?
+        if base.filter(director_id=self.director_id).filter(overlap).exists():
+            raise ValidationError("Overlaps another session for this instructor.")
+
     def save(self, *args, **kwargs):
+        # compute derived fields first
         if self.time_start and self.time_end:
-             delta = datetime.combine(date.min, self.time_end) - datetime.combine(date.min, self.time_start)
-             self.duration_minutes = int(delta.total_seconds() / 60)
-        super().save(*args, **kwargs)
+            delta = datetime.combine(date.min, self.time_end) - datetime.combine(date.min, self.time_start)
+            self.duration_minutes = int(delta.total_seconds() // 60)
+
+        if self.duration_weeks:
+            base_dt = self.linked_at or timezone.now()
+            if self.pk and self.linked_at:
+                base_dt = self.linked_at
+            self.expires_at = base_dt + timedelta(weeks=int(self.duration_weeks))
+        else:
+            self.expires_at = None
+
+        # ENFORCE validation everywhere
+        self.full_clean()
+
+        return super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self) -> bool:
+        return bool(self.expires_at and self.expires_at <= timezone.now())
 
     
 class ClassroomEnrollment(models.Model):
@@ -225,6 +283,12 @@ class LessonReading(models.Model):
     class Meta:
         managed = True
         db_table = 'lesson_reading'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['lesson', 'title', 'url'],
+                name='uniq_lesson_title_url'
+            )
+        ]
 
 
 class StudentAssignment(models.Model):

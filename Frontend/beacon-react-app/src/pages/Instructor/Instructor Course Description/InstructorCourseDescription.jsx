@@ -53,13 +53,6 @@ export default function InstructorCourseDescription() {
         .then((res) => setCourse(res.data))
         .catch(() => setCourse(null));
       
-       /**
-      api
-        .get(`/courses/${courseId}/detail/`)
-        .then((res) => setCourse(res.data))
-        .catch(() => setCourse(null));
-       */ 
-
       //Fetching placeholders
       api
         .get(`/instructor/courses/${courseId}/lessons/`)
@@ -68,7 +61,7 @@ export default function InstructorCourseDescription() {
 
       //Active classrooms 
       api
-        .get(`/instructor/courses/${courseId}/`)
+        .get(`instructor/course/classrooms/`, {params:{course_id: courseId}})
         .then((res) => setActiveClassrooms(res.data))
         .catch(() => setActiveClassrooms([]))
 
@@ -116,7 +109,7 @@ export default function InstructorCourseDescription() {
               Course Director: <strong>{course.course_director}</strong>
             </span>
             <span>
-              Enrolled Student: <strong>{course.enrolled_count}</strong>
+              Enrolled Students: <strong>{course.enrolled_count}</strong>
             </span>
           </div>
 

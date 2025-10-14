@@ -30,16 +30,16 @@ export default function CourseCard({
           </span>
         </div>
         <div className={s.metaRow}>
-          <span>Lessons: </span>
+          <span>Lessons </span>
           </div>
           {isEnrolled && (
           <button
           type="button"
           className={s.cta}
           onClick={(e) => { e.stopPropagation();
-            e.stopPropagation();                 // prevent parent click
+            e.stopPropagation();                 
             navigate(`/student/course/${course.course_id}/my-lessons`, {
-              state: course,                     // optional: pass data forward
+              state: course,                   
             });
             
           }}>Go to my course lesson<svg

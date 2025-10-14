@@ -8,6 +8,7 @@ import { api } from "../../../api";
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
   const { lessonId, courseId } = useParams();
+  const [lesson, setLesson] = useState(null)
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
@@ -16,31 +17,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const [readingListInput, setReadingListInput] = useState("");
   const [assignmentsInput, setAssignmentsInput] = useState("");
 
-    const submitPrereqs = async () => {
-        /**Handle prerequisites submission */
-        // split by commas / whitespace / newlines
-
-        const prereqIds = prereqInput
-            .split(/[\s,]+/)
-            .map(s => s.trim())
-            .filter(Boolean);
-
-        if (prereqIds.length === 0) {
-            return;
-        } //Nothing entered --> Just leave
-
-        try {
-            const res = await api.post(
-                `instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
-                { prerequisites: prereqIds, mode: "merge" }, // or "replace"
-            );
-            console.log("Created:", res.data);
-        } catch (err) {
-            console.error("Server error:", err?.response?.data || err);
-            alert("Failed to set prerequisites.");
-        }
-    };
-
+    
     const [formData, setFormData] = useState({
         title: "",
         credits: "",
@@ -108,46 +85,92 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   }, []);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const durationNum = Number(formData.duration_weeks);
-  const creditsNum = formData.credits === "" ? null : Number(formData.credits);
+    const durationNum = Number(formData.duration_weeks);
+    const creditsNum = formData.credits === "" ? null : Number(formData.credits);
 
-  if (Number.isFinite(durationNum) && (durationNum < 2 || durationNum > 4)) {
-    alert("Duration weeks must be 2–4.");
-    return;
-  }
+    if (formData.duration_weeks !== "" && Number.isFinite(durationNum) && (durationNum < 2 || durationNum > 4)) {
+      alert("Duration weeks must be 2–4.");
+      return;
+    }
+
+
+
+  const submitPrereqs = async () => {
+    /**Handle prerequisites submission */
+    // split by commas / whitespace / newlines
+    const prereqIds = prereqInput
+        .split(/[\s,]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    if (prereqIds.length === 0) {
+        return;
+    } //Nothing entered --> Just leave
+
+    try {
+        const res = await api.post(
+            `instructor/lessons/${lessonId}/prerequisites/`,
+            { prerequisites: prereqIds, mode: "merge" }, // or "replace"
+        );
+        console.log("Created:", res.data);
+    } catch (err) {
+        console.error("Server error:", err?.response?.data || err);
+        alert("Failed to set prerequisites.");
+    }
+};
+
 
   const payload = {
     lesson_id: formData.lesson_id || lessonId,
     course: courseId,
-    title: formData.title,
-    description: formData.description,
-    objectives: formData.objectives,
-    duration_weeks: durationNum || null,
-    credits: creditsNum,
+    ...(formData.title?.trim()
+        ? {title: formData.title}
+        : {}
+        ),
+    ...(formData.description?.trim()
+        ? {description: formData.description}
+        : {}
+        ),
+    ...(formData.objectives?.trim()
+        ? {objectives: formData.objectives}
+        : {}
+        ),
+    ...(formData.duration_weeks !== ""
+        ? {duration_weeks: formData.duration_weeks}
+        : {}
+        ),
+    ...(formData.credits?.trim()
+        ? {credits: creditsNum}
+        : {}
+        ),
     status: formData.status,
-    designer: formData.designer || null,
+    ...(formData.designer?.trim()
+        ? { designer: formData.designer.trim() }   // email string
+        : {}),
   };
 
   try {
-    if (lessonId) {
-      // Update existing
-      await api.patch(`/instructor/lessons/${lessonId}/`, payload);
-      await api.post(`/instructor/lessons/${lessonId}/prerequisites/bulk-create/`, {
-        prerequisites: prereqInput.split(/[\s,]+/).filter(Boolean),
-        mode: "replace",
-      });
-    } else {
-      // Create new
-      const { data } = await api.post(`/instructor/lessons/`, payload);
-      await api.post(`/instructor/lessons/${data.lesson_id}/prerequisites/bulk-create/`, {
-        prerequisites: prereqInput.split(/[\s,]+/).filter(Boolean),
-        mode: "replace",
-      });
-    }
+      await api.patch(`/instructor/lessons/${lessonId}/update/`, payload);
+      submitPrereqs()
 
-    // TODO: Save reading list & assignments via backend endpoints
+
+      if (readingListInput.trim()) {
+        await api.post(
+          `/instructor/lessons/${lessonId}/readings/`,
+          { lesson_id: lessonId, items: readingListInput },
+          { headers: { "Content-Type": "application/json" } }
+        );
+      }
+      
+      if (assignmentsInput.trim()) {
+        await api.post(
+          `/instructor/lessons/${lessonId}/assignments/`,
+          { lesson_id: lessonId, items: assignmentsInput },
+          { headers: { "Content-Type": "application/json" } }
+        );
+      }
 
     alert("Lesson saved successfully!");
     navigate(`/instructor/course/${courseId}`);
@@ -177,7 +200,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                required
               />
             </div>
 
@@ -232,19 +254,15 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
             <div className={i.row}>
               <label className={i.label}>Lesson Designer:</label>
-              <select
+
+              <input
                 className={i.input}
-                name="director"
-                value={formData.director}
+                type="text"
+                name="designer"
+                value={formData.designer}
                 onChange={handleChange}
-              >
-                <option value="">Select Instructor</option>
-                {/* Later map instructors from backend */}
-                <option value="Dr Charles Xavier">Dr Charles Xavier</option>
-                <option value="Mr La Pa Ta O Rulwena">
-                  Mr La Pa Ta O Rulwena
-                </option>
-              </select>
+                placeholder="Enter instructor email"
+              />
             </div>
 
             <div className={i.row}>
@@ -271,7 +289,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course Description:</label>
+              <label className={i.label}>Lesson Description:</label>
               <textarea
                 className={i.input}
                 name="description"

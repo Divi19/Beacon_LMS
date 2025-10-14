@@ -9,11 +9,12 @@ from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import authenticate
 from django.db.models.functions import Lower, Coalesce
-from django.db.models import Sum
+from django.db.models import Sum, Q, F
 from django.core.exceptions import ObjectDoesNotExist
 
 #local 
 from .models import *
+import re
 
 """
 Auth-related serializers
@@ -351,68 +352,8 @@ classroom_id = models.CharField(
 
 """
 
-class LessonClassroomSerializer(serializers.ModelSerializer):
-    day = serializers.CharField(source="day_of_week", write_only=True)
-    start_time = serializers.TimeField(source="time_start", write_only=True,)
-    end_time = serializers.TimeField(source="time_end", write_only=True,)
-    duration_minutes = serializers.IntegerField(required=False)
-    classroom = serializers.PrimaryKeyRelatedField(queryset=Classroom.objects.all(), write_only=True, required=True)
-    lesson = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all(), write_only=True, required=True)
+
     
-
-    #Responses 
-    day_of_week = serializers.CharField(read_only=True)
-    time_start  = serializers.TimeField(read_only=True)
-    time_end    = serializers.TimeField(read_only=True)
-    enrolled_count = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = LessonClassroom
-        fields = [
-           "day", "start_time", "end_time", "duration_minutes", "classroom", "lesson"
-        ]
-        read_only_fields = ["day_of_week", "time_start", "time_end", "enrolled_count"]
-
-    def validate(self, attrs):
-        # pull values (handles create/update)
-        req = self.context.get("request")
-        if req and getattr(req.user, "is_authenticated", False):
-            inst = InstructorProfile.objects.filter(user=req.user).first()
-
-        lesson = (
-            self.context.get("lesson")
-            or attrs.get("lesson")
-            or getattr(self.instance, "lesson", None)
-        )
-
-        day = attrs.get("day_of_week") or getattr(self.instance, "day_of_week", None)
-        t_start = attrs.get("time_start") or getattr(self.instance, "time_start", None)
-        t_end   = attrs.get("time_end")   or getattr(self.instance, "time_end", None)
-
-        if not (lesson and day and t_start and t_end):
-            return attrs
-
-        if t_end <= t_start:
-            raise serializers.ValidationError({"end_time": "end_time must be after start_time"})
-
-        base = LessonClassroom.objects.filter(day_of_week=day)
-        if self.instance:
-            base = base.exclude(pk=self.instance.pk)
-
-        # B) no overlaps for the SAME INSTRUCTOR (across lessons)
-        overlaps_instr = False
-        if inst:
-            overlaps_instr = base.filter(
-                instructor=inst,
-                time_start__lt=t_end,
-                time_end__gt=t_start,
-            ).exists()
-
-        if overlaps_instr: #deleted overlaps_lesson
-            raise serializers.ValidationError(
-                {"non_field_errors": ["This time overlaps an existing classroom. Pick a different slot."]}
-            )
-        return attrs
 
 """
 TODO: After model is done 
@@ -462,6 +403,7 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
     director = serializers.PrimaryKeyRelatedField(
         queryset=InstructorProfile.objects.all(), write_only=True
     )
+    enrolled_count = serializers.IntegerField(read_only = True)
 
     class Meta:
         model = LessonClassroom
@@ -485,8 +427,99 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
                 if owner:
                     validated_data["owner_instructor"] = owner
         return LessonClassroom.objects.create(**validated_data) 
+    
+    class Meta:
+        model = LessonClassroom
+        fields = [
+           "day", "start_time", "end_time", "duration_minutes", "classroom", "lesson"
+        ]
+        read_only_fields = ["day_of_week", "time_start", "time_end"]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(time_end__gt=F("time_start")),
+                name="lessonclassroom_time_end_after_start",
+            ),
+        ]
+    
+    def validate(self, attrs):
+        """
+        Prevent overlaps (end-exclusive) on the same weekday for:
+          - SAME classroom
+          - SAME director (instructor)
+        """
+        instance = getattr(self, "instance", None)
 
-        
+        # Resolve effective values regardless of create/partial update
+        classroom = attrs.get("classroom")     or (instance.classroom if instance else None)
+        day       = attrs.get("day_of_week")   or (instance.day_of_week if instance else None)
+        t_start   = attrs.get("time_start")    or (instance.time_start  if instance else None)
+        t_end     = attrs.get("time_end")      or (instance.time_end    if instance else None)
+        lesson    = attrs.get("lesson")        or (instance.lesson      if instance else None)
+
+        # Resolve director (from request.user’s profile or instance)
+        request = self.context.get("request")
+        director = getattr(instance, "director", None)
+        if not director and request and getattr(request.user, "is_authenticated", False):
+            director = InstructorProfile.objects.filter(user=request.user).first()
+
+        # On create, require the essentials; on partial update, skip if incomplete
+        required = [("classroom", classroom), ("day_of_week", day), ("time_start", t_start), ("time_end", t_end), ("director", director)]
+        if any(v is None for _, v in required):
+            return attrs
+
+        if t_end <= t_start:
+            raise serializers.ValidationError({"end_time": "end_time must be after start_time."})
+
+        # Consider only active rows as clashes (optional). Remove active_q if expired rows must still block.
+        now = timezone.now()
+        # Overlap predicate (back-to-back allowed)
+        overlap_q = Q(time_start__lt=t_end) & Q(time_end__gt=t_start)
+
+        base = LessonClassroom.active.filter(day_of_week=day).exclude(pk=instance.pk) if instance \
+               else LessonClassroom.active.filter(day_of_week=day)
+
+        # A) same classroom clash
+        clash_room_qs = base.filter(classroom=classroom).filter(overlap_q)
+
+        # B) same director clash
+        clash_dir_qs  = base.filter(director=director).filter(overlap_q)
+
+        room_clash = clash_room_qs.values("time_start", "time_end").first()
+        dir_clash  = clash_dir_qs.values("time_start", "time_end").first()
+
+        if room_clash or dir_clash:
+            errs = []
+            if room_clash:
+                errs.append(
+                    f"classroom conflict {room_clash['time_start'].strftime('%H:%M')}–{room_clash['time_end'].strftime('%H:%M')}"
+                )
+            if dir_clash:
+                errs.append(
+                    f"instructor conflict {dir_clash['time_start'].strftime('%H:%M')}–{dir_clash['time_end'].strftime('%H:%M')}"
+                )
+            raise serializers.ValidationError({"non_field_errors": [f"Overlapping slot: {', '.join(errs)}. Pick a different time."]})
+
+        return attrs
+
+    def save(self, *args, **kwargs):
+        # compute duration first (not strictly required for validation)
+        if self.time_start and self.time_end:
+            delta = datetime.combine(date.min, self.time_end) - datetime.combine(date.min, self.time_start)
+            self.duration_minutes = int(delta.total_seconds() // 60)
+
+        # compute/update expires_at
+        if self.duration_weeks:
+            base = self.linked_at or timezone.now()
+            if self.pk and self.linked_at:
+                base = self.linked_at
+            self.expires_at = base + timedelta(weeks=int(self.duration_weeks))
+        else:
+            self.expires_at = None
+
+        # **Enforce validation on all save paths**
+        self.full_clean()
+
+        return super().save(*args, **kwargs)
         
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -502,82 +535,132 @@ class LessonSerializer(serializers.ModelSerializer):
     duration_weeks = serializers.CharField(required=True, allow_blank=True)
     description = serializers.CharField(required=True, allow_blank=True)
     objectives = serializers.CharField(required=True, allow_blank=True)
-    designer = serializers.PrimaryKeyRelatedField(
-        queryset=InstructorProfile.objects.all(), write_only=True
-    ) 
+    objectives = serializers.CharField(required=False, allow_blank=True)
     status = serializers.CharField(required=True)
    
     class Meta:
         model = Lesson
         fields = ["designer", "objectives", "lesson_id", "enrolled_count", "credits", "course", "title", "description", "objectives", "duration_weeks", "status", "created_by"]
-        read_only_fields = ["lesson_id", "owner_instructor", "created_by"] 
-
-    def update(self, instance, validated_data):
-        owner_email = validated_data.pop('owner_instructor', None)
-        if owner_email:
-            #resolve by using instructor email
-            try:
-                user = User.objects.get(email=owner_email)
-                instructor = InstructorProfile.objects.get(user=user)
-                validated_data['owner_instructor'] = instructor
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError({"owner_instructor": "Instructor with this email does not exist."})
-        else:
-            #No email given, default to current logged in instructor 
-            req = self.context.get("request")
-            if req and getattr(req.user, "is_authenticated", False):
-                owner = InstructorProfile.objects.filter(user=req.user).first()
-                if owner:
-                    validated_data["owner_instructor"] = owner
-        validated_data.pop("created_by", None)
-        return super().update(instance, validated_data)
-
-        
-
-class LessonPrereqBulkInSerializer(serializers.Serializer):
-    prerequisites = serializers.ListField(
-        child=serializers.CharField(min_length=1, allow_blank=False),
-        allow_empty=False
-    )
-    mode = serializers.ChoiceField(choices=["merge", "replace"], required=False, default="merge")
+        read_only_fields = ["lesson_id", "designer", "created_by"] 
 
     def validate(self, attrs):
+        """
+        Ensure 'designer' is always a valid InstructorProfile before model validation.
+        """
+        request = self.context.get("request")
+
+        # Extract designer email if provided
+        designer_email = attrs.get("designer")
+        if designer_email:
+            try:
+                user = User.objects.get(email=designer_email)
+                instructor = InstructorProfile.objects.get(user=user)
+                attrs["designer"] = instructor
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError({
+                    "designer": f"Instructor with email '{designer_email}' does not exist."
+                })
+        elif request and getattr(request.user, "is_authenticated", False):
+            instructor = InstructorProfile.objects.filter(user=request.user).first()
+            if instructor:
+                attrs["designer"] = instructor
+            else:
+                raise serializers.ValidationError({
+                    "designer": "No InstructorProfile found for logged-in user."
+                })
+
+        # Case 3: Nothing works → reject
+        else:
+            raise serializers.ValidationError({
+                "designer": "Designer must be provided or resolvable from logged-in user."
+            })
+
+        return attrs
+    
+    def update(self, instance, validated_data):
+        validated_data.pop("created_by", None)
+        return super().update(instance, validated_data)
+        
+class LessonPrereqOutSerializer(serializers.ModelSerializer):
+    """
+    Serialize each prerequisite relation, exposing the target lesson's id/title.
+    """
+    prereq_lesson_id = serializers.CharField(source="prereq_lesson.lesson_id", read_only=True)
+    prereq_title = serializers.CharField(source="prereq_lesson.title", read_only=True)
+
+    class Meta:
+        model = LessonPrerequisite
+        fields = ["prereq_lesson_id", "prereq_title"]
+
+class PrereqInputSerializer(serializers.Serializer):
+    """
+    Accepts either:
+      1) prerequisites as a STRING (newlines/commas allowed), or
+      2) prerequisites as a LIST of strings.
+    We normalize ourselves to avoid ListField pre-validation.
+    """
+    prerequisites = serializers.JSONField(required=False, allow_null=True)  # raw; could be list or string
+    mode = serializers.ChoiceField(choices=["merge", "replace"], required=False, default="merge")
+
+    _SPLIT = re.compile(r"[,\r\n]+")  # commas or newlines
+
+    def _normalize_to_list(self, raw):
+        # Case: missing entirely
+        if raw is None:
+            return []
+
+        # Case: already a list
+        if isinstance(raw, list):
+            items = [str(x).strip() for x in raw if str(x).strip()]
+        # Case: a string (textarea)
+        elif isinstance(raw, str):
+            items = [s.strip() for s in self._SPLIT.split(raw) if s.strip()]
+        else:
+            # Anything else (dict, int, etc.) -> treat as invalid/empty
+            items = []
+
+        # De-dup while preserving order
+        seen, out = set(), []
+        for lid in items:
+            if lid not in seen:
+                seen.add(lid)
+                out.append(lid)
+        return out
+
+    def validate(self, attrs):
+        # lesson_id must be passed via serializer context
         lesson_id = self.context.get("lesson_id")
         if not lesson_id:
-            raise serializers.ValidationError({"lesson_id": "Missing lesson_id."})
+            raise serializers.ValidationError({"lesson_id": "Missing lesson_id in context."})
 
-        try:
-            lesson = Lesson.objects.get(lesson_id=lesson_id)
-        except Lesson.DoesNotExist:
-            raise serializers.ValidationError({"lesson_id": f"Lesson '{lesson_id}' not found."})
+        # Normalize to a list regardless of incoming shape
+        normalized = self._normalize_to_list(self.initial_data.get("prerequisites", None))
 
-        raw_ids = [x.strip() for x in attrs["prerequisites"] if x and x.strip()]
-        if not raw_ids:
+        if not normalized:
+            # IMPORTANT: we throw the error here (after normalization),
+            # not via ListField pre-validation.
             raise serializers.ValidationError({"prerequisites": "Provide at least one prerequisite lesson_id."})
 
-        seen, clean_ids = set(), []
-        for lid in raw_ids:
-            if lid not in seen:
-                seen.add(lid); clean_ids.append(lid)
+        # Anchor lesson
+        lesson = Lesson.objects.filter(lesson_id=lesson_id).first()
+        if not lesson:
+            raise serializers.ValidationError({"lesson_id": f"Lesson '{lesson_id}' not found."})
 
-        if lesson.lesson_id in seen:
+        # Self-reference check
+        if lesson.lesson_id in normalized:
             raise serializers.ValidationError({"prerequisites": "A lesson cannot be a prerequisite of itself."})
 
-        found = {l.lesson_id: l for l in Lesson.objects.filter(lesson_id__in=clean_ids)}
-        missing = [lid for lid in clean_ids if lid not in found]
+        # Resolve all referenced lessons
+        found = {l.lesson_id: l for l in Lesson.objects.filter(lesson_id__in=normalized)}
+        missing = [lid for lid in normalized if lid not in found]
         if missing:
             raise serializers.ValidationError({"prerequisites": [f"Not found: {', '.join(missing)}"]})
 
+        # Stash for view
         attrs["lesson"] = lesson
-        attrs["prereq_list"] = [found[lid] for lid in clean_ids]
+        attrs["prereq_list"] = [found[lid] for lid in normalized]
         return attrs
 
-class LessonPrereqOutSerializer(serializers.ModelSerializer):
-    # use prereq_lesson, not prerequisite
-    prerequisite_id = serializers.CharField(source="prereq_lesson.lesson_id", read_only=True)
-    class Meta:
-        model = LessonPrerequisite
-        fields = ["prerequisite_id"]
 
 class LessonBulkCreateInSerializer(serializers.Serializer):
     count = serializers.IntegerField(min_value=1, max_value=50)  # cap to prevent abuse
@@ -589,14 +672,31 @@ class LessonBulkCreateInSerializer(serializers.Serializer):
     description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     objectives = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
-# class LessonOutSerializer(serializers.ModelSerializer):
-#     """
-#     Seen only in responses
-#     """
-#     class Meta:
-#         model = Lesson
-#         fields = [
-#             "lesson_id", "course", "title", "description", "credits",
-#             "objectives", "duration_weeks", "status", "created_by", "created_at"
-#         ]
-#         read_only_fields = fields
+class LessonItemsBulkSerializer(serializers.Serializer):
+    lesson_id = serializers.CharField(required=True)
+    items = serializers.CharField(allow_blank=False, trim_whitespace=True)
+
+    def validate_lesson_id(self, v):
+        if not Lesson.objects.filter(pk=v).exists():
+            raise serializers.ValidationError("Lesson not found.")
+        return v
+    
+class LessonReadingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonReading
+        fields = ["reading_id", "lesson", "title", "url", "created_at", "updated_at"]
+        read_only_fields = ["reading_id", "created_at", "updated_at"]
+
+class LessonAssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonAssignment
+        fields = [
+            "assignment_id",
+            "lesson",
+            "title",
+            "description",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["assignment_id", "created_at", "updated_at"]
+
