@@ -12,13 +12,24 @@ export default function InstructorTopBar() {
       <nav className={s.rightSide}>
         <ul className={s.navList}>
           <li className={s.navItem}>
-            <a href="/instructor/course-list" className={s.navLink}>Courses</a>
+            <a href="/instructor/course-list" className={s.navLink}>
+              Courses
+            </a>
           </li>
           <li className={s.navItem}>Student Progress</li>
-          <li className={s.navItem}>Classrooms</li>
+          <li className={s.navItem}>
+            {" "}
+            <a href="/instructor/classrooms" className={s.navLink}>
+              Classrooms
+            </a>
+          </li>
           <li className={s.navItem}>Reports</li>
           <li className={s.navItem}>
-            <img src="/profile_picture.png" alt="Profile" className={s.profileLogoTop} />
+            <img
+              src="/profile_picture.png"
+              alt="Profile"
+              className={s.profileLogoTop}
+            />
             <span className={s.accountText}>Instructor</span>
           </li>
         </ul>

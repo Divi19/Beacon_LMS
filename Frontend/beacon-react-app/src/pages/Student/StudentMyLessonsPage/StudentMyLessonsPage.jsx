@@ -1,22 +1,44 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentMyLessonsPage.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
+import { api } from "../../../api";
+import LessonCard from "../../../components/LessonCard/LessonCard";
+import LessonDisplay from "../../../components/LessonDisplay/LessonDisplay";
 
 export default function StudentMyLessonsPage() {
   const navigate = useNavigate();
+  const { courseId } =useParams();
+  const location = useLocation();
+  // const course = location.state?.course || null
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [course, setCourse] = useState(location.state?.course || null);
+  const [loadingCourse, setLoadingCourse] = useState(!location.state?.course);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!course) {
+      setLoadingCourse(true);
+      api.get(`/courses/${courseId}/detail`)
+      .then(res => setCourse(res.data))
+      .catch(err => console.error("Failed to fetch course", err))
+      .finally(() => setLoadingCourse(false));
+    }
+  }, [course, courseId]);
 
-    async function checkCourses() {
+    useEffect(() => {
+        let cancelled = false;
+        
+    async function checkLessons() {
       try {
-        const res = await axios.get("http://localhost:8000/courses/frontend/");
+        setLoading(true);
+        const res = await api.get(`/student/courses/${courseId}/lessons/enrolled/`);
         if (!cancelled && Array.isArray(res.data) && res.data.length > 0) {
           // Instructor has at least one course — go to the list view
-          navigate("/student/my-lesson", { replace: true });
+          setLessons(res.data || []);
         }
         // else: stay on this page and show "No courses yet"
       } catch (err) {
@@ -25,9 +47,13 @@ export default function StudentMyLessonsPage() {
       }
     }
 
-    checkCourses();
+    checkLessons();
     return () => { cancelled = true; };
-  }, [navigate]);
+  }, [courseId]);
+
+  // const handleLessonClick = (lesson_id) => {
+  //   navigate(`/student/courses/${courseId}/lessons/{lesson_id}`);
+  // }
 
   return (
     <div className={i.wrap}>
@@ -37,10 +63,10 @@ export default function StudentMyLessonsPage() {
       <header className={i.header}>
         <h1 className={i.title}>MY LESSONS</h1>
         <div className={i.rect}>
-            <div className={i.label}><strong>Bachelor of Computer Science</ strong></div>
+            <div className={i.label}><strong>{course?.course_title || "Loading..."}</strong></div>
             <div className={i.label1}>
-                <span>Code:<span> C2100</span></span>
-                <span>30<span> Credits</span></span>
+                <span>Code:<span> {course?.course_id || "-"}</span></span>
+                <span> {course?.course_credits || "30"}<span> Credits</span></span>
             </div>
         </div>
       </header>
@@ -48,7 +74,7 @@ export default function StudentMyLessonsPage() {
         <Button
             variant="blue"
             className={i.enrollBtn}
-            onClick={() => navigate("/student/lesson-enrollment")}
+            onClick={() => navigate(`/student/course/${courseId}/lesson-enroll`, {state:{course}})}
           >
             <span>Enrollment</span>
             <svg
@@ -72,36 +98,57 @@ export default function StudentMyLessonsPage() {
         </div>
       </header>
 
-      <section className={i.card}>
-        <p className={i.emptyText}>
-          No enrolled lessons in this course yet.<br />
-        </p>
-
-        <div className={i.ctaRow}>
-          <Button
-            variant="blue"
-            className={i.enrollBtn}
-            onClick={() => navigate("/student/lesson-enrollment")}
-          >
-            <span>First time enrollment</span>
-            <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 8 16 12 12 16" />
-                    <line x1="8" y1="12" x2="16" y2="12" />
-                  </svg>
-          </Button>
-        </div>
-      </section>
+      {lessons.length === 0 ? (
+  <section className={i.card}>
+    <p className={i.emptyText}>
+      No enrolled lessons in this course yet.<br />
+    </p>
+    <div className={i.ctaRow}>
+      <Button
+        variant="blue"
+        className={i.enrollBtn}
+        onClick={() => navigate(`/student/course/${courseId}/lesson-enroll`, {state:{course}})}
+      >
+        <span>First time enrollment</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 8 16 12 12 16" />
+          <line x1="8" y1="12" x2="16" y2="12" />
+        </svg>
+      </Button>
+    </div>
+  </section>
+) : (
+  <div className={i.grid1}>
+    {lessons.map((lesson) => (
+      <LessonCard
+        key={lesson.lesson_id}
+        lesson={{
+          code: lesson.lesson_id,
+          title: lesson.lesson_title,
+          credit: lesson.lesson_credits,
+          designer: lesson.lesson_designer,
+          duration: lesson.lesson_duration,
+        }}
+        isEnrolled={true}
+        ctaText="View"
+        onClick={() => navigate(`/student/course/${courseId}/lesson/${lesson.lesson_id}`)}
+      />
+    ))}
+  </div>
+)}
     </div>
   );
 }
+
+///student//student/course/${course.course_id}/lesson-creation/${course.course_id}

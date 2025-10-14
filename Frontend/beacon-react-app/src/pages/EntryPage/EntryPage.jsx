@@ -10,7 +10,7 @@ export default function EntryPage() {
 
   const go = (r) => {
     const next =
-      r === "student" ? "/student/login" : "/instructor/login";
+      r === "student" ? "/student/login" : r === "instructor" ? "/instructor/login" : "/admin/log-in";
     navigate(next);
   };
 
@@ -38,13 +38,19 @@ export default function EntryPage() {
             >
               Student
             </Button>
-            <div className={s.or}>OR</div>
             <Button
               variant="orange"
               className={s.entryBtn}
               onClick={() => go("instructor")}
             >
               Instructor
+            </Button>
+            <Button
+              variant="green"
+              className={s.entryBtn}
+              onClick={() => go("admin")}
+            >
+              Admin
             </Button>
           </div>
         </div>
