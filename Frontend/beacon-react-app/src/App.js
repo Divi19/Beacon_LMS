@@ -92,6 +92,7 @@ export default function App(){
 
       {/* Classrooms */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassCreation />}/>
+      <Route path="/instructor/classrooms/create" element={<InstructorClassCreation />}/>
       <Route path="/admin/log-in" element={<AdminLogIn />}/>
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
