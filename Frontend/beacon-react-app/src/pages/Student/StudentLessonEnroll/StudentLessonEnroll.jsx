@@ -125,9 +125,9 @@ return (
                 <Button
                     variant="blue"
                     className={i.enrollBtn}
-                    onClick={() => navigate("/student/lesson-enrollment")}
+                    onClick={() => navigate(`/student/course/${courseId}/my-lessons`)}
                 >
-                    <span>Enrollment</span>
+                    <span>Back to MY LESSONS</span>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="22"
