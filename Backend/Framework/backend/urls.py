@@ -55,10 +55,15 @@ urlpatterns = [
     path("student/my_courses/", StudentEnrolledCourses.as_view(), name="my-courses"),
     path("student/courses/unenrolled/", StudentUnenrolledCourses.as_view(), name="enrollment"),
     path("student/courses/enroll/", StudentUnenrolledCourses.as_view(), name="enroll"),
+    #Student Lessons
+    path("student/courses/<str:course_id>/lessons/enrolled/", StudentEnrolledLessons.as_view(), name="enrolled-lessons"),
+    path("student/courses/<str:course_id>/lessons/unenrolled/", StudentUnenrolledLessons.as_view(), name="unenrolled-lessons"),
+    path("student/courses/<str:course_id>/lessons/enroll/<str:lesson_id>/", StudentUnenrolledLessons.as_view(), name="unenrolled-lessons"),
     #Students Classrooms
     path("student/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")
+    
     
 ]
