@@ -386,9 +386,9 @@ TODO: After model is done
 class ClassroomSerializer(serializers.ModelSerializer):
     #Request
     capacity = serializers.IntegerField(min_value=1, max_value=100)
-    zoom_link = serializers.CharField(required=False, allow_blank=True)
-    is_online = serializers.BooleanField(write_only=True, default=True)
-    location = serializers.CharField(required=True)
+    zoom_link = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    is_online = serializers.BooleanField(default=False)
+    location = serializers.CharField(required=True, allow_blank=True)
 
     class Meta:
         model = Classroom

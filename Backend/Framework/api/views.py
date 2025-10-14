@@ -263,7 +263,8 @@ class ActiveClassroomsView(APIView):
                 "classroom__capacity",
                 "enrolled_count",   
                 "classroom__zoom_link",
-                "classroom__is_online"                                               
+                "classroom__is_online",   
+                "lesson__lesson_id"                                           
             )
         )
 
@@ -279,7 +280,8 @@ class ActiveClassroomsView(APIView):
                 "capacity": r["classroom__capacity"],
                 "enrolled_count": r["enrolled_count"],   
                 "is_online": r["classroom__is_online"],
-                "zoom_link": r["classroom__zoom_link"]                         
+                "zoom_link": r["classroom__zoom_link"], 
+                "lesson_id": r["lesson__lesson_id"]                      
             }
 
         data = [*map(norm_linked, linked_rows)]
@@ -319,7 +321,8 @@ class OwnClassroomsView(APIView):
                 "enrolled_count", 
                 "director__full_name",
                 "classroom__zoom_link",
-                "classroom__is_online"                                                
+                "classroom__is_online",
+                "lesson__lesson_id"                                           
             )
         )
 
@@ -344,7 +347,8 @@ class OwnClassroomsView(APIView):
                 "enrolled_count",
                 "lessonclassroom__director__full_name",      
                 "zoom_link",
-                "is_online"                                             
+                "is_online",
+                "lessonclassroom__lesson__lesson_id"                                          
             )
         )
 
@@ -360,7 +364,8 @@ class OwnClassroomsView(APIView):
                 "enrolled_count": r["enrolled_count"], 
                 "director": r["director__full_name"],
                 "is_online": r["classroom__is_online"],
-                "zoom_link": r["classroom__zoom_link"]    
+                "zoom_link": r["classroom__zoom_link"],
+                "lesson_id": r["lesson__lesson_id"]  
                                        
             }
 
@@ -376,7 +381,8 @@ class OwnClassroomsView(APIView):
                 "enrolled_count": r["enrolled_count"],    
                 "director": r["lessonclassroom__director__full_name"],
                 "is_online": r["is_online"],
-                "zoom_link": r["zoom_link"]                            
+                "zoom_link": r["zoom_link"],
+                "lesson_id": r["lessonclassroom__lesson__lesson_id"]                           
             }
 
         data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]

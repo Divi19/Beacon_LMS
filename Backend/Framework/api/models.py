@@ -43,6 +43,7 @@ class Classroom(models.Model):
     is_online = models.BooleanField(default=False)
     zoom_link = models.CharField(max_length=255, blank=True, null=True)
 
+
     class Meta:
         managed = True
         db_table = 'classroom'
