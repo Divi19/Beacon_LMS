@@ -39,25 +39,25 @@ export default function StudentMyLessonsPage() {
     useEffect(() => {
         let cancelled = false;
 
-        async function checkLessons() {
+        async function checkCourses() {
             try {
-                const res = await api.get("/lessons/frontend/");
+                const res = await api.get("/courses/frontend/");
                 if (
                     !cancelled &&
                     Array.isArray(res.data) &&
                     res.data.length > 0
                 ) {
                     // Instructor has at least one course — go to the list view
-                    navigate("/student/enrollment", { replace: true });
+                    navigate("/student/my-lesson", { replace: true });
                 }
                 // else: stay on this page and show "No courses yet"
             } catch (err) {
                 // Silently fail and keep user here; you can log if you want
-                console.error("Failed to check lessons", err);
+                console.error("Failed to check courses", err);
             }
         }
 
-        checkLessons();
+        checkCourses();
         return () => {
             cancelled = true;
         };
