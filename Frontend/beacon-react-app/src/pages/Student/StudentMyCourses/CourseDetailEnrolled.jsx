@@ -92,9 +92,8 @@ export default function CourseDetailEnrolled() {
               <span className={s.noLessons}>No lessons</span>
             )}
           </div>
-
           <div className={s.actions}>
-            <Button className={s.enrollBtn} onClick={() => navigate("/student/my-lesson", { state: course })}>
+            <Button className={s.enrollBtn} onClick={() => navigate(`/student/course/${courseId}/my-lessons`, { state: course })}>
               Go to my course lessons
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -129,20 +128,7 @@ export default function CourseDetailEnrolled() {
                 <polyline points="12 8 8 12 12 16" />
                 <line x1="8" y1="12" x2="16" y2="12" />
               </svg>
-            </Button>
-
-            
-            <Button
-              className={s.cta} // To remove after integration just to access lesson detail without actual lesson list page.
-              type="button"
-              onClick={() =>
-                navigate(`/student/course/${courseId}/my-lessons`, { state: {course}}
-                  // `/student/course/${courseId}/lesson/${getLessonId(course)}`
-                )
-              }
-            >
-              Go to my course lessons →
-            </Button>
+            </Button>            
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import s from "./CourseCard.module.css";
-
+import { useNavigate } from "react-router-dom";
 export default function CourseCard({
   course,
   onClick,
@@ -7,6 +7,7 @@ export default function CourseCard({
   onCta,
   isEnrolled = false,
 }) {
+  const navigate = useNavigate();
   return (
     <article
       className={s.card}
@@ -29,15 +30,18 @@ export default function CourseCard({
           </span>
         </div>
         <div className={s.metaRow}>
-          <span>Lessons: </span>
+          <span>Lessons </span>
           </div>
           {isEnrolled && (
           <button
           type="button"
           className={s.cta}
           onClick={(e) => { e.stopPropagation();
-            window.location.href = "/student/own-lessons";
-          
+            e.stopPropagation();                 
+            navigate(`/student/course/${course.code}/my-lessons`, {
+              state: course,                   
+            });
+            
           }}>Go to my course lesson<svg
             xmlns="http://www.w3.org/2000/svg"
             width="22"

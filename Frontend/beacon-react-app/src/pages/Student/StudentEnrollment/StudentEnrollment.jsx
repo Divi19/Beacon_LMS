@@ -13,7 +13,7 @@ export default function StudentEnrollment() {
   const { isEnrolled } = useEnrollment();
   const navigate = useNavigate();
   //Dummy value
-  const student_id = localStorage.getItem("studentId")
+  //const student_id = localStorage.getItem("studentId")
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [unenrolled, setUnenrolled] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
@@ -32,7 +32,7 @@ export default function StudentEnrollment() {
   const handleEnroll = async (courseId) => {
     try {
       setSubmittingId(courseId);
-      await api.post( `/student/${student_id}/courses/enroll/`, {
+      await api.post( `/student/courses/enroll/`, {
         course_id: courseId,
       });
       fetchCourses(); // refresh after write so UI stays correct (the number of unenrolled)

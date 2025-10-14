@@ -11,39 +11,10 @@ import { api } from "../../../api";
 import LessonCard from "../../../components/LessonCard/LessonCard";
 import Button from '../../../components/Button/Button';
 
-    // useEffect(() => {
-    //     let cancelled = false;
-
-    //     async function checkLessons() {
-    //         try {
-    //             const res = await api.get("/lessons/frontend/");
-    //             if (
-    //                 !cancelled &&
-    //                 Array.isArray(res.data) &&
-    //                 res.data.length > 0
-    //             ) {
-    //                 // Instructor has at least one course — go to the list view
-    //                 navigate("/student/enrollment", { replace: true });
-    //             }
-    //             // else: stay on this page and show "No courses yet"
-    //         } catch (err) {
-    //             // Silently fail and keep user here; you can log if you want
-    //             console.error("Failed to check lessons", err);
-    //         }
-    //     }
-
-    //     checkLessons();
-    //     return () => {
-    //         cancelled = true;
-    //     };
-    // }, [navigate]);
-
 export default function StudentLessonEnroll() {
   // const { isEnrolled } = useEnrollment();
   const location = useLocation();
   const navigate = useNavigate();
-  //Dummy value
-  const student_id = localStorage.getItem("studentId")
   //const available = allCourses.filter((c) => !isEnrolled(c.id));
   const [lessons, setLessons] = useState([])
   const [submittingId, setSubmittingId] = useState(null);
@@ -74,7 +45,7 @@ export default function StudentLessonEnroll() {
     try {
       const res = await api.get(`/student/courses/${courseId}/lessons/unenrolled`);
       console.log("Unenrolled lessons data:", res.data);
-          setLessons(res.data);
+      setLessons(res.data);
     } catch (err) {
       console.error("Error fetching unenrolled lessons", err);
       alert("Failed to load available lessons.");
@@ -132,24 +103,22 @@ return (
                 <StudentTopBar />
             </div>
             <header className={i.header}>
-                <h1 className={i.title}>LESSON ENROLMENT</h1>
+                <h1 className={i.title}>LESSON ENROLLMENT</h1>
                 <div className={i.rect}>
-                    {lessons.length > 0 && (
-  <>
-    <div className={i.label}>
-        <strong>{course.course_title}</strong>
-    </div>
-    <div className={i.label1}>
-        <span>
-            Code:<span> {course.code}</span>
-        </span>
-        <span>
-            {course.credits}
-            <span> Credits</span>
-        </span>
-    </div>
-  </>
-)}
+              
+              <div className={i.label}>
+                  <strong>{course.course_title}</strong>
+              </div>
+              <div className={i.label1}>
+                  <span>
+                      Code:<span> {course.course_id}</span>
+                  </span>
+                  <span>
+                      {course.course_credits}
+                      <span> Credits</span>
+                  </span>
+              </div>
+     
 
                 </div>
             </header>
@@ -177,11 +146,11 @@ return (
                     </svg>
                 </Button>
                 <div className={i.rect1}>
-                    {lessons.length > 0 && (
-  <div className={i.label2}>
-      <strong>{course.status}</strong>
-  </div>
-)}
+           
+                <div className={i.label2}>
+                    <strong>{course.status}</strong>
+                </div>
+              
 
                 </div>
             </header>
