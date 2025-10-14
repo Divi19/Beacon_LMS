@@ -31,7 +31,7 @@ export default function StudentMyLessonsPage() {
 
     useEffect(() => {
         let cancelled = false;
-
+        
     async function checkLessons() {
       try {
         setLoading(true);
