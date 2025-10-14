@@ -118,7 +118,6 @@ return (
                       <span> Credits</span>
                   </span>
               </div>
-     
 
                 </div>
             </header>
