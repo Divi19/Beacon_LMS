@@ -121,10 +121,18 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     if (!lessonId) return;
     (async () => {
       try {
-        const { data } = await api.get(LIST_LINKED_CLASSROOMS_URL(lessonId));
+        const online_classroom_payload = {capacity: formData.capacity, location: "", is_online: true, zoom_link: formData.zoom_link};
+        const {data} = await api.get();
+        const online_lessonclassroom_payload = {
+          day_of_week: formData.day_of_week,
+          time_start: formData.time_start,
+          time_end: formData.time_end,
+        }
+        const online_lessonclassroom = await api.get();
         // Expect shape from your ActiveClassroomsView:
         // [{ classroom_id, day_of_week, time_start, time_end, duration_minutes, capacity, ... }]
         const rows = Array.isArray(data) ? data : [];
+
         setOnlineClassrooms(
           rows.map((r) => ({
             classroom_id: r.classroom_id,
@@ -206,7 +214,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         ),
     status: formData.status,
     ...(formData.designer?.trim()
-        ? { designer: formData.designer.trim() }   // email string
+        ? { designer_input: formData.designer.trim() }   // email string
         : {}),
   };
 

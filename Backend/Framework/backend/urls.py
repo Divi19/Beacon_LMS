@@ -42,12 +42,13 @@ urlpatterns = [
         #Lesson specific - sendParams
     path("instructor/lesson/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
         #Own or unlinked classrooms
-    path("instructor/classrooms/<str:course_id>", OwnClassroomsView.as_view(), name="classrooms"),
+    path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),
         #Linking classrooms
     path("instructor/classrooms/<str:course_id>/get/", LinkingClassroomsView.as_view(), name="classrooms"),
     path("instructor/classrooms/<str:lesson_id>/link/", LinkingClassroomsView.as_view(), name="classrooms"),
-        #Creating online classrooms
-    path("instructor/classrooms/online/<str:lesson_id>/create/", OnlineClassroomsView.as_view()),
+        #Creating physical classrooms
+    path("instructor/classrooms/create/", CreateClassroomView.as_view()),
+    
     
     #Instructor Lessons 
     path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),

@@ -175,7 +175,7 @@ class LinkingClassroomsView(APIView):
 
         unlinked_rows = (
             Classroom.objects
-            .filter(lessonclassroom__isnull=True)
+            .filter(lessonclassroom__isnull=True, is_online=False)
             .annotate(
                 day_of_week=Value(None, output_field=CharField()),
                 time_start=Value(None, output_field=TimeField()),
@@ -224,6 +224,7 @@ class LinkingClassroomsView(APIView):
         return Response(data)
     
     def post(self, request, lesson_id):
+        
         return 
 
 class ActiveClassroomsView(APIView):
@@ -341,7 +342,7 @@ class OwnClassroomsView(APIView):
                 "duration_minutes",
                 "capacity",
                 "enrolled_count",
-                "director",      
+                "lessonclassroom__director__full_name",      
                 "zoom_link",
                 "is_online"                                             
             )
@@ -373,16 +374,22 @@ class OwnClassroomsView(APIView):
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["capacity"],
                 "enrolled_count": r["enrolled_count"],    
-                "director": r["director"],
+                "director": r["lessonclassroom__director__full_name"],
                 "is_online": r["is_online"],
                 "zoom_link": r["zoom_link"]                            
             }
 
         data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+        data.sort(
+            key=lambda x: (
+                str(x["classroom_id"]) if x["classroom_id"] is not None else 0,
+                str(x["day_of_week"]) if x["day_of_week"] else "ZZZ",
+                str(x["time_start"]) if x["time_start"] else ""
+                )
+        )
         return Response(data)
 
-class OnlineClassroomsView(APIView):
+class CreateClassroomView(APIView):
     """
     Specific to instructor 
     Creating online classrooms 
@@ -390,25 +397,18 @@ class OnlineClassroomsView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
-    def post(self, request, lesson_id):
+    def post(self, request):
         """
         POST method 
         """
-            #Creating classrooms 
+        #Creating physical classrooms 
         serializer = ClassroomSerializer(
-                data = request.data, 
-            )
-        serializer.is_valid(raise_exception=True)
-        classroom = serializer.save()
-        
-        #Linking classrooms 
-        serializer = LessonClassroomSerializer(
             data = request.data, 
-            context = {"lesson_id": lesson_id, "classroom": classroom}
         )
         serializer.is_valid(raise_exception=True)
-        lesson_classroom = serializer.save() 
-        return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
+        classroom = serializer.save()
+        return Response(ClassroomSerializer(classroom).data, status=201)
+        
 
 
 """
@@ -437,7 +437,7 @@ class LessonsView(APIView):
             .distinct()
         )
 
-        data = LessonOutSerializer(lessons, many=True).data
+        data = LessonSerializer(lessons, many=True).data
         return Response(data)
     
     def patch(self, request, lesson_id):
@@ -577,7 +577,7 @@ class LessonBulkCreateView(APIView):
 
             created = Lesson.objects.bulk_create(new_lessons, batch_size=100)
 
-        out = LessonOutSerializer(created, many=True).data
+        out = LessonSerializer(created, many=True).data
         return Response({"created": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
 class LessonPrereqBulkCreateView(APIView):

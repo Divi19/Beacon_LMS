@@ -38,7 +38,7 @@ export default function CourseCard({
           className={s.cta}
           onClick={(e) => { e.stopPropagation();
             e.stopPropagation();                 
-            navigate(`/student/course/${course.course_id}/my-lessons`, {
+            navigate(`/student/course/${course.code}/my-lessons`, {
               state: course,                   
             });
             

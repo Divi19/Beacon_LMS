@@ -7,6 +7,7 @@ import { api } from "../../../api";
 export default function InstructorClassCreation() {
   const navigate = useNavigate();
   const [location, setLocation] = useState("");
+  const [capacity, setCapacity] = useState(10);
   const [submitting, setSubmitting] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [persisted, setPersisted] = useState(true);
@@ -21,23 +22,26 @@ export default function InstructorClassCreation() {
     }
     setSubmitting(true);
 
-    const payload = { is_online: false, location: location.trim() };
-    const candidates = ["/instructor/classrooms/create/", "/classrooms/"];
-    let saved = false;
-
-    for (const path of candidates) {
-      try {
-        await api.post(path, payload);
-        saved = true;
-        break;
-      } catch {
-        // silently try next
-      }
+    const payload = {capacity: capacity, location: location.trim(), is_online: false, zoom_link: null};
+    if (capacity > 10){
+        alert("Classroom capacity must be less than 10")
+        return 
     }
 
-    setPersisted(saved);
-    setSuccessOpen(true);
-    setSubmitting(false);
+    let saved = false;
+    try {
+      await api.post("/instructor/classrooms/create/", payload);
+      saved = true
+      setPersisted(saved);
+      setSuccessOpen(true);
+      setSubmitting(true);
+    } catch (e) {
+      setPersisted(saved);
+      setSubmitting(false);
+      console.log("Failed to create classrooms", e)
+      alert("Failed to create classrooms.")
+    }
+  
   };
 
   const handleGoToLesson = () => {
@@ -59,6 +63,15 @@ export default function InstructorClassCreation() {
             placeholder="Classroom Location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+          />
+        </div>
+
+        <div className={i.row}>
+          <label>Classroom capacity:</label>
+          <input
+            placeholder="10"
+            value={capacity}
+            onChange={(e) => setCapacity(e.target.value)}
           />
         </div>
 
