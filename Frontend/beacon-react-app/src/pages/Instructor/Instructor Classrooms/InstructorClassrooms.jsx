@@ -37,21 +37,21 @@ export default function InstructorClassrooms() {
       <h1 className={i.title}>CLASSROOM</h1>
 
       <div className={i.actions}>
-        <button className={i.createBtn} onClick={() => navigate("/classrooms/create")}>
-          Create Classroom <span className={i.plus}>＋</span>
+        <button className={i.createBtn} onClick={() => navigate("/instructor/classrooms/create")}>
+          Create Classroom <span className={i.plus}>+</span>
         </button>
       </div>
 
       <div className={i.grid}>
         {items.map((c) => (
           <div key={c.classroom_id} className={i.card}>
-            <div className={i.icon} aria-hidden>🧑‍🏫</div>
+            <div className={i.icon} aria-hidden>CLass</div>
             <h4 className={i.courseName}>
-              {c.location ? c.location : "Haven’t been assigned"}
+              {c.location ? c.location : "Haven't been assigned"}
             </h4>
             <h3 className={i.roomLabel}>Classroom {c.classroom_id}</h3>
             <p className={i.meta}>
-              Instructor: {c.instructor || "Haven’t been assigned"}
+              Instructor: {c.instructor || "Haven't been assigned"}
             </p>
             <p className={i.meta}>
               Type: {c.type}
