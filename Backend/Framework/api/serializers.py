@@ -375,10 +375,8 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # pull values (handles create/update)
-        inst = getattr(self.instance, "instructor", None)
         req = self.context.get("request")
-        if not inst and req and getattr(req.user, "is_authenticated", False):
-            from .models import InstructorProfile
+        if req and getattr(req.user, "is_authenticated", False):
             inst = InstructorProfile.objects.filter(user=req.user).first()
 
         lesson = (

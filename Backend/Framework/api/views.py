@@ -467,7 +467,6 @@ class LessonDetails(APIView):
         GET method. Retrieving Lessons
         """
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
-        lesson_id =  models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=False)
         output = {
             "lesson_id": lesson.lesson_id,
             "title": lesson.title,
