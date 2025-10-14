@@ -28,7 +28,6 @@ import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLess
 import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
-import StudentOwnLessons from "./pages/Student/StudentOwnLessons/StudentOwnLessons";
 
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
@@ -92,7 +91,6 @@ export default function App(){
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
       <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
-      <Route path="/student/own-lessons" element={<StudentOwnLessons />}/>
       <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>
       <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
 
