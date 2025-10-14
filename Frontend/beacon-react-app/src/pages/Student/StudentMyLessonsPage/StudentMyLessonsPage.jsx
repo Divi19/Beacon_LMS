@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentMyLessonsPage.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 import { api } from "../../../api";
 import LessonCard from "../../../components/LessonCard/LessonCard";
+import LessonDisplay from "../../../components/LessonDisplay/LessonDisplay";
 
 export default function StudentMyLessonsPage() {
   const navigate = useNavigate();
@@ -28,9 +29,9 @@ export default function StudentMyLessonsPage() {
     }
   }, [course, courseId]);
 
-  useEffect(() => {
-    let cancelled = false;
-
+    useEffect(() => {
+        let cancelled = false;
+        
     async function checkLessons() {
       try {
         setLoading(true);
@@ -65,7 +66,7 @@ export default function StudentMyLessonsPage() {
             <div className={i.label}><strong>{course?.course_title || "Loading..."}</strong></div>
             <div className={i.label1}>
                 <span>Code:<span> {course?.course_id || "-"}</span></span>
-                <span> {course?.course_credits || "-"}<span> Credits</span></span>
+                <span> {course?.course_credits || "30"}<span> Credits</span></span>
             </div>
         </div>
       </header>
@@ -136,7 +137,7 @@ export default function StudentMyLessonsPage() {
           code: lesson.lesson_id,
           title: lesson.lesson_title,
           credit: lesson.lesson_credits,
-          // director: lesson.director,
+          designer: lesson.lesson_designer,
           duration: lesson.lesson_duration,
         }}
         isEnrolled={true}
@@ -149,3 +150,5 @@ export default function StudentMyLessonsPage() {
     </div>
   );
 }
+
+///student//student/course/${course.course_id}/lesson-creation/${course.course_id}

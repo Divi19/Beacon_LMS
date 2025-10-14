@@ -25,7 +25,7 @@ export default function LessonCard({
         </div>
         <div className={s.metaRow}>
           <span>
-            Course Director: <strong>{lesson.director}</strong>
+            Lesson Designer: <strong>{lesson.designer}</strong>
           </span>
         </div>
         <div className={s.metaRow}>

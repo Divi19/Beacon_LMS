@@ -13,11 +13,12 @@ import InstructorCourseDescription from "./pages/Instructor/Instructor Course De
 import InstructorLogin from "./pages/Instructor/Instructor Login/InstructorLogin";
 
 import InstructorLessonDetail from "./pages/Instructor/Instructor Lesson Detail/InstructorLessonDetail";
-import InstructorLessonCreation from "./pages/Instructor/Instructor Lesson Creation/InstructorLessonCreation";
+//Deleted Instructor
 import InstructorLessonCreate from "./pages/Instructor/Instructor Lesson Create/InstructorLessonCreate";
 import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/InstructorLessonList";
 
 import InstructorClassCreation from "./pages/Instructor/Instructor Class Creation/InstructorClassCreation"; 
+import InstructorClassrooms from "./pages/Instructor/Instructor Classrooms/InstructorClassrooms";
 
 
 import axios from 'axios';
@@ -27,7 +28,7 @@ import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLess
 import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
-import StudentOwnLessons from "./pages/Student/StudentOwnLessons/StudentOwnLessons";
+//Deleted StudentOwnLessons
 import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
 
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
@@ -75,6 +76,7 @@ export default function App(){
       <Route path="/instructor/course-list" element={<InstructorCourseList />} />
       <Route path="/instructor/course/:courseId" element={<InstructorCourseDescription />} />
       <Route path="/instructor/login" element={<InstructorLogin/>} />
+      <Route path="/instructor/classrooms" element={<InstructorClassrooms />} />
       
       {/* Lessons */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId" element={<InstructorLessonDetail />}/>
@@ -90,12 +92,16 @@ export default function App(){
 
       {/* Classrooms */}
       <Route path="/instructor/course/:courseId/lesson/:lessonId/classroom/new" element={<InstructorClassCreation />}/>
+      <Route path="/instructor/classrooms/create" element={<InstructorClassCreation />}/>
       <Route path="/admin/log-in" element={<AdminLogIn />}/>
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
       <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
-      <Route path="/trial" element={<StudentLessonEnroll />}/>
-      {/* <Route path="/" element={<StudentOwnLessons />}/> */}
+
+     {/*<Route path="/student/own-lessons" element={<StudentMyLessonsPage />}/>
+      <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>/*/}
+
+      <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
 
       
 

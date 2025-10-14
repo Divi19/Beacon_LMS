@@ -1,0 +1,69 @@
+.wrap {
+  padding: clamp(16px, 4vw, 40px);
+  padding-top: 22vh;
+}
+.title {
+  letter-spacing: 0.3rem;
+  margin: 0 0 1rem;
+  color: #c45619;
+  font-weight: 800;
+  font-size: clamp(20px, 3vw, 35px);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 1rem 0 2rem;
+}
+.createBtn {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.65rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: #f0c89b;
+  color: #9c440c;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.createBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #df9b4c;
+} 
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.4rem;
+}
+.card {
+  background: #ffdcb2;
+  border-radius: 20px;
+  padding: 1.25rem 1.25rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.icon {
+  font-size: 2.4rem;
+  margin-bottom: 0.4rem;
+}
+.courseName {
+  margin: 0;
+  color: #0d5a62;
+  font-weight: 700;
+}
+.roomLabel {
+  margin: 0.2rem 0 0.1rem;
+  color: #114b4f;
+}
+.meta {
+  margin: 0;
+  color: #145c61;
+}
+.plus {
+  font-weight: 900;
+  font-size: 1.1rem;
+}
