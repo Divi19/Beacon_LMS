@@ -83,6 +83,72 @@ class InstructorSerializer(serializers.ModelSerializer):
         model = InstructorProfile
         fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
 
+"""
+Admin-related serializers
+"""
+class AdminSerializer(serializers.ModelSerializer):
+    user = UserSerializer() 
+    class Meta:
+        model = AdminProfile
+        fields = ["admin_profile_id", "user", "full_name"]
+
+class InstructorCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for admin creating new instructors
+    """
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
+    title = serializers.CharField(write_only=True)
+    full_name = serializers.CharField(write_only=True)
+    
+    class Meta:
+        model = InstructorProfile
+        fields = ['instructor_profile_id', 'title', 'full_name', 'email', 'password', 'full_name', 'staff_no']
+        read_only_fields = ['instructor_profile_id', 'staff_no']
+    
+    def create(self, validated_data):
+        email = validated_data.pop('email')
+        password = validated_data.pop('password')
+        full_name = validated_data.pop('full_name')
+        title = validated_data.pop('title', '')
+        
+        # full_name = f"{first_name} {last_name}".strip()
+        
+        def generate_staff_no():
+            digits = ''.join(random.choices(string.digits, k=5))
+            return f"I{digits}"
+        
+        staff_no = generate_staff_no()
+        while InstructorProfile.objects.filter(staff_no=staff_no).exists():
+            staff_no = generate_staff_no()
+        
+        user = User.objects.create(
+            email=email,
+            password_hash=password,
+            role='instructor',
+            is_active=True
+        )
+        
+        instructor = InstructorProfile.objects.create(
+            user=user,
+            title=title,
+            full_name=full_name,
+            staff_no=staff_no,
+            **validated_data
+        )
+        return instructor
+
+class InstructorListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing instructors (admin view)
+    """
+    email = serializers.EmailField(source='user.email', read_only=True)
+    password = serializers.CharField(source='user.password_hash', read_only=True)
+    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
+    
+    class Meta:
+        model = InstructorProfile
+        fields = ['instructor_profile_id', 'title', 'full_name', 'staff_no', 'email', 'password', 'is_active']
 
 """
 Student-related serializers

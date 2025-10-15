@@ -92,6 +92,7 @@ class Enrollment(models.Model):
 class InstructorProfile(models.Model):
     instructor_profile_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('User', models.DO_NOTHING)
+    title = models.CharField(max_length=40, blank=True, null=True)
     full_name = models.CharField(max_length=255)
     staff_no = models.CharField(unique=True, max_length=50)
 
@@ -224,6 +225,16 @@ class StudentReading(models.Model):
         managed = True
         db_table = 'student_reading'
 
+
+class AdminProfile(models.Model):
+    admin_profile_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('User', models.DO_NOTHING)
+    full_name = models.CharField(max_length=255)
+    # staff_no = models.CharField(unique=True, max_length=50)
+
+    class Meta:
+        managed = True
+        db_table = 'admin_profile'
 
 class User(models.Model):
     user_id = models.AutoField(primary_key=True)
