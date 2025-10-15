@@ -764,5 +764,110 @@ class CourseDetailView(APIView):
         }
         return Response(output, status=status.HTTP_200_OK)
     
+class AdminLogin(APIView): 
+    """
+    Posting login request. 
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = [] #Bypassing authentication
 
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user'] #in the post json
+        token = RefreshToken.for_user(user) #Creates a token
+
+        admin = (
+            AdminProfile.objects
+            .select_related("user")
+            .filter(user=user)
+            .first()
+        )
+        if not admin:
+            # Auth succeeded, but user lacks instructor privileges
+            return Response({"error": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        
+        payload = {
+            "access": str(token.access_token),
+            "refresh": str(token),
+            "user": {
+                "admin_profile_id": admin.admin_profile_id,
+                "full_name": admin.full_name,
+                "role": "admin",
+                "email": user.email,
+                "user_id": user.user_id,
+            },
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+
+class AdminInstructorListView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
     
+    def get(self, request):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructors = InstructorProfile.objects.select_related('user').all()
+        serializer = InstructorListSerializer(instructors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = InstructorCreateSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            instructor = serializer.save()
+            return Response(
+                InstructorListSerializer(instructor).data,
+                status=status.HTTP_201_CREATED
+            )
+
+class AdminInstructorDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+    
+    def get(self, request, instructor_id):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructor = get_object_or_404(InstructorProfile, instructor_profile_id=instructor_id)
+        serializer = InstructorListSerializer(instructor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def patch(self, request, instructor_id):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructor = get_object_or_404(InstructorProfile, instructor_profile_id=instructor_id)
+        
+        if 'is_active' in request.data:
+            instructor.user.is_active = request.data['is_active']
+            instructor.user.save()
+        
+        for field in ['title', 'full_name']:
+            if field in request.data:
+                setattr(instructor, field, request.data[field])
+        
+        instructor.save()
+        serializer = InstructorListSerializer(instructor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, instructor_id):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructor = get_object_or_404(InstructorProfile, instructor_profile_id=instructor_id)
+        user = instructor.user
+        
+        user.is_active = False
+        user.save()
+        
+        return Response({"detail": "Instructor deactivated successfully."}, status=status.HTTP_200_OK)
