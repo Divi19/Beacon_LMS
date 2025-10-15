@@ -153,6 +153,20 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     setLessonInput("");
   };
 
+  // For discard handling
+  const handleDiscard = () => {
+    // clear local form state
+    resetForm();
+
+    // go back to the course detail screen
+    if (courseId) {
+      navigate(`/instructor/course/${courseId}`);
+    } else {
+      // fallback if no courseId in URL
+      navigate(-1);
+    }
+  };
+
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -750,7 +764,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <button
                 type="button"
                 className={i.discardbutton}
-                onClick={resetForm}
+                onClick={handleDiscard}
               >
                 Discard
               </button>
