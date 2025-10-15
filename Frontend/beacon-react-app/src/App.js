@@ -33,7 +33,7 @@ import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMy
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
 import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
-import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
+// import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
 
 export default function App(){
   const [details, setDetails] = useState([]);
