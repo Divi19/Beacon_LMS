@@ -1,5 +1,6 @@
 from contextvars import Token
-import re 
+import re
+from urllib.parse import urlparse
 from .forms import *
 
 #django 
@@ -142,54 +143,7 @@ class InstructorCoursesView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save() 
             return Response(serializer.data,  status=status.HTTP_200_OK)
-
-"""
-class ClassroomView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication] 
-
-    def get(self, request, lesson_id):
-        #Receiving instructor 
-        user = self.request.user
-        instr = InstructorProfile.objects.filter(user=user).first()
-        #Receiving lessons  
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
-        if not instr:
-            return Response({"detail": "Not an instructor."}, status=403)
-        if not lesson:
-            return Response({"detail": "No related lessons."}, status=403)
-        classrooms = (
-            Classroom.objects
-            .filter(
-                director=instr,                          # Classroom has 'director', not 'instructor'
-                lessonclassroom__lesson=lesson           # traverse via LessonClassroom → Lesson
-            )
-            .annotate(enrolled_count=Count("classroomenrollment", distinct=True))
-            .distinct()
-        )
-        serializer = ClassroomSerializer(classrooms, many=True, context={"request": request})
-        return Response(serializer.data,  status=status.HTTP_200_OK)
-    
-    def post(self, request, lesson_id):
-        lesson = get_object_or_404(Lesson, pk=lesson_id)
-        user = self.request.user
-        try:
-            instructor = InstructorProfile.objects.get(user=request.user)
-        except InstructorProfile.DoesNotExist:
-            raise serializers.ValidationError("This user is not an instructor.")
-        ser = ClassroomSerializer(data=request.data, context={"request": request, "lesson": lesson})
-        ser.is_valid(raise_exception=True)
-
-        try:
-            classroom = ser.save(lesson=lesson, instructor=instructor)
-        except IntegrityError:
-            return Response(
-                {"detail": "A classroom with the same day & time already exists for this lesson."},
-                status=400,
-            )
-        return Response(ClassroomSerializer(classroom, context={"request": request}).data, status=201)
-
-"""
+        
 """
 TODO: Use after model done 
 """
@@ -197,12 +151,14 @@ class LinkingClassroomsView(APIView):
     """
     Shows all classrooms for linking 
     """
-    def get(self, request, lesson_id):
-        instructor = InstructorProfile.objects.get(user=request.user)
-
+    def get(self, request, course_id):
+        """
+        POST
+        Grab all unlinked classrooms and linked classrooms of the same course
+        """
         linked_rows = (
-            LessonClassroom.objects
-            .filter(lesson__lesson_id=lesson_id, classroom__director=instructor)
+            LessonClassroom.active
+            .filter(lesson__course__course_id=course_id)
             .select_related("classroom")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
@@ -219,7 +175,7 @@ class LinkingClassroomsView(APIView):
 
         unlinked_rows = (
             Classroom.objects
-            .filter(director=instructor, lessonclassroom__isnull=True)
+            .filter(lessonclassroom__isnull=True, is_online=False)
             .annotate(
                 day_of_week=Value(None, output_field=CharField()),
                 time_start=Value(None, output_field=TimeField()),
@@ -266,6 +222,10 @@ class LinkingClassroomsView(APIView):
         data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
         data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
         return Response(data)
+    
+    def post(self, request, lesson_id):
+        
+        return 
 
 class ActiveClassroomsView(APIView):
     """
@@ -277,7 +237,9 @@ class ActiveClassroomsView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
-    def get(self, request, lesson_id=None, course_id=None):
+    def get(self, request):
+        lesson_id = request.query_params.get("lesson_id", None)
+        course_id = request.query_params.get("course_id", None)
         if lesson_id is not None:
             q = Q(lesson__lesson_id=lesson_id)
         elif course_id is not None:
@@ -286,9 +248,9 @@ class ActiveClassroomsView(APIView):
             return Response({"detail": "Provide lesson_id or course_id."}, status=400)
 
         linked_rows = (
-            LessonClassroom.objects
+            LessonClassroom.active
             .filter(q)
-            .select_related("classroom")
+            .select_related("classroom", "director")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
                 "classroom__classroom_id",
@@ -296,9 +258,13 @@ class ActiveClassroomsView(APIView):
                 "day_of_week",
                 "time_start",
                 "time_end",
+                "director__full_name",
                 "duration_minutes",
                 "classroom__capacity",
-                "enrolled_count",                                                  
+                "enrolled_count",   
+                "classroom__zoom_link",
+                "classroom__is_online",   
+                "lesson__lesson_id"                                           
             )
         )
 
@@ -307,16 +273,21 @@ class ActiveClassroomsView(APIView):
                 "classroom_id": r["classroom__classroom_id"],
                 "location": r["classroom__location"],
                 "day_of_week": r["day_of_week"],
+                "director": r["director__full_name"],
                 "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
                 "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["classroom__capacity"],
-                "enrolled_count": r["enrolled_count"],                             
+                "enrolled_count": r["enrolled_count"],   
+                "is_online": r["classroom__is_online"],
+                "zoom_link": r["classroom__zoom_link"], 
+                "lesson_id": r["lesson__lesson_id"]                      
             }
 
         data = [*map(norm_linked, linked_rows)]
         data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
         return Response(data)
+
 class OwnClassroomsView(APIView):
     """
     Showing own classrooms (as director) and unlinked classrooms 
@@ -329,16 +300,14 @@ class OwnClassroomsView(APIView):
         GET Method 
         Returns a flat list. Classrooms without links show LC fields as null.
         Classrooms with links appear once per LessonClassroom.
-        Used to show classrooms in specific lessons or 
-                     classrooms in course
+        Used to show own and unlinked classrooms u
         """
         
         instructor = InstructorProfile.objects.get(user=request.user)
-        q = Q(director=instructor)
 
         linked_rows = (
-            LessonClassroom.objects
-            .filter(q)
+            LessonClassroom.active
+            .filter(director=instructor)
             .select_related("classroom")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
@@ -349,13 +318,17 @@ class OwnClassroomsView(APIView):
                 "time_end",
                 "duration_minutes",
                 "classroom__capacity",
-                "enrolled_count",                                                  
+                "enrolled_count", 
+                "director__full_name",
+                "classroom__zoom_link",
+                "classroom__is_online",
+                "lesson__lesson_id"                                           
             )
         )
 
         unlinked_rows = (
             Classroom.objects
-            .filter(director=instructor, lessonclassroom__isnull=True)
+            .filter(Q(lessonclassroom__director=instructor) | Q(lessonclassroom__isnull=True))
             .annotate(
                 day_of_week=Value(None, output_field=CharField()),
                 time_start=Value(None, output_field=TimeField()),
@@ -371,7 +344,11 @@ class OwnClassroomsView(APIView):
                 "time_end",
                 "duration_minutes",
                 "capacity",
-                "enrolled_count",                                                  
+                "enrolled_count",
+                "lessonclassroom__director__full_name",      
+                "zoom_link",
+                "is_online",
+                "lessonclassroom__lesson__lesson_id"                                          
             )
         )
 
@@ -384,7 +361,12 @@ class OwnClassroomsView(APIView):
                 "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["classroom__capacity"],
-                "enrolled_count": r["enrolled_count"],                             
+                "enrolled_count": r["enrolled_count"], 
+                "director": r["director__full_name"],
+                "is_online": r["classroom__is_online"],
+                "zoom_link": r["classroom__zoom_link"],
+                "lesson_id": r["lesson__lesson_id"]  
+                                       
             }
 
         def norm_unlinked(r):
@@ -396,14 +378,24 @@ class OwnClassroomsView(APIView):
                 "time_end": r["time_end"],
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["capacity"],
-                "enrolled_count": r["enrolled_count"],                             
+                "enrolled_count": r["enrolled_count"],    
+                "director": r["lessonclassroom__director__full_name"],
+                "is_online": r["is_online"],
+                "zoom_link": r["zoom_link"],
+                "lesson_id": r["lessonclassroom__lesson__lesson_id"]                           
             }
 
         data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+        data.sort(
+            key=lambda x: (
+                str(x["classroom_id"]) if x["classroom_id"] is not None else 0,
+                str(x["day_of_week"]) if x["day_of_week"] else "ZZZ",
+                str(x["time_start"]) if x["time_start"] else ""
+                )
+        )
         return Response(data)
 
-class OnlineClassroomsView(APIView):
+class CreateClassroomView(APIView):
     """
     Specific to instructor 
     Creating online classrooms 
@@ -411,25 +403,18 @@ class OnlineClassroomsView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
-    def post(self, request, lesson_id):
+    def post(self, request):
         """
         POST method 
         """
-            #Creating classrooms 
+        #Creating physical classrooms 
         serializer = ClassroomSerializer(
-                data = request.data, 
-            )
-        serializer.is_valid(raise_exception=True)
-        classroom = serializer.save()
-        
-        #Linking classrooms 
-        serializer = LessonClassroomSerializer(
             data = request.data, 
-            context = {"lesson_id": lesson_id, "classroom": classroom}
         )
         serializer.is_valid(raise_exception=True)
-        lesson_classroom = serializer.save() 
-        return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
+        classroom = serializer.save()
+        return Response(ClassroomSerializer(classroom).data, status=201)
+        
 
 
 """
@@ -442,11 +427,23 @@ class LessonsView(APIView):
     authentication_classes = [CustomJWTAuthentication] 
     def get(self, request, course_id):
         """
-        GET method. Retrieving Lessons
+        GET method. Retrieving Lessons related to self, or all lessons if is course director
         """
         course = get_object_or_404(Course, course_id=course_id)
-        lessons = Lesson.objects.filter(course = course).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
-        data = LessonOutSerializer(lessons, many=True).data
+        user = self.request.user
+        inst = get_object_or_404(InstructorProfile, user=user)
+
+        lessons = (
+            Lesson.objects
+            .filter(course=course)
+            .filter(Q(designer=inst) | Q(course__owner_instructor=inst))
+            .select_related('course', 'designer') 
+            .annotate(enrolled_count=Count('lessonenrollment', distinct=True))
+            .order_by('pk')  # or any stable ordering
+            .distinct()
+        )
+
+        data = LessonSerializer(lessons, many=True).data
         return Response(data)
     
     def patch(self, request, lesson_id):
@@ -458,6 +455,8 @@ class LessonsView(APIView):
         ser.is_valid(raise_exception=True)
         ser.save()
         return Response(ser.data, status=status.HTTP_200_OK)
+    
+
     
 class LessonDetails(APIView): 
     permission_classes = [IsAuthenticated]
@@ -584,7 +583,7 @@ class LessonBulkCreateView(APIView):
 
             created = Lesson.objects.bulk_create(new_lessons, batch_size=100)
 
-        out = LessonOutSerializer(created, many=True).data
+        out = LessonSerializer(created, many=True).data
         return Response({"created": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
 class LessonPrereqBulkCreateView(APIView):
@@ -593,39 +592,59 @@ class LessonPrereqBulkCreateView(APIView):
 
     def get(self, request, lesson_id):
         """
-        GET method. Retrieving Prereq lessons 
+        List current prerequisites for a lesson.
         """
-        lessons = LessonPrerequisite.objects.filter(lesson_id = lesson_id).annotate(enrolled_count=Count("lessonenrollment", distinct=True)) 
-        data = LessonSerializer(lessons, many=True).data
-        return Response(data)
+        edges = (
+            LessonPrerequisite.objects
+            .filter(lesson_id=lesson_id)
+            .select_related("prereq_lesson")
+        )
+        data = LessonPrereqOutSerializer(edges, many=True).data
+        return Response({"lesson_id": lesson_id, "count": len(data), "prerequisites": data})
 
+    @transaction.atomic
     def post(self, request, lesson_id):
-        ser = LessonPrereqBulkInSerializer(data=request.data, context={"request": request, "lesson_id": lesson_id})
+        """
+        Upsert prerequisites (merge/replace). Accepts list OR newline/comma-separated string.
+        """
+        ser = PrereqInputSerializer(
+            data=request.data,
+            context={"request": request, "lesson_id": lesson_id}
+        )
         ser.is_valid(raise_exception=True)
+
         lesson = ser.validated_data["lesson"]
-        prereq_list = ser.validated_data["prereq_list"]
+        prereq_list = ser.validated_data["prereq_list"]  # list[Lesson]
         mode = ser.validated_data["mode"]
 
-        with transaction.atomic():
-            if mode == "replace":
-                LessonPrerequisite.objects.filter(lesson=lesson).delete()
+        if mode == "replace":
+            LessonPrerequisite.objects.filter(lesson=lesson).delete()
 
-            existing_ids = set(
-                LessonPrerequisite.objects
-                .filter(lesson=lesson)
-                .values_list("prereq_lesson_id", flat=True)   # <-- use prereq_lesson_id
-            )
+        # Avoid duplicates
+        existing_ids = set(
+            LessonPrerequisite.objects
+            .filter(lesson=lesson)
+            .values_list("prereq_lesson__lesson_id", flat=True)
+        )
 
-            to_create = [
-                LessonPrerequisite(lesson=lesson, prereq_lesson=p)  # <-- use prereq_lesson
-                for p in prereq_list
-                if p.pk not in existing_ids
-            ]
+        to_create = [
+            LessonPrerequisite(lesson=lesson, prereq_lesson=p)
+            for p in prereq_list
+            if p.lesson_id not in existing_ids
+        ]
+        if to_create:
             LessonPrerequisite.objects.bulk_create(to_create, batch_size=100)
-        created = LessonPrerequisite.objects.filter(lesson=lesson).select_related("prereq_lesson")
-        out = LessonPrereqOutSerializer(created, many=True).data
-        return Response({"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)}, status=status.HTTP_201_CREATED)
 
+        current = (
+            LessonPrerequisite.objects
+            .filter(lesson=lesson)
+            .select_related("prereq_lesson")
+        )
+        out = LessonPrereqOutSerializer(current, many=True).data
+        return Response(
+            {"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)},
+            status=status.HTTP_201_CREATED
+        )
 
 """
 See student list 
@@ -785,7 +804,7 @@ class StudentEnrolledLessons(APIView):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
         lessons = (Lesson.objects
-                   .filter(lessonenrollment__student=student, course__course_id=course_id)
+                   .filter(lessonenrollment__student=student, course__course_id=course_id, status="Active")
                    .select_related("course", "designer") 
                    .distinct() )
         output = [{
@@ -958,7 +977,9 @@ class StudentUnenrolledLessons(APIView):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
         course = get_object_or_404(Course, course_id=course_id)
-        unenrolled_lessons = Lesson.objects.filter(course=course).exclude(lessonenrollment__student=student).distinct()
+        unenrolled_lessons = Lesson.objects.filter(
+            Q(course=course) & Q(status="Active")
+            ).exclude(lessonenrollment__student=student).distinct()
         serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
     
@@ -1002,7 +1023,7 @@ class StudentUnenrolledClassrooms(APIView):
         student = get_object_or_404(StudentProfile, user=request.user)
 
         qs = (
-            LessonClassroom.objects
+            LessonClassroom.active
             .filter(lesson__lesson_id=lesson_id)
             .exclude(classroomenrollment__student=student)
             .select_related("classroom")
@@ -1064,7 +1085,7 @@ class StudentEnrolledClassrooms(APIView):
         student = get_object_or_404(StudentProfile, user=request.user)
 
         linked_rows = (
-            LessonClassroom.objects
+            LessonClassroom.active
             .filter(lesson__lesson_id=lesson_id, classroomenrollment__student=student, classroom__is_active=True)
             .select_related("classroom")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
@@ -1136,6 +1157,205 @@ class CourseDetailView(APIView):
             "enrolled_count": course.enrolled_count
         }
         return Response(output, status=status.HTTP_200_OK)
-    
 
-    
+class LessonReadingBulkCreateView(APIView):
+    """
+    POST body:
+      { "items": "Title | https://a\nOnly a Title\nhttps://b\nTitle - https://c" }
+    Splits on newlines; within a line, supports " | " or " - " as title/url separators.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    _LINE_SPLIT = re.compile(r"[\r\n]+")  # newline oriented; commas allowed in titles
+    _SEP_CANDIDATES = (" | ", " - ")
+
+    def get(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        qs = LessonReading.objects.filter(lesson=lesson).order_by("-created_at", "-pk")
+        serializer = LessonReadingSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def _looks_like_url(self, s: str) -> bool:
+        """
+        Treat 'example.com' as URL-like by assuming http:// if no scheme.
+        """
+        probe = s.strip()
+        parsed = urlparse(probe if "://" in probe else f"http://{probe}")
+        return bool(parsed.scheme and parsed.netloc and "." in parsed.netloc)
+
+    def _normalize_url(self, s: str) -> str | None:
+        if not s:
+            return None
+        s = s.strip()
+        if not self._looks_like_url(s):
+            return None
+        # Add http:// if missing
+        return s if "://" in s else f"http://{s}"
+
+    def parse_reading_items(self, raw: str):
+        """
+        Split by newline; within each line split on ' | ' or ' - ' if present.
+        Return list of dicts: {"title": str, "url": Optional[str]}.
+        """
+        lines = [ln.strip() for ln in self._LINE_SPLIT.split(raw or "") if ln.strip()]
+        out = []
+        for ln in lines:
+            title, url = None, None
+            # prefer explicit separators
+            for sep in self._SEP_CANDIDATES:
+                if sep in ln:
+                    left, right = [x.strip() for x in ln.split(sep, 1)]
+                    title = (left or right)[:255] if left else None
+                    url = self._normalize_url(right)
+                    break
+            else:
+                # no explicit sep: URL-only or Title-only
+                if self._looks_like_url(ln):
+                    title = ln[:255]
+                    url = self._normalize_url(ln)
+                else:
+                    title = ln[:255]
+                    url = None
+
+            if title:
+                out.append({"title": title, "url": url})
+        return out
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        lesson_id = kwargs.get("lesson_id")
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+
+        ser = LessonItemsBulkSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+
+        parsed = self.parse_reading_items(ser.validated_data["items"])
+
+        # in-memory de-dup on (title, url)
+        seen = set()
+        readings_to_create = []
+        for item in parsed:
+            key = (item["title"], item["url"])
+            if key in seen:
+                continue
+            seen.add(key)
+            readings_to_create.append(
+                LessonReading(lesson=lesson, title=item["title"], url=item["url"])
+            )
+
+        # compute counts pre/post for accurate created_count
+        before = LessonReading.objects.filter(lesson=lesson).count()
+        LessonReading.objects.bulk_create(readings_to_create, ignore_conflicts=True)
+        after = LessonReading.objects.filter(lesson=lesson).count()
+
+        current = (LessonReading.objects
+                   .filter(lesson=lesson)
+                   .order_by("-created_at", "-pk")
+                   .values("reading_id", "title", "url", "created_at"))
+
+        return Response(
+            {
+                "lesson_id": lesson.lesson_id,
+                "attempted": len(readings_to_create),
+                "created_count": max(after - before, 0),
+                "items": list(current),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+class LessonAssignmentBulkCreateView(APIView):
+    """
+    GET  /instructor/lessons/<lesson_id>/assignments/
+    POST /instructor/lessons/<lesson_id>/assignments/   (body: { "items": "..." })
+
+    items (comma- or newline-separated lines, we split by newline):
+      - "Title | Description"
+      - "Title - Description"
+      - "Only a Title"
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    _LINE_SPLIT = re.compile(r"[\r\n]+")   # newline-oriented split; commas are allowed inside
+    _SEP_CANDIDATES = (" | ", " - ")
+
+    def get(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        qs = (LessonAssignment.objects
+              .filter(lesson=lesson)
+              .order_by("-created_at", "-pk")
+              .values("assignment_id", "title", "description", "created_at", "updated_at"))
+        return Response(list(qs), status=status.HTTP_200_OK)
+
+    def parse_assignment_items(self, raw: str):
+        """
+        Split by newline; for each line:
+          - if contains " | " or " - ", treat right side as description
+          - else it's title-only
+        Returns list[{"title": str, "description": Optional[str]}]
+        """
+        lines = [ln.strip() for ln in self._LINE_SPLIT.split(raw or "") if ln.strip()]
+        out = []
+        for ln in lines:
+            title, desc = None, None
+            for sep in self._SEP_CANDIDATES:
+                if sep in ln:
+                    left, right = [x.strip() for x in ln.split(sep, 1)]
+                    title = (left or right)[:255] if left else None
+                    desc = right or None
+                    break
+            else:
+                title = ln[:255]
+                desc = None
+
+            if title:
+                out.append({"title": title, "description": desc})
+        return out
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        lesson_id = kwargs.get("lesson_id")
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+
+        # Reuse the same input serializer you already have:
+        ser = LessonItemsBulkSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+
+        parsed = self.parse_assignment_items(ser.validated_data["items"])
+
+        # In-memory de-dup (title, description) to avoid obvious duplicates in the same payload
+        seen = set()
+        objs = []
+        for item in parsed:
+            key = (item["title"], item["description"])
+            if key in seen:
+                continue
+            seen.add(key)
+            objs.append(
+                LessonAssignment(
+                    lesson=lesson,
+                    title=item["title"],
+                    description=item["description"]
+                )
+            )
+
+        before = LessonAssignment.objects.filter(lesson=lesson).count()
+        # If you add a DB unique constraint (see note below), ignore_conflicts=True will do the right thing.
+        LessonAssignment.objects.bulk_create(objs, ignore_conflicts=True)
+        after = LessonAssignment.objects.filter(lesson=lesson).count()
+
+        current = (LessonAssignment.objects
+                   .filter(lesson=lesson)
+                   .order_by("-created_at", "-pk")
+                   .values("assignment_id", "title", "description", "created_at", "updated_at"))
+
+        return Response(
+            {
+                "lesson_id": lesson.lesson_id,
+                "attempted": len(objs),
+                "created_count": max(after - before, 0),
+                "items": list(current),
+            },
+            status=status.HTTP_201_CREATED,
+        )

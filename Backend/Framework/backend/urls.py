@@ -37,23 +37,31 @@ urlpatterns = [
     #Instructors Courses
     path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
     #Instructors Classrooms
-        #Course specific
-    path("instructor/course/<str:course_id>/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
-        #Lesson specific 
-    path("instructor/lesson/<str:lesson_id>/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
+        #Course specific - sendParams
+    path("instructor/course/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
+        #Lesson specific - sendParams
+    path("instructor/lesson/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
         #Own or unlinked classrooms
     path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),
-        #Linking classroom
+        #Linking classrooms
+    path("instructor/classrooms/<str:course_id>/get/", LinkingClassroomsView.as_view(), name="classrooms"),
+    path("instructor/classrooms/<str:lesson_id>/link/", LinkingClassroomsView.as_view(), name="classrooms"),
+        #Creating physical classrooms
+    path("instructor/classrooms/create/", CreateClassroomView.as_view()),
+    
+    
     #Instructor Lessons 
     path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
     path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
     path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
     path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
-    path("instructor/lessons/<str:lesson_id>/create/", LessonsView.as_view(), name="get-lessons"),
+    path("instructor/lessons/<str:lesson_id>/update/", LessonsView.as_view(), name="get-lessons"),
     #Instructor Lessons prerequisites 
-    path("instructor/lessons/<str:lesson_id>/prerequisites/bulk-create/", LessonPrereqBulkCreateView.as_view()),
-    path("intructor/lesson/<str:lesson_id>/prerequisites/",LessonPrereqBulkCreateView.as_view()),
-
+    path("instructor/lessons/<str:lesson_id>/prerequisites/", LessonPrereqBulkCreateView.as_view()),
+    #Instructor Reading 
+    path("instructor/lessons/<str:lesson_id>/readings/", LessonReadingBulkCreateView.as_view()),
+    #Instructor Assignment 
+    path("instructor/lessons/<str:lesson_id>/assignments/", LessonAssignmentBulkCreateView.as_view()),
 
     path("student/login/", StudentLogin.as_view(), name="student-login"),
     #Student registration

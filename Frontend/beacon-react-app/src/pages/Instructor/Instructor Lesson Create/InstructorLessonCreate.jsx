@@ -8,6 +8,7 @@ import { api } from "../../../api";
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
   const { lessonId, courseId } = useParams();
+  const [lesson, setLesson] = useState(null)
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
@@ -37,39 +38,15 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   });
   const [onlineClassrooms, setOnlineClassrooms] = useState([]);
 
-  const submitPrereqs = async () => {
-    /**Handle prerequisites submission */
-    // split by commas / whitespace / newlines
-
-    const prereqIds = prereqInput
-      .split(/[\s,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    if (prereqIds.length === 0) {
-      return;
-    }
-
-    try {
-      const res = await api.post(
-        `instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
-        { prerequisites: prereqIds, mode: "merge" } // or "replace"
-      );
-      console.log("Created:", res.data);
-    } catch (err) {
-      console.error("Server error:", err?.response?.data || err);
-      alert("Failed to set prerequisites.");
-    }
-  };
-
-  const [formData, setFormData] = useState({
-    title: "",
-    credits: "",
-    duration_weeks: "",
-    director: "",
-    description: "",
-    objectives: "",
-  });
+    
+    const [formData, setFormData] = useState({
+        title: "",
+        credits: "",
+        duration_weeks: "",
+        director: "",
+        description: "",
+        objectives: "",
+    });
 
   const openModal = () => {
     setShowModal(true);
@@ -144,10 +121,18 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     if (!lessonId) return;
     (async () => {
       try {
-        const { data } = await api.get(LIST_LINKED_CLASSROOMS_URL(lessonId));
+        const online_classroom_payload = {capacity: formData.capacity, location: "", is_online: true, zoom_link: formData.zoom_link};
+        const {data} = await api.get();
+        const online_lessonclassroom_payload = {
+          day_of_week: formData.day_of_week,
+          time_start: formData.time_start,
+          time_end: formData.time_end,
+        }
+        const online_lessonclassroom = await api.get();
         // Expect shape from your ActiveClassroomsView:
         // [{ classroom_id, day_of_week, time_start, time_end, duration_minutes, capacity, ... }]
         const rows = Array.isArray(data) ? data : [];
+
         setOnlineClassrooms(
           rows.map((r) => ({
             classroom_id: r.classroom_id,
@@ -170,50 +155,89 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     e.preventDefault();
 
     const durationNum = Number(formData.duration_weeks);
-    const creditsNum =
-      formData.credits === "" ? null : Number(formData.credits);
+    const creditsNum = formData.credits === "" ? null : Number(formData.credits);
 
-    if (Number.isFinite(durationNum) && (durationNum < 2 || durationNum > 4)) {
+    if (formData.duration_weeks !== "" && Number.isFinite(durationNum) && (durationNum < 2 || durationNum > 4)) {
       alert("Duration weeks must be 2–4.");
       return;
     }
 
-    const payload = {
-      lesson_id: formData.lesson_id || lessonId,
-      course: courseId,
-      title: formData.title,
-      description: formData.description,
-      objectives: formData.objectives,
-      duration_weeks: durationNum || null,
-      credits: creditsNum,
-      status: formData.status,
-      designer: formData.designer || null,
-    };
+
+
+  const submitPrereqs = async () => {
+    /**Handle prerequisites submission */
+    // split by commas / whitespace / newlines
+    const prereqIds = prereqInput
+        .split(/[\s,]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    if (prereqIds.length === 0) {
+        return;
+    } //Nothing entered --> Just leave
 
     try {
-      if (lessonId) {
-        // Update existing
-        await api.patch(`/instructor/lessons/${lessonId}/`, payload);
-        await api.post(
-          `/instructor/lessons/${lessonId}/prerequisites/bulk-create/`,
-          {
-            prerequisites: prereqInput.split(/[\s,]+/).filter(Boolean),
-            mode: "replace",
-          }
+        const res = await api.post(
+            `instructor/lessons/${lessonId}/prerequisites/`,
+            { prerequisites: prereqIds, mode: "merge" }, // or "replace"
         );
-      } else {
-        // Create new
-        const { data } = await api.post(`/instructor/lessons/`, payload);
+        console.log("Created:", res.data);
+    } catch (err) {
+        console.error("Server error:", err?.response?.data || err);
+        alert("Failed to set prerequisites.");
+    }
+};
+
+
+  const payload = {
+    lesson_id: formData.lesson_id || lessonId,
+    course: courseId,
+    ...(formData.title?.trim()
+        ? {title: formData.title}
+        : {}
+        ),
+    ...(formData.description?.trim()
+        ? {description: formData.description}
+        : {}
+        ),
+    ...(formData.objectives?.trim()
+        ? {objectives: formData.objectives}
+        : {}
+        ),
+    ...(formData.duration_weeks !== ""
+        ? {duration_weeks: formData.duration_weeks}
+        : {}
+        ),
+    ...(formData.credits?.trim()
+        ? {credits: creditsNum}
+        : {}
+        ),
+    status: formData.status,
+    ...(formData.designer?.trim()
+        ? { designer_input: formData.designer.trim() }   // email string
+        : {}),
+  };
+
+  try {
+      await api.patch(`/instructor/lessons/${lessonId}/update/`, payload);
+      submitPrereqs()
+
+
+      if (readingListInput.trim()) {
         await api.post(
-          `/instructor/lessons/${data.lesson_id}/prerequisites/bulk-create/`,
-          {
-            prerequisites: prereqInput.split(/[\s,]+/).filter(Boolean),
-            mode: "replace",
-          }
+          `/instructor/lessons/${lessonId}/readings/`,
+          { lesson_id: lessonId, items: readingListInput },
+          { headers: { "Content-Type": "application/json" } }
         );
       }
-
-      // TODO: Save reading list & assignments via backend endpoints
+      
+      if (assignmentsInput.trim()) {
+        await api.post(
+          `/instructor/lessons/${lessonId}/assignments/`,
+          { lesson_id: lessonId, items: assignmentsInput },
+          { headers: { "Content-Type": "application/json" } }
+        );
+      }
 
       alert("Lesson saved successfully!");
       navigate(`/instructor/course/${courseId}`);
@@ -295,7 +319,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                required
               />
             </div>
 
@@ -350,19 +373,15 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
             <div className={i.row}>
               <label className={i.label}>Lesson Designer:</label>
-              <select
+
+              <input
                 className={i.input}
-                name="director"
-                value={formData.director}
+                type="text"
+                name="designer"
+                value={formData.designer}
                 onChange={handleChange}
-              >
-                <option value="">Select Instructor</option>
-                {/* Later map instructors from backend */}
-                <option value="Dr Charles Xavier">Dr Charles Xavier</option>
-                <option value="Mr La Pa Ta O Rulwena">
-                  Mr La Pa Ta O Rulwena
-                </option>
-              </select>
+                placeholder="Enter instructor email"
+              />
             </div>
 
             <div className={i.row}>
@@ -389,7 +408,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
             </div>
 
             <div className={i.row}>
-              <label className={i.label}>Course Description:</label>
+              <label className={i.label}>Lesson Description:</label>
               <textarea
                 className={i.input}
                 name="description"

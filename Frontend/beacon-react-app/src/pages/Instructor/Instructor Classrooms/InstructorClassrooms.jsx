@@ -45,16 +45,22 @@ export default function InstructorClassrooms() {
       <div className={i.grid}>
         {items.map((c) => (
           <div key={c.classroom_id} className={i.card}>
-            <div className={i.icon} aria-hidden>CLass</div>
+            {/*<div className={i.icon} aria-hidden>Class</div>*/}
             <h4 className={i.courseName}>
-              {c.location ? c.location : "Haven't been assigned"}
+              {c.location ? c.location : "Unlinked"}
             </h4>
-            <h3 className={i.roomLabel}>Classroom {c.classroom_id}</h3>
+            <h3 className={i.roomLabel}> Classroom {c.classroom_id}</h3>
             <p className={i.meta}>
-              Instructor: {c.instructor || "Haven't been assigned"}
+              Director: {c.director || "Unlinked"}
             </p>
             <p className={i.meta}>
-              Type: {c.type}
+              Lesson linked: {c.lesson_id || "Unlinked"}
+            </p>
+            <p className={i.meta}>
+              Capacity: {c.capacity || "Unlinked"}
+            </p>
+            <p className={i.meta}>
+              Type: {c.is_online ? "-" : "Physical"}
             </p>
           </div>
         ))}

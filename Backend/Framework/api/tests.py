@@ -487,3 +487,28 @@ def test_wrong_email(api, url, db):
     res = api.post(url, mutated_payload, format="json")
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
+def test_overlapping_classroom():
+    from datetime import time
+    room1 = Classroom(location="Rar")
+    course = Course.objects.create(title="Math 101", owner_instructor=inst1)
+    lessonA = Lesson.objects.create(course=course, designer=inst2, created_by=inst1, title="Cells")
+    lessonB = Lesson.objects.create(course=course, designer=inst2, created_by=inst1, title="Nob")
+    lessonC = Lesson.objects.create(course=course, designer=inst1, created_by=inst1, title="Nob")
+    user1 = User.objects.create(email="inst@example.com", password_hash="pw", role="instructor")
+    inst1 = InstructorProfile.objects.create(user=user1, full_name="Inst One", staff_no="T123")
+    user2 = User.objects.create(email="insta@example.com", password_hash="pw", role="instructor")
+    inst2 = InstructorProfile.objects.create(user=user2, full_name="Inst Two", staff_no="T111")
+    
+    inst2 = InstructorProfile()
+    r1 = LessonClassroom(classroom=room1, director=inst1, day_of_week="Monday",
+                        time_start=time(10,0), time_end=time(11,0), lesson=lessonA)
+    r1.save()
+
+    r2 = LessonClassroom(classroom=room1, director=inst2, day_of_week="Monday",
+                        time_start=time(10,30), time_end=time(11,30), lesson=lessonB)
+    r2.save() 
+
+    r3 = LessonClassroom(classroom=room1, director=inst1, day_of_week="Monday",
+                        time_start=time(10,30), time_end=time(11,30), lesson=lessonC)
+    r3.save() 
+
