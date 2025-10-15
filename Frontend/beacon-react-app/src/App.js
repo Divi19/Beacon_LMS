@@ -93,7 +93,7 @@ export default function App(){
       <Route path="/admin/log-in" element={<AdminLogIn />}/>
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
-      <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
+      {/* <Route path="/admin/instructor-list" element={<AdminInstructorList />}/> */}
       <Route path="/trial" element={<StudentLessonEnroll />}/>
       {/* <Route path="/" element={<StudentOwnLessons />}/> */}
 
