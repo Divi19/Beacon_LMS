@@ -14,7 +14,7 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #ffc07d 0%, #93be77 70%, #0dbad8);
+  background: linear-gradient(to bottom, #ffc07d 0%, #f0c89b 70%, #0dbad8);
 }
 
 .body {
@@ -35,7 +35,7 @@
 }
 
 .cta {
-  background: rgba(106, 195, 209, 0.9);
+  background:#ff9c5f ;
   color: #fff;
   border: none;
   border-radius: 25px;

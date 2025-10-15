@@ -8,7 +8,7 @@ import { api } from "../../../api";
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
   const { lessonId, courseId } = useParams();
-  const [lesson, setLesson] = useState(null)
+  const [lesson, setLesson] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
@@ -20,6 +20,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   // --- API endpoints (NO url changes required on server) ---
   const LIST_LINKED_CLASSROOMS_URL = (lessonId) =>
     `/instructor/lesson/${lessonId}/classrooms/`; //  existing GET
+
+  const LIST_ALL_MY_CLASSROOMS_URL = `/instructor/classrooms/`;
 
   const CREATE_ONLINE_CLASS_URL = (lessonId) => [
     `/instructor/lessons/${lessonId}/classrooms/online/`,
@@ -38,15 +40,31 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   });
   const [onlineClassrooms, setOnlineClassrooms] = useState([]);
 
-    
-    const [formData, setFormData] = useState({
-        title: "",
-        credits: "",
-        duration_weeks: "",
-        director: "",
-        description: "",
-        objectives: "",
-    });
+  const [formData, setFormData] = useState({
+    title: "",
+    credits: "",
+    duration_weeks: "",
+    director: "",
+    description: "",
+    objectives: "",
+  });
+
+  // PHYSICAL CLASSROOM LINKING STATE
+  const [showPhysicalList, setShowPhysicalList] = useState(false); // popup #1
+  const [availablePhysical, setAvailablePhysical] = useState([]); // rows in popup #1
+
+  const [showLinkForm, setShowLinkForm] = useState(false); // popup #2
+  const [selectedClassroom, setSelectedClassroom] = useState(null); // chosen from popup #1
+  const [linkForm, setLinkForm] = useState({
+    // time/day inputs
+    day_of_week: "",
+    time_start: "",
+    time_end: "",
+    supervisor: "", // UI only; backend will infer from auth
+  });
+
+  // The card shown on the lesson form (single physical classroom)
+  const [linkedPhysical, setLinkedPhysical] = useState(null);
 
   const openModal = () => {
     setShowModal(true);
@@ -62,7 +80,32 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     setShowModal(false);
   };
 
+  // Open list of unlinked physical classrooms
+  const openPhysicalList = () => setShowPhysicalList(true);
+  const closePhysicalList = () => {
+    setShowPhysicalList(false);
+  };
+
+  // Move from popup #1 -> popup #2
+  const chooseClassroom = (row) => {
+    setSelectedClassroom(row);
+    setShowPhysicalList(false);
+    setShowLinkForm(true);
+  };
+
+  const closeLinkForm = () => {
+    setShowLinkForm(false);
+    setSelectedClassroom(null);
+    setLinkForm({
+      day_of_week: "",
+      time_start: "",
+      time_end: "",
+      supervisor: "",
+    });
+  };
+
   const openOnlineClassModal = () => setShowOnlineClassModal(true);
+
   const closeOnlineClassModal = () => {
     setOnlineForm({
       day_of_week: "",
@@ -117,17 +160,23 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }));
   }, []);
 
+  // For online classroom creation
   useEffect(() => {
     if (!lessonId) return;
     (async () => {
       try {
-        const online_classroom_payload = {capacity: formData.capacity, location: "", is_online: true, zoom_link: formData.zoom_link};
-        const {data} = await api.get();
+        const online_classroom_payload = {
+          capacity: formData.capacity,
+          location: "",
+          is_online: true,
+          zoom_link: formData.zoom_link,
+        };
+        const { data } = await api.get();
         const online_lessonclassroom_payload = {
           day_of_week: formData.day_of_week,
           time_start: formData.time_start,
           time_end: formData.time_end,
-        }
+        };
         const online_lessonclassroom = await api.get();
         // Expect shape from your ActiveClassroomsView:
         // [{ classroom_id, day_of_week, time_start, time_end, duration_minutes, capacity, ... }]
@@ -155,73 +204,65 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     e.preventDefault();
 
     const durationNum = Number(formData.duration_weeks);
-    const creditsNum = formData.credits === "" ? null : Number(formData.credits);
+    const creditsNum =
+      formData.credits === "" ? null : Number(formData.credits);
 
-    if (formData.duration_weeks !== "" && Number.isFinite(durationNum) && (durationNum < 2 || durationNum > 4)) {
+    if (
+      formData.duration_weeks !== "" &&
+      Number.isFinite(durationNum) &&
+      (durationNum < 2 || durationNum > 4)
+    ) {
       alert("Duration weeks must be 2–4.");
       return;
     }
 
-
-
-  const submitPrereqs = async () => {
-    /**Handle prerequisites submission */
-    // split by commas / whitespace / newlines
-    const prereqIds = prereqInput
+    const submitPrereqs = async () => {
+      /**Handle prerequisites submission */
+      // split by commas / whitespace / newlines
+      const prereqIds = prereqInput
         .split(/[\s,]+/)
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean);
 
-    if (prereqIds.length === 0) {
+      if (prereqIds.length === 0) {
         return;
-    } //Nothing entered --> Just leave
+      } //Nothing entered --> Just leave
 
-    try {
+      try {
         const res = await api.post(
-            `instructor/lessons/${lessonId}/prerequisites/`,
-            { prerequisites: prereqIds, mode: "merge" }, // or "replace"
+          `instructor/lessons/${lessonId}/prerequisites/`,
+          { prerequisites: prereqIds, mode: "merge" } // or "replace"
         );
         console.log("Created:", res.data);
-    } catch (err) {
+      } catch (err) {
         console.error("Server error:", err?.response?.data || err);
         alert("Failed to set prerequisites.");
-    }
-};
+      }
+    };
 
-
-  const payload = {
-    lesson_id: formData.lesson_id || lessonId,
-    course: courseId,
-    ...(formData.title?.trim()
-        ? {title: formData.title}
-        : {}
-        ),
-    ...(formData.description?.trim()
-        ? {description: formData.description}
-        : {}
-        ),
-    ...(formData.objectives?.trim()
-        ? {objectives: formData.objectives}
-        : {}
-        ),
-    ...(formData.duration_weeks !== ""
-        ? {duration_weeks: formData.duration_weeks}
-        : {}
-        ),
-    ...(formData.credits?.trim()
-        ? {credits: creditsNum}
-        : {}
-        ),
-    status: formData.status,
-    ...(formData.designer?.trim()
-        ? { designer_input: formData.designer.trim() }   // email string
+    const payload = {
+      lesson_id: formData.lesson_id || lessonId,
+      course: courseId,
+      ...(formData.title?.trim() ? { title: formData.title } : {}),
+      ...(formData.description?.trim()
+        ? { description: formData.description }
         : {}),
-  };
+      ...(formData.objectives?.trim()
+        ? { objectives: formData.objectives }
+        : {}),
+      ...(formData.duration_weeks !== ""
+        ? { duration_weeks: formData.duration_weeks }
+        : {}),
+      ...(formData.credits?.trim() ? { credits: creditsNum } : {}),
+      status: formData.status,
+      ...(formData.designer?.trim()
+        ? { designer_input: formData.designer.trim() } // email string
+        : {}),
+    };
 
-  try {
+    try {
       await api.patch(`/instructor/lessons/${lessonId}/update/`, payload);
-      submitPrereqs()
-
+      submitPrereqs();
 
       if (readingListInput.trim()) {
         await api.post(
@@ -230,7 +271,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           { headers: { "Content-Type": "application/json" } }
         );
       }
-      
+
       if (assignmentsInput.trim()) {
         await api.post(
           `/instructor/lessons/${lessonId}/assignments/`,
@@ -244,6 +285,137 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     } catch (error) {
       console.error("Error saving lesson:", error);
       alert("Error saving lesson. Please try again.");
+    }
+  };
+
+  // For physical classroom linking
+  useEffect(() => {
+    if (!showPhysicalList) return;
+
+    (async () => {
+      try {
+        const { data } = await api.get(LIST_ALL_MY_CLASSROOMS_URL);
+
+        // Physical heuristic: location present => physical; online => no location.
+        const rows = Array.isArray(data) ? data : data?.results || [];
+        const unlinkedPhysical = rows
+          .filter((r) => r.location ?? null) // has location => physical
+          .filter((r) => r.day_of_week == null); // null => unlinked
+
+        // Normalize for the UI list
+        setAvailablePhysical(
+          unlinkedPhysical.map((r) => ({
+            classroom_id: r.classroom_id,
+            location: r.location,
+            capacity: r.capacity ?? 0,
+            type: "Physical",
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to load available classrooms", err);
+        setAvailablePhysical([]);
+      }
+    })();
+  }, [showPhysicalList]);
+
+  // Display linked classroom
+  useEffect(() => {
+    if (!lessonId) return;
+
+    (async () => {
+      try {
+        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId));
+        const rows = Array.isArray(data) ? data : [];
+        // Physical heuristic: has location
+        const physicalLinked = rows.find((r) => r.location ?? null);
+        if (physicalLinked) {
+          setLinkedPhysical({
+            classroom_id: physicalLinked.classroom_id,
+            location: physicalLinked.location,
+            day_of_week: physicalLinked.day_of_week || "",
+            time_start: physicalLinked.time_start || "",
+            time_end: physicalLinked.time_end || "",
+            duration_minutes: physicalLinked.duration_minutes ?? null,
+            capacity: physicalLinked.capacity ?? null,
+            supervisor: physicalLinked.supervisor || "", // if your serializer returns it
+          });
+        } else {
+          setLinkedPhysical(null);
+        }
+      } catch (_) {
+        // Non-blocking
+      }
+    })();
+  }, [lessonId]);
+
+  const submitLinkClassroom = async (e) => {
+    e.preventDefault();
+    if (!lessonId || !selectedClassroom) return;
+
+    const { day_of_week, time_start, time_end } = linkForm;
+    if (!day_of_week) return alert("Please select class day.");
+
+    const bodyA = {
+      classroom_id: selectedClassroom.classroom_id,
+      day_of_week,
+      time_start: time_start || null,
+      time_end: time_end || null,
+    };
+
+    let saved = false;
+    for (const url of LINK_CLASSROOM_URLS(
+      lessonId,
+      selectedClassroom.classroom_id
+    )) {
+      try {
+        await api.post(url, bodyA);
+        saved = true;
+        break;
+      } catch (_) {
+        /* try next */
+      }
+    }
+
+    // Optimistic update of the card on the form
+    setLinkedPhysical({
+      classroom_id: selectedClassroom.classroom_id,
+      location: selectedClassroom.location,
+      day_of_week,
+      time_start,
+      time_end,
+      duration_minutes: null,
+      capacity: selectedClassroom.capacity ?? null,
+      supervisor: linkForm.supervisor || "",
+      _pending: !saved,
+    });
+
+    closeLinkForm();
+
+    // If persistence succeeded, refresh fully from backend to show accurate duration/enrollment
+    if (saved) {
+      try {
+        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId));
+        const rows = Array.isArray(data) ? data : [];
+        const physicalLinked = rows.find((r) => r.location ?? null);
+        if (physicalLinked) {
+          setLinkedPhysical({
+            classroom_id: physicalLinked.classroom_id,
+            location: physicalLinked.location,
+            day_of_week: physicalLinked.day_of_week || "",
+            time_start: physicalLinked.time_start || "",
+            time_end: physicalLinked.time_end || "",
+            duration_minutes: physicalLinked.duration_minutes ?? null,
+            capacity: physicalLinked.capacity ?? null,
+            supervisor: physicalLinked.supervisor || "",
+          });
+        }
+      } catch (_) {
+        /* ignore */
+      }
+    } else {
+      console.info(
+        "Linked locally. Once backend link endpoint is added, this will persist automatically."
+      );
     }
   };
 
@@ -266,7 +438,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         is_online: true,
         zoom_link: zoom_link.trim(),
         day_of_week,
-        time_start: time_start || null, 
+        time_start: time_start || null,
         time_end: time_end || null,
       };
 
