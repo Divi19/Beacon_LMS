@@ -18,7 +18,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const [assignmentsInput, setAssignmentsInput] = useState("");
 
   // --- API endpoints (NO url changes required on server) ---
-  const LIST_LINKED_CLASSROOMS_URL = (lessonId) =>
+  const LIST_LESSON_CLASSROOMS_URL = (lessonId) =>
     `/instructor/lesson/${lessonId}/classrooms/`; //  existing GET
 
   const LIST_ALL_MY_CLASSROOMS_URL = `/instructor/classrooms/`;
@@ -27,6 +27,12 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     `/instructor/lessons/${lessonId}/classrooms/online/`,
     `/instructor/lessons/${lessonId}/classrooms/`,
     `/instructor/classrooms/${lessonId}/online/`,
+  ];
+
+  const LINK_CLASSROOM_URLS = (lessonId, classroomId) => [
+    `/instructor/lessons/${lessonId}/classrooms/link/`,
+    `/instructor/lesson/${lessonId}/classrooms/`,
+    `/instructor/classrooms/${classroomId}/link/${lessonId}/`,
   ];
 
   // POPUP + FORM STATE FOR ONLINE CLASSROOM
@@ -633,13 +639,56 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               />
             </div>
 
+            {/*For physical classroom linkage */}
             <div className={i.row}>
               <label className={i.label}>Physical Classroom:</label>
-              <button type="button" className={i.linkButton}>
-                Link Classroom
-              </button>
+
+              <div className={i.physPanel}>
+                {linkedPhysical ? (
+                  <div className={i.physCard}>
+                    <div>
+                      <strong>Location:</strong> {linkedPhysical.location}
+                    </div>
+                    <div className={i.physRow}>
+                      <span>
+                        <strong>Day:</strong>{" "}
+                        {linkedPhysical.day_of_week || "-"}
+                      </span>
+                      <span>
+                        <strong>Time:</strong>{" "}
+                        {linkedPhysical.time_start || "-"}
+                        {linkedPhysical.time_end
+                          ? ` - ${linkedPhysical.time_end}`
+                          : ""}
+                      </span>
+                      <span>
+                        <strong>Duration:</strong>{" "}
+                        {linkedPhysical.duration_minutes
+                          ? `${linkedPhysical.duration_minutes} mins`
+                          : "—"}
+                      </span>
+                    </div>
+                    {linkedPhysical._pending && (
+                      <div className={i.pending}>pending</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className={i.physCardEmpty}>
+                    No classroom linked yet.
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className={i.linkButton}
+                  onClick={openPhysicalList}
+                >
+                  Link Classroom
+                </button>
+              </div>
             </div>
 
+            {/*For online classroom creation*/}
             <div className={i.row}>
               <label className={i.label}>Online Classroom:</label>
 
@@ -726,6 +775,152 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         </div>
       )}
 
+      {/**Popup to show all available classes for linking*/}
+      {showPhysicalList && (
+        <div className={i.modalOverlay}>
+          <div className={i.modalBox}>
+            <h3 className={i.modalTitle}>Available Classrooms:</h3>
+
+            <div className={i.pickList}>
+              {availablePhysical.length === 0 ? (
+                <div className={i.empty}>
+                  No unlinked physical classrooms found.
+                </div>
+              ) : (
+                availablePhysical.map((row) => (
+                  <div key={row.classroom_id} className={i.pickItem}>
+                    <span>
+                      <strong>ID:</strong> {row.classroom_id}
+                    </span>
+                    <span>
+                      <strong>Location:</strong> {row.location}
+                    </span>
+                    <span>
+                      <strong>Type:</strong> {row.type}
+                    </span>
+                    <button
+                      className={i.smallSelect}
+                      onClick={() => chooseClassroom(row)}
+                    >
+                      Select
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className={i.modalActions}>
+              <button className={i.modalBack} onClick={closePhysicalList}>
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/**Popup for classroom detail setup for linking */}
+      {showLinkForm && selectedClassroom && (
+        <div className={i.modalOverlay}>
+          <div className={i.modalBox}>
+            <h3 className={i.modalTitle}>Set time details for class</h3>
+
+            <div className={i.metaRow}>
+              <span>
+                <strong>ID:</strong> {selectedClassroom.classroom_id}
+              </span>
+              <span>
+                <strong>Location:</strong> {selectedClassroom.location}
+              </span>
+              <span>
+                <strong>Type:</strong> Physical
+              </span>
+            </div>
+
+            <form onSubmit={submitLinkClassroom} className={i.modalForm}>
+              <div className={i.modalRow}>
+                <label className={i.modalLabel}>Class Day:</label>
+                <select
+                  className={i.modalInput}
+                  value={linkForm.day_of_week}
+                  onChange={(e) =>
+                    setLinkForm((s) => ({ ...s, day_of_week: e.target.value }))
+                  }
+                  required
+                >
+                  <option value="">Select day</option>
+                  <option>Monday</option>
+                  <option>Tuesday</option>
+                  <option>Wednesday</option>
+                  <option>Thursday</option>
+                  <option>Friday</option>
+                  <option>Saturday</option>
+                  <option>Sunday</option>
+                </select>
+              </div>
+
+              <div className={i.modalRow}>
+                <label className={i.modalLabel}>Class Timing:</label>
+                <div className={i.timeWrap}>
+                  <input
+                    type="time"
+                    className={i.modalInput}
+                    value={linkForm.time_start}
+                    onChange={(e) =>
+                      setLinkForm((s) => ({ ...s, time_start: e.target.value }))
+                    }
+                  />
+                  <span className={i.to}>To</span>
+                  <input
+                    type="time"
+                    className={i.modalInput}
+                    value={linkForm.time_end}
+                    onChange={(e) =>
+                      setLinkForm((s) => ({ ...s, time_end: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className={i.modalRow}>
+                <label className={i.modalLabel}>Class Max capacity:</label>
+                <div className={i.modalStatic}>
+                  {selectedClassroom.capacity ?? "—"}
+                </div>
+              </div>
+
+              <div className={i.modalRow}>
+                <label className={i.modalLabel}>Class Supervisor:</label>
+                <select
+                  className={i.modalInput}
+                  value={linkForm.supervisor}
+                  onChange={(e) =>
+                    setLinkForm((s) => ({ ...s, supervisor: e.target.value }))
+                  }
+                >
+                  <option value="">Select</option>
+                  <option>Dr Jeriko addams</option>
+                  <option>Mr. La Pa Ta O Rulwena</option>
+                </select>
+              </div>
+
+              <div className={i.modalActions}>
+                <button
+                  type="button"
+                  className={i.modalBack}
+                  onClick={closeLinkForm}
+                >
+                  Back
+                </button>
+                <button type="submit" className={i.modalCreate}>
+                  Link class to lesson
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/*Pop up for online classroom creation */}
       {showOnlineClassModal && (
         <div className={i.modalOverlay}>
           <div className={i.modalBox}>
