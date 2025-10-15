@@ -37,7 +37,7 @@ export default function InstructorClassrooms() {
       <h1 className={i.title}>CLASSROOM</h1>
 
       <div className={i.actions}>
-        <button className={i.createBtn} onClick={() => navigate("/instructor/classrooms/create")}>
+        <button className={i.createBtn} onClick={() => navigate("instructo/classrooms/create")}>
           Create Classroom <span className={i.plus}>+</span>
         </button>
       </div>
