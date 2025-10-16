@@ -152,6 +152,9 @@ class LinkingClassroomsView(APIView):
     """
     Shows all classrooms for linking 
     """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+
     def get(self, request, course_id):
         """
         POST
@@ -225,24 +228,100 @@ class LinkingClassroomsView(APIView):
         return Response(data)
     
     def post(self, request, lesson_id):
-        #Link to physical classrooms
         mutable_data = deepcopy(request.data)
-        mutable_data.pop("lesson_id", None) #removing possible lesson_id in POST json
+        mutable_data.pop("lesson_id", None)
+        if "classroom_id" in mutable_data and "classroom" not in mutable_data:
+            mutable_data["classroom"] = mutable_data.pop("classroom_id")
+       
+       
         mutable_data["lesson"] = lesson_id
         serializer = LessonClassroomSerializer(
-            data = mutable_data, 
+            data=mutable_data,
+            context={"request": request}  #needed for supervisor fallback
         )
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            print("ERR:", serializer.errors)
+            return Response(serializer.errors, status=400)
         lesson_classroom = serializer.save()
         return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
-
 
 class OnlineClassroomsView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
-    def get(self, request):
+
+
+    def get(self, request, lesson_id):
+        q = Q(lesson__lesson_id=lesson_id) & Q(classroom__is_online = True)
+
+        linked_rows = (
+            LessonClassroom.active
+            .filter(q)
+            .select_related("classroom", "supervisor")
+            .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
+            .values(
+                "classroom__classroom_id",
+                "classroom__location",
+                "day_of_week",
+                "time_start",
+                "time_end",
+                "supervisor__full_name",
+                "duration_minutes",
+                "classroom__capacity",
+                "enrolled_count",   
+                "classroom__zoom_link",
+                "classroom__is_online",   
+                "lesson__lesson_id"                                           
+            )
+        )
+
+        def norm_linked(r):
+            return {
+                "classroom_id": r["classroom__classroom_id"],
+                "location": r["classroom__location"],
+                "day_of_week": r["day_of_week"],
+                "supervisor": r["supervisor__full_name"],
+                "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
+                "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
+                "duration_minutes": r["duration_minutes"],
+                "capacity": r["classroom__capacity"],
+                "enrolled_count": r["enrolled_count"],   
+                "is_online": r["classroom__is_online"],
+                "zoom_link": r["classroom__zoom_link"], 
+                "lesson_id": r["lesson__lesson_id"]                      
+            }
+
+        data = [*map(norm_linked, linked_rows)]
+        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+        return Response(data)
+
+    @transaction.atomic
+    def post(self, request, lesson_id):
+        #classroom first 
+        mutable1 = deepcopy(request.data)
+        mutable1["lesson"] = lesson_id
+        mutable1["is_online"] = True #Just in case
+        online_classroom = ClassroomSerializer(data=request.data, context={"request": request})
+        if not  online_classroom.is_valid():
+            print("ERR:", online_classroom.errors)
+            return Response(online_classroom.errors, status=400)
+        online_classroom_obj = online_classroom.save()
+
+        mutable2 = deepcopy(mutable1)
+        mutable2["classroom"] = online_classroom_obj.classroom_id 
+        online_lesson_classroom = LessonClassroomSerializer(data=mutable2, context={"request": request})    
+        if not  online_lesson_classroom.is_valid():
+            print("ERR:", online_lesson_classroom.errors)
+            return Response(online_lesson_classroom.errors, status=400)
+        online_lesson_classroom_obj = online_lesson_classroom.save()
         
-        return 
+        
+        return Response(
+            {
+                "online_lesson_classroom": LessonClassroomSerializer(online_lesson_classroom_obj).data,
+                "online_classroom": ClassroomSerializer(online_classroom_obj).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 
