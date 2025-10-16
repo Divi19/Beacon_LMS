@@ -422,7 +422,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     const { day_of_week, time_start, time_end, duration_weeks } = linkForm;
     if (!day_of_week) return alert("Please select class day.");
 
-    // Calculate duration in minutes based on inputed time
+    // Calculate duration in minutes based on inputed.
     let duration_minutes = null;
     if (time_start && time_end) {
       const [h1, m1] = time_start.split(":").map(Number);
