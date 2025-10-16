@@ -45,6 +45,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     time_end: "",
     zoom_link: "",
     supervisor: "", // UI only for now; backend will infer director from auth user
+    duration_weeks: "",
   });
   const [onlineClassrooms, setOnlineClassrooms] = useState([]);
 
@@ -137,7 +138,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     navigate("/instructor/course-list");
   };
 
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -229,17 +229,22 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   }, [lessonId]);
 
   // For online classroom creation
- useEffect(() => {
+  useEffect(() => {
     if (!lessonId) return;
     (async () => {
       try {
-        const online_classroom_payload = {capacity: formData.capacity, location: "", is_online: true, zoom_link: formData.zoom_link};
-        const {data} = await api.get();
+        const online_classroom_payload = {
+          capacity: formData.capacity,
+          location: "",
+          is_online: true,
+          zoom_link: formData.zoom_link,
+        };
+        const { data } = await api.get();
         const online_lessonclassroom_payload = {
           day_of_week: formData.day_of_week,
           time_start: formData.time_start,
           time_end: formData.time_end,
-        }
+        };
         const online_lessonclassroom = await api.get();
         // Expect shape from your ActiveClassroomsView:
         // [{ classroom_id, day_of_week, time_start, time_end, duration_minutes, capacity, ... }]
@@ -262,7 +267,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       }
     })();
   }, [lessonId]);
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -346,7 +350,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
       alert("Lesson saved successfully!");
       navigate(`/instructor/course/${courseId}`);
-
     } catch (error) {
       console.error("Error saving lesson:", error);
       alert("Error saving lesson. Please try again.");
@@ -416,14 +419,25 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     e.preventDefault();
     if (!lessonId || !selectedClassroom) return;
 
-    const { day_of_week, time_start, time_end } = linkForm;
+    const { day_of_week, time_start, time_end, duration_weeks } = linkForm;
     if (!day_of_week) return alert("Please select class day.");
+
+    // Calculate duration in minutes based on inputed time
+    let duration_minutes = null;
+    if (time_start && time_end) {
+      const [h1, m1] = time_start.split(":").map(Number);
+      const [h2, m2] = time_end.split(":").map(Number);
+      const diff = h2 * 60 + m2 - (h1 * 60 + m1);
+      duration_minutes = diff > 0 ? diff : null;
+    }
 
     const bodyA = {
       classroom_id: selectedClassroom.classroom_id,
       day_of_week,
       time_start: time_start || null,
       time_end: time_end || null,
+      duration_weeks: duration_weeks || null,
+      duration_minutes,
     };
 
     let saved = false;
@@ -483,7 +497,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }
   };
 
-   const submitOnlineClassroom = async (e) => {
+  const submitOnlineClassroom = async (e) => {
     e.preventDefault();
     if (!lessonId) {
       alert("Lesson ID is required to link a classroom.");
@@ -502,7 +516,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         is_online: true,
         zoom_link: zoom_link.trim(),
         day_of_week,
-        time_start: time_start || null, 
+        time_start: time_start || null,
         time_end: time_end || null,
       };
 
@@ -534,7 +548,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       );
     }
   };
-
 
   return (
     <div className={i.wrap}>
@@ -959,6 +972,26 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                   <option value="">Select</option>
                   <option>Dr Jeriko addams</option>
                   <option>Mr. La Pa Ta O Rulwena</option>
+                </select>
+              </div>
+
+              <div className={i.modalRow}>
+                <label className={i.modalLabel}>Class Duration (Weeks):</label>
+                <select
+                  className={i.modalInput}
+                  value={linkForm.duration_weeks}
+                  onChange={(e) =>
+                    setLinkForm((s) => ({
+                      ...s,
+                      duration_weeks: e.target.value,
+                    }))
+                  }
+                  required
+                >
+                  <option value="">Select duration</option>
+                  <option value="2">2 Weeks</option>
+                  <option value="3">3 Weeks</option>
+                  <option value="4">4 Weeks</option>
                 </select>
               </div>
 
