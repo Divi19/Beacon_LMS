@@ -6,7 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
-from django.db.models import Q
+from django.db.models import Sum, Q, F
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
@@ -190,6 +190,12 @@ class LessonClassroom(models.Model):
     class Meta:
         managed = True
         db_table = 'lesson_classroom'
+        constraints = [
+            models.CheckConstraint(
+                check=Q(time_end__gt=F("time_start")),
+                name="lessonclassroom_time_end_after_start",
+            ),
+        ]
 
     def clean(self):
         # sanity
@@ -214,7 +220,7 @@ class LessonClassroom(models.Model):
             raise ValidationError("Overlaps an existing session in this classroom.")
 
         # same supervisor clash?
-        if base.filter(supervisor__instructor_id=self.director_id).filter(overlap).exists():
+        if base.filter(supervisor_id=self.supervisor.instructor_profile_id).filter(overlap).exists():
             raise ValidationError("Overlaps another session for this instructor.")
 
     def save(self, *args, **kwargs):

@@ -43,11 +43,11 @@ urlpatterns = [
     path("instructor/lesson/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
         #Own or unlinked classrooms
     path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),
-        #Linking classrooms
-    path("instructor/classrooms/<str:course_id>/get/", LinkingClassroomsView.as_view(), name="classrooms"),
-    path("instructor/classrooms/<str:lesson_id>/link/", LinkingClassroomsView.as_view(), name="classrooms"),
-        #Creating physical classrooms
+        #GET + POST Linking classrooms
+    path("instructor/classrooms/<str:course_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
     path("instructor/classrooms/create/", CreateClassroomView.as_view()),
+        #GET + POST Create and linking online classroom // showing online classrooms
+    path("intructor/classrooms/online/<str:lesson_id>/", OnlineClassroomsView.as_view()),
     
     
     #Instructor Lessons 
