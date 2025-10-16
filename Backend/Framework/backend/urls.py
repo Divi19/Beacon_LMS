@@ -63,6 +63,12 @@ urlpatterns = [
     #Instructor Assignment 
     path("instructor/lessons/<str:lesson_id>/assignments/", LessonAssignmentBulkCreateView.as_view()),
 
+    #Admin login
+    path("api/admin/login/", AdminLogin.as_view(), name="admin-login"),
+    path('api/admin/instructors/', AdminInstructorListView.as_view(), name="admin-instructors"),
+    path('api/admin/instructors/<int:instructor_id>/', AdminInstructorDetailView.as_view(), name="admin-instructor-detail"),
+
+    #Students login TODO
     path("student/login/", StudentLogin.as_view(), name="student-login"),
     #Student registration
     path("student/signup/", StudentRegister.as_view(), name="student-register"),

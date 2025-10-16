@@ -18,4 +18,5 @@ admin.site.register(LessonAssignment)
 admin.site.register(LessonReading)
 admin.site.register(StudentAssignment)
 admin.site.register(StudentReading)
+admin.site.register(AdminProfile)
 
