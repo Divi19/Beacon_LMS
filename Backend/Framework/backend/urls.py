@@ -39,7 +39,7 @@ urlpatterns = [
     #Instructors Classrooms
         #Course specific - sendParams
     path("instructor/course/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
-        #Lesson specific - sendParams
+        #Lesson specific - sendParams 
     path("instructor/lesson/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
         #Own or unlinked classrooms
     path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),

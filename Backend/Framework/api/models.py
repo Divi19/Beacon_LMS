@@ -181,7 +181,7 @@ class LessonClassroom(models.Model):
     duration_minutes = models.IntegerField(blank=True, null=True)
     duration_weeks = models.IntegerField(choices=Weeks.choices, default=Weeks.TWO)
     linked_at = models.DateTimeField(auto_now_add=True)
-    director = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
+    supervisor = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
     expires_at = models.DateTimeField(blank=True, null=True, db_index=True)
     objects = models.Manager()                
     active  = ActiveLessonClassroomManager()
@@ -195,7 +195,7 @@ class LessonClassroom(models.Model):
         # sanity
         if self.time_end <= self.time_start:
             raise ValidationError({"time_end": "time_end must be after time_start."})
-        if not (self.classroom_id and self.director_id and self.day_of_week):
+        if not (self.classroom_id and self.supervisor_id and self.day_of_week):
             return  # skip until essentials present
 
         # only consider active rows (remove this if expired rows should still block)
@@ -213,8 +213,8 @@ class LessonClassroom(models.Model):
         if base.filter(classroom_id=self.classroom_id).filter(overlap).exists():
             raise ValidationError("Overlaps an existing session in this classroom.")
 
-        # same director clash?
-        if base.filter(director_id=self.director_id).filter(overlap).exists():
+        # same supervisor clash?
+        if base.filter(supervisor__instructor_id=self.director_id).filter(overlap).exists():
             raise ValidationError("Overlaps another session for this instructor.")
 
     def save(self, *args, **kwargs):

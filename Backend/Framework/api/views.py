@@ -2,6 +2,7 @@ from contextvars import Token
 import re
 from urllib.parse import urlparse
 from .forms import *
+from copy import deepcopy
 
 #django 
 from django.shortcuts import render, redirect
@@ -224,12 +225,30 @@ class LinkingClassroomsView(APIView):
         return Response(data)
     
     def post(self, request, lesson_id):
+        #Link to physical classrooms
+        mutable_data = deepcopy(request.data)
+        mutable_data.pop("lesson_id", None) #removing possible lesson_id in POST json
+        mutable_data["lesson"] = lesson_id
+        serializer = LessonClassroomSerializer(
+            data = mutable_data, 
+        )
+        serializer.is_valid(raise_exception=True)
+        lesson_classroom = serializer.save()
+        return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
+
+
+class OnlineClassroomsView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+    def get(self, request):
         
         return 
 
+
+
 class ActiveClassroomsView(APIView):
     """
-    Showing classrooms or multiple linked classrooms with self as director 
+    Showing classrooms or multiple linked classrooms with self as supervisor 
     Both online and physical 
     lesson_id given: shows only classrooms linked to that lesson 
     course_id given: shows only classrooms linked to the lessons in this course
@@ -250,7 +269,7 @@ class ActiveClassroomsView(APIView):
         linked_rows = (
             LessonClassroom.active
             .filter(q)
-            .select_related("classroom", "director")
+            .select_related("classroom", "supervisor")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
                 "classroom__classroom_id",
@@ -258,7 +277,7 @@ class ActiveClassroomsView(APIView):
                 "day_of_week",
                 "time_start",
                 "time_end",
-                "director__full_name",
+                "supervisor__full_name",
                 "duration_minutes",
                 "classroom__capacity",
                 "enrolled_count",   
@@ -273,7 +292,7 @@ class ActiveClassroomsView(APIView):
                 "classroom_id": r["classroom__classroom_id"],
                 "location": r["classroom__location"],
                 "day_of_week": r["day_of_week"],
-                "director": r["director__full_name"],
+                "supervisor": r["supervisor__full_name"],
                 "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
                 "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
                 "duration_minutes": r["duration_minutes"],
@@ -288,9 +307,10 @@ class ActiveClassroomsView(APIView):
         data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
         return Response(data)
 
+
 class OwnClassroomsView(APIView):
     """
-    Showing own classrooms (as director) and unlinked classrooms 
+    Showing own classrooms (as supervisor) and unlinked classrooms 
     """
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
@@ -307,7 +327,7 @@ class OwnClassroomsView(APIView):
 
         linked_rows = (
             LessonClassroom.active
-            .filter(director=instructor)
+            .filter(supervisor=instructor)
             .select_related("classroom")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
@@ -319,7 +339,7 @@ class OwnClassroomsView(APIView):
                 "duration_minutes",
                 "classroom__capacity",
                 "enrolled_count", 
-                "director__full_name",
+                "supervisor__full_name",
                 "classroom__zoom_link",
                 "classroom__is_online",
                 "lesson__lesson_id"                                           
@@ -328,7 +348,7 @@ class OwnClassroomsView(APIView):
 
         unlinked_rows = (
             Classroom.objects
-            .filter(Q(lessonclassroom__director=instructor) | Q(lessonclassroom__isnull=True))
+            .filter(Q(lessonclassroom__supervisor=instructor) | Q(lessonclassroom__isnull=True))
             .annotate(
                 day_of_week=Value(None, output_field=CharField()),
                 time_start=Value(None, output_field=TimeField()),
@@ -345,7 +365,7 @@ class OwnClassroomsView(APIView):
                 "duration_minutes",
                 "capacity",
                 "enrolled_count",
-                "lessonclassroom__director__full_name",      
+                "lessonclassroom__supervisor__full_name",      
                 "zoom_link",
                 "is_online",
                 "lessonclassroom__lesson__lesson_id"                                          
@@ -362,7 +382,7 @@ class OwnClassroomsView(APIView):
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["classroom__capacity"],
                 "enrolled_count": r["enrolled_count"], 
-                "director": r["director__full_name"],
+                "supervisor": r["supervisor__full_name"],
                 "is_online": r["classroom__is_online"],
                 "zoom_link": r["classroom__zoom_link"],
                 "lesson_id": r["lesson__lesson_id"]  
@@ -379,7 +399,7 @@ class OwnClassroomsView(APIView):
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["capacity"],
                 "enrolled_count": r["enrolled_count"],    
-                "director": r["lessonclassroom__director__full_name"],
+                "supervisor": r["lessonclassroom__supervisor__full_name"],
                 "is_online": r["is_online"],
                 "zoom_link": r["zoom_link"],
                 "lesson_id": r["lessonclassroom__lesson__lesson_id"]                           
@@ -1157,7 +1177,6 @@ class CourseDetailView(APIView):
             "enrolled_count": course.enrolled_count
         }
         return Response(output, status=status.HTTP_200_OK)
-<<<<<<< HEAD
 
 class LessonReadingBulkCreateView(APIView):
     """
@@ -1469,4 +1488,3 @@ class AdminInstructorDetailView(APIView):
         user.save()
         
         return Response({"detail": "Instructor deactivated successfully."}, status=status.HTTP_200_OK)
->>>>>>> origin/backend_divieleisch

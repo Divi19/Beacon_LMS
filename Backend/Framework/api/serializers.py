@@ -476,7 +476,7 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
     lesson = serializers.PrimaryKeyRelatedField(
         queryset=Lesson.objects.all(), write_only=True
     )
-    classroom = course = serializers.PrimaryKeyRelatedField(
+    classroom = serializers.PrimaryKeyRelatedField(
         queryset=Classroom.objects.all(), write_only=True
     )
     #session_times_json = models.JSONField(blank=True, null=True)
@@ -484,15 +484,23 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
     time_start = serializers.TimeField(required=True)
     time_end = serializers.TimeField(required=True)
     duration_minutes = serializers.IntegerField(required=True)
-    linked_at = serializers.DateTimeField()
-    director = serializers.PrimaryKeyRelatedField(
+    duration_weeks = serializers.IntegerField(required=True)
+    supervisor = serializers.PrimaryKeyRelatedField(
         queryset=InstructorProfile.objects.all(), write_only=True
     )
     enrolled_count = serializers.IntegerField(read_only = True)
 
     class Meta:
         model = LessonClassroom
-        fields = "__all__"
+        fields = ["time_start",
+                  "time_end",
+                  "day_of_week"
+                  "duration_minutes",
+                  "duration_weeks",
+                  "linked_at",
+                  "enrolled_count",
+                  "supervisor"
+                ]
 
     def create(self, validated_data):
         owner_email = validated_data.pop('owner_instructor', None)
@@ -530,7 +538,7 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
         """
         Prevent overlaps (end-exclusive) on the same weekday for:
           - SAME classroom
-          - SAME director (instructor)
+          - SAME supervisor (instructor)
         """
         instance = getattr(self, "instance", None)
 
@@ -541,14 +549,14 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
         t_end     = attrs.get("time_end")      or (instance.time_end    if instance else None)
         lesson    = attrs.get("lesson")        or (instance.lesson      if instance else None)
 
-        # Resolve director (from request.user’s profile or instance)
+        # Resolve supervisor (from request.user’s profile or instance)
         request = self.context.get("request")
-        director = getattr(instance, "director", None)
-        if not director and request and getattr(request.user, "is_authenticated", False):
-            director = InstructorProfile.objects.filter(user=request.user).first()
+        supervisor = getattr(instance, "supervisor", None)
+        if not supervisor and request and getattr(request.user, "is_authenticated", False):
+            supervisor = InstructorProfile.objects.filter(user=request.user).first()
 
         # On create, require the essentials; on partial update, skip if incomplete
-        required = [("classroom", classroom), ("day_of_week", day), ("time_start", t_start), ("time_end", t_end), ("director", director)]
+        required = [("classroom", classroom), ("day_of_week", day), ("time_start", t_start), ("time_end", t_end), ("supervisor", supervisor)]
         if any(v is None for _, v in required):
             return attrs
 
@@ -566,8 +574,8 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
         # A) same classroom clash
         clash_room_qs = base.filter(classroom=classroom).filter(overlap_q)
 
-        # B) same director clash
-        clash_dir_qs  = base.filter(director=director).filter(overlap_q)
+        # B) same supervisor clash
+        clash_dir_qs  = base.filter(supervisor=supervisor).filter(overlap_q)
 
         room_clash = clash_room_qs.values("time_start", "time_end").first()
         dir_clash  = clash_dir_qs.values("time_start", "time_end").first()

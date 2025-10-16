@@ -20,10 +20,9 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   // turn null/undefined into "", keep numbers as strings for <input>/<select>
   const asStr = (v) => (v === null || v === undefined ? "" : String(v));
   // --- API endpoints (NO url changes required on server) ---
-  const LIST_LESSON_CLASSROOMS_URL = (lessonId) =>
-    `/instructor/lesson/${lessonId}/classrooms/`; //  existing GET
+  const LIST_LESSON_CLASSROOMS_URL = ()  =>
+    `/instructor/lesson/classrooms/` //  existing GET
 
-  const LIST_ALL_MY_CLASSROOMS_URL = `/instructor/classrooms/`;
 
   const CREATE_ONLINE_CLASS_URL = (lessonId) => [
     `/instructor/lessons/${lessonId}/classrooms/online/`,
@@ -336,6 +335,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         );
       }
 
+      //----------for submitting readings and assignments 
       if (assignmentsInput.trim()) {
         await api.post(
           `/instructor/lessons/${lessonId}/assignments/`,
@@ -353,13 +353,13 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }
   };
 
-  // For physical classroom linking
+  //----------------For physical classroom linking
   useEffect(() => {
     if (!showPhysicalList) return;
 
     (async () => {
       try {
-        const { data } = await api.get(LIST_ALL_MY_CLASSROOMS_URL);
+        const { data } = await api.get(`/instructor/classrooms/`);
         const rows = Array.isArray(data) ? data : data?.results || [];
 
         // physical = has a location (and/or not online if the API returns is_online)
@@ -382,13 +382,13 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     })();
   }, [showPhysicalList]);
 
-  // Display linked classroom
+  //--------Display linked classroom
   useEffect(() => {
     if (!lessonId) return;
 
     (async () => {
       try {
-        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId));
+        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL, {lesson_id: lessonId});
         const rows = Array.isArray(data) ? data : [];
         // Physical heuristic: has location
         const physicalLinked = rows.find((r) => r.location ?? null);
@@ -401,7 +401,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
             time_end: physicalLinked.time_end || "",
             duration_minutes: physicalLinked.duration_minutes ?? null,
             capacity: physicalLinked.capacity ?? null,
-            supervisor: physicalLinked.supervisor || "", // if your serializer returns it
+            supervisor: physicalLinked.director || "", // if your serializer returns it
           });
         } else {
           setLinkedPhysical(null);
@@ -449,7 +449,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       time_end,
       duration_minutes: null,
       capacity: selectedClassroom.capacity ?? null,
-      supervisor: linkForm.supervisor || "",
+      director: linkForm.supervisor || "",
       _pending: !saved,
     });
 
