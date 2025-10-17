@@ -8,7 +8,6 @@ import { api } from "../../../api";
 export default function InstructorLessonCreation({ onCourseCreated }) {
   const navigate = useNavigate();
   const { lessonId, courseId } = useParams();
-  const [lesson, setLesson] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lessonInput, setLessonInput] = useState("");
@@ -17,20 +16,23 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const [readingListInput, setReadingListInput] = useState("");
   const [assignmentsInput, setAssignmentsInput] = useState("");
 
+
   // turn null/undefined into "", keep numbers as strings for <input>/<select>
   const asStr = (v) => (v === null || v === undefined ? "" : String(v));
   // --- API endpoints (NO url changes required on server) ---
   const LIST_LESSON_CLASSROOMS_URL = (lessonId) =>
-    `/instructor/lesson/${lessonId}/classrooms/`; // existing GET
+    `/instructor/lesson/classrooms/`; // existing GET and pass lessonId params
 
   // --- PLACEHOLDERS the backend can wire later ---
   const ONLINE_LIST_SHOWING = (lessonId) =>
-    `/__placeholder__/online/list/${lessonId}/`; // GET: online classrooms for a lesson
+    `/instructor/classrooms/online/${lessonId}/`; // GET: online classrooms for a lesson
 
   const ONLINE_LINKING = (lessonId) =>
-    `/instructor/classrooms/online/${lessonId}/`;
+    `/instructor/classrooms/online/${lessonId}/`; //POST: online classroom linking to a lesson 
 
-  const PHYSICAL_LINKING = (lessonId) => `/instructor/classrooms/${lessonId}/`;
+  const PHYSICAL_LINKING = (lessonId) => 
+    `/instructor/classrooms/${lessonId}/`; 
+
 
   // POPUP + FORM STATE FOR ONLINE CLASSROOM
   const [showOnlineClassModal, setShowOnlineClassModal] = useState(false);
@@ -48,9 +50,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     title: "",
     credits: "",
     duration_weeks: "",
-    director: "",
+    designer_email: "",
     description: "",
     objectives: "",
+    supervisor: ""
   });
 
   // PHYSICAL CLASSROOM LINKING STATE
@@ -118,6 +121,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       time_end: "",
       zoom_link: "",
       supervisor: "",
+      is_online: true
     });
     setShowOnlineClassModal(false);
   };
@@ -129,9 +133,9 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }
   };
 
-  const goToCoursePage = () => {
+  const goToLessonPage = () => {
     setShowOptionalModal(false);
-    navigate("/instructor/course-list");
+    navigate(`/instructor/course/${courseId}/lesson/${lessonId}`);
   };
 
   const handleChange = (e) => {
@@ -186,6 +190,14 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
     (async () => {
       try {
+        const { data: asgn_data } = await api.get(`/instructor/assignments/${lessonId}/`);
+        const { data: read_data } = await api.get(`/instructor/readings/${lessonId}/`);
+        const { data: prereqs_data} = await api.get(`/instructor/prereqs/${lessonId}/`);
+        
+        setAssignmentsInput(asgn_data.assignments_text);
+        setReadingListInput(read_data.readings_text);
+        setPrereqInput(prereqs_data.prereqs_text)
+        
         const { data } = await api.get(
           `/instructor/lessons/${lessonId}/detail/`
         );
@@ -207,17 +219,9 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           description: asStr(data.description),
           objectives: asStr(data.objectives),
           status: asStr(data.status || "Inactive"),
-          // pick whichever field you want displayed for "designer"
-          designer: asStr(data.created_by), // or keep "", depending on your UI
+          // display designer's email
+          designer_email: asStr(data.designer_email), 
         }));
-
-        // to prefill prerequisites too (optional) and have a GET endpoint for it:
-        const pre = await api.get(
-          `/instructor/lessons/${lessonId}/prerequisites/`
-        );
-        setPrereqInput(
-          pre.data?.prerequisites?.map((p) => p.lesson_id).join(", ") || ""
-        );
       } catch (err) {
         console.error("Failed to load lesson details", err);
       }
@@ -259,19 +263,19 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     const submitPrereqs = async () => {
       /**Handle prerequisites submission */
       // split by commas / whitespace / newlines
-      const prereqIds = prereqInput
+      let prereqIds = prereqInput
         .split(/[\s,]+/)
         .map((s) => s.trim())
         .filter(Boolean);
 
       if (prereqIds.length === 0) {
-        return;
+        prereqIds = ""
       } //Nothing entered --> Just leave
 
       try {
         const res = await api.post(
           `instructor/lessons/${lessonId}/prerequisites/`,
-          { prerequisites: prereqIds, mode: "merge" } // or "replace"
+          { prerequisites: prereqIds, mode: "replace" } // or "replace"
         );
         console.log("Created:", res.data);
       } catch (err) {
@@ -295,8 +299,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         : {}),
       ...(formData.credits?.trim() ? { credits: creditsNum } : {}),
       status: formData.status,
-      ...(formData.designer?.trim()
-        ? { designer_input: formData.designer.trim() } // email string
+      ...(formData.designer_email?.trim()
+        ? { designer_input: formData.designer_email.trim() } //email string
         : {}),
     };
 
@@ -307,16 +311,28 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       if (readingListInput.trim()) {
         await api.post(
           `/instructor/lessons/${lessonId}/readings/`,
-          { lesson_id: lessonId, items: readingListInput },
+          { lesson_id: lessonId, items: readingListInput, mode: "replace" },
+          { headers: { "Content-Type": "application/json" } }
+        );
+      } else {
+        await api.post(
+          `/instructor/lessons/${lessonId}/readings/`,
+          { lesson_id: lessonId, items: "", mode: "replace" },
           { headers: { "Content-Type": "application/json" } }
         );
       }
 
-      //----------for submitting readings and assignments
+      //----------for submitting readings and assignments--
       if (assignmentsInput.trim()) {
         await api.post(
           `/instructor/lessons/${lessonId}/assignments/`,
-          { lesson_id: lessonId, items: assignmentsInput },
+          { lesson_id: lessonId, items: assignmentsInput, mode: "replace" },
+          { headers: { "Content-Type": "application/json" } }
+        );
+      } else {
+        await api.post(
+          `/instructor/lessons/${lessonId}/assignments/`,
+          { lesson_id: lessonId, items: "", mode: "replace" },
           { headers: { "Content-Type": "application/json" } }
         );
       }
@@ -361,11 +377,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   // Use effect to fetch one combined list:
   useEffect(() => {
     if (!lessonId) return;
-
     (async () => {
       try {
         // 1) Try the single combined endpoint
-        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId));
+        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId), {params: {lesson_id: lessonId}});
         const rows = Array.isArray(data) ? data : data?.results || [];
 
         // Split physical vs online heuristically
@@ -502,6 +517,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       zoom_link,
       supervisor,
       duration_weeks,
+      capacity,
+      is_online
     } = onlineForm || {};
 
     if (!day_of_week) return alert("Please select class day.");
@@ -524,6 +541,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       duration_weeks: duration_weeks || null,
       duration_minutes,
       supervisor: supervisor || null,
+      capacity: 100,
+      location: "",
+      is_online: true
+
     };
 
     try {
@@ -629,12 +650,11 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
             <div className={i.row}>
               <label className={i.label}>Lesson Designer:</label>
-
               <input
                 className={i.input}
                 type="text"
                 name="designer"
-                value={formData.designer}
+                value={formData.designer_email}
                 onChange={handleChange}
                 placeholder="Enter instructor email"
               />
@@ -734,17 +754,13 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                   physicalClassrooms.map((pc) => (
                     <div key={pc.classroom_id} className={i.physCard}>
                       <div>
-                        <strong>Location:</strong> {pc.location || "-"}
+                        {pc.location || "-"} 
                       </div>
                       <div className={i.physRow}>
+                      <span> <strong>Supervisor: </strong> {pc.supervisor}</span>
                         <span>
-                          <strong>Supervisor:</strong> {pc.supervisor || "-"}
-                        </span>
-                        <span>
-                          <strong>Day:</strong> {pc.day_of_week || "-"}
-                        </span>
-                        <span>
-                          <strong>Time:</strong> {pc.time_start || "-"}
+                          <strong> {pc.day_of_week || "-"} &nbsp;&nbsp;</strong>
+                          {pc.time_start || "-"}
                           {pc.time_end ? ` - ${pc.time_end}` : ""}
                         </span>
                         <span>
@@ -800,19 +816,19 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                         </span>
                       </div>
                       <div className={i.onlineRow}>
-                        <span>
-                          <strong>Day:</strong> {c.day_of_week || "-"}
-                        </span>
-                        <span>
-                          <strong>Time:</strong>{" "}
+                        <span> <strong>Supervisor: </strong> {c.supervisor}</span>
+                        <strong>{c.day_of_week || "-"}</strong>  
                           {c.time_start ? c.time_start : "-"}
                           {c.time_end ? ` - ${c.time_end}` : ""}
-                        </span>
                         <span>
                           <strong>Duration:</strong>{" "}
                           {c.duration_minutes
                             ? `${c.duration_minutes} mins`
                             : "-- mins"}
+                        </span>
+                        <span>
+                          <strong>Weeks:</strong>{" "}
+                          {c.duration_weeks ? `${c.duration_weeks}` : "—"}
                         </span>
                       </div>
                     </div>
@@ -850,7 +866,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           <div className={i.modalContent}>
             <h3>Lesson saved successfully!</h3>
             <div className={i.modalButtons}>
-              <button className={i.selectButton} onClick={goToCoursePage}>
+              <button className={i.selectButton} onClick={goToLessonPage}>
                 Go to lesson page
               </button>
             </div>
@@ -984,7 +1000,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                       supervisor: e.target.value,
                     }))
                   }
-                  placeholder="Enter instructor email:  instructor@beacon.edu"
+                  placeholder="Enter instructor email"
                 />
               </div>
 
@@ -1096,7 +1112,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                   onChange={(e) =>
                     setOnlineForm((s) => ({ ...s, supervisor: e.target.value }))
                   }
-                  placeholder="Enter instructor email: instructor@beacon.edu"
+                  placeholder="Enter instructor email"
                 />
               </div>
 
@@ -1112,6 +1128,26 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                   }
                   required
                 />
+              </div>
+
+              <div className={i.modalRow}>
+                <label className={i.modalLabel}>Class Duration (Weeks)</label>
+                <select
+                  className={i.modalInput}
+                  value={onlineForm.duration_weeks}
+                  onChange={(e) =>
+                    setOnlineForm((s) => ({
+                      ...s,
+                      duration_weeks: e.target.value,
+                    }))
+                  }
+                  required
+                >
+                  <option value="">Select duration</option>
+                  <option value="2">2 Weeks</option>
+                  <option value="3">3 Weeks</option>
+                  <option value="4">4 Weeks</option>
+                </select>
               </div>
 
               <div className={i.modalActions}>

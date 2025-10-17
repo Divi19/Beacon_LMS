@@ -308,9 +308,9 @@ class LessonSerializer(serializers.ModelSerializer):
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), write_only=True)
     created_by = serializers.PrimaryKeyRelatedField(queryset=InstructorProfile.objects.all(), write_only=True, required=False)
 
-    # display-only: pulls full name from related 'designer'
-    designer_display = serializers.CharField(source="designer.full_name", read_only=True)
-
+    # display-only: pulls full name or email from related 'designer'
+    designer_email = serializers.CharField(source="designer.user.email", read_only=True)
+    designer_card = serializers.CharField(source="designer.full_name", read_only=True)
     # incoming optional email to resolve designer; accepts "", null, or omit
     designer_input = serializers.EmailField(write_only=True, required=False, allow_blank=True, allow_null=True)
 
@@ -335,9 +335,11 @@ class LessonSerializer(serializers.ModelSerializer):
             "objectives",
             "status",
             "enrolled_count",
-            "designer_display",
+            "designer_email",
             "designer_input",
             "created_by",
+            "designer_card"
+            
         ]
         read_only_fields = ["lesson_id"]
 
@@ -359,7 +361,7 @@ class LessonSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "designer_input": f"No InstructorProfile found for email '{designer_email}'."
                 })
-
+     
         return attrs
 
     def create(self, validated_data):
@@ -372,7 +374,12 @@ class LessonSerializer(serializers.ModelSerializer):
                 instr = InstructorProfile.objects.filter(user=request.user).first()
                 if instr:
                     validated_data["designer"] = instr
-
+        else: 
+            designer_email = validated_data.pop("designer_input")
+            user = User.objects.get(email=designer_email)
+            instructor = InstructorProfile.objects.get(user=user)
+            validated_data["designer"] = instructor
+        
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
@@ -480,7 +487,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
             "capacity", "zoom_link", "is_online", "location"
         ]
     def create(self, validated_data):
-        is_online = validated_data.pop("is_online", False)
+        is_online = validated_data.get("is_online", False)
         if is_online:
             validated_data["capacity"] = 100 
         return Classroom.objects.create(**validated_data) 
@@ -507,14 +514,15 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
 
     duration_minutes = serializers.IntegerField(read_only=True)
     duration_weeks = serializers.IntegerField(required=False, allow_null=True)
-    supervisor = serializers.EmailField(write_only=True, required=False, allow_blank = True)
+    supervisor_input = serializers.EmailField(write_only=True, required=False, allow_blank = True, allow_null=True)
     enrolled_count = serializers.IntegerField(read_only=True)
     day_of_week = serializers.CharField()
-
+    supervisor = serializers.CharField(source="supervisor.full_name", read_only=True)
+    
     class Meta:
         model = LessonClassroom
         fields = [
-           "enrolled_count", "day_of_week", "duration_weeks", "time_start", "time_end", "duration_minutes", "classroom", "lesson", "supervisor"
+           "supervisor_input", "enrolled_count", "day_of_week", "duration_weeks", "time_start", "time_end", "duration_minutes", "classroom", "lesson", "supervisor"
         ]
         
     
@@ -623,6 +631,7 @@ class LessonPrereqOutSerializer(serializers.ModelSerializer):
         model = LessonPrerequisite
         fields = ["prereq_lesson_id", "prereq_title"]
 
+
 class PrereqInputSerializer(serializers.Serializer):
     """
     Accepts either:
@@ -636,18 +645,14 @@ class PrereqInputSerializer(serializers.Serializer):
     _SPLIT = re.compile(r"[,\r\n]+")  # commas or newlines
 
     def _normalize_to_list(self, raw):
-        # Case: missing entirely
         if raw is None:
             return []
 
-        # Case: already a list
         if isinstance(raw, list):
             items = [str(x).strip() for x in raw if str(x).strip()]
-        # Case: a string (textarea)
         elif isinstance(raw, str):
             items = [s.strip() for s in self._SPLIT.split(raw) if s.strip()]
         else:
-            # Anything else (dict, int, etc.) -> treat as invalid/empty
             items = []
 
         # De-dup while preserving order
@@ -664,12 +669,14 @@ class PrereqInputSerializer(serializers.Serializer):
         if not lesson_id:
             raise serializers.ValidationError({"lesson_id": "Missing lesson_id in context."})
 
-        # Normalize to a list regardless of incoming shape
-        normalized = self._normalize_to_list(self.initial_data.get("prerequisites", None))
+        raw = self.initial_data.get("prerequisites", None)
+        normalized = self._normalize_to_list(raw)
 
-        if not normalized:
-            # IMPORTANT: we throw the error here (after normalization),
-            # not via ListField pre-validation.
+        # Determine mode (respect input, default to merge)
+        mode = self.initial_data.get("mode", attrs.get("mode", "merge"))
+
+        # Allow "clear all" only in REPLACE mode; still reject empty for MERGE
+        if not normalized and mode != "replace":
             raise serializers.ValidationError({"prerequisites": "Provide at least one prerequisite lesson_id."})
 
         # Anchor lesson
@@ -677,21 +684,23 @@ class PrereqInputSerializer(serializers.Serializer):
         if not lesson:
             raise serializers.ValidationError({"lesson_id": f"Lesson '{lesson_id}' not found."})
 
-        # Self-reference check
-        if lesson.lesson_id in normalized:
+        # Self-reference check (only matters if list not empty)
+        if normalized and lesson.lesson_id in normalized:
             raise serializers.ValidationError({"prerequisites": "A lesson cannot be a prerequisite of itself."})
 
-        # Resolve all referenced lessons
-        found = {l.lesson_id: l for l in Lesson.objects.filter(lesson_id__in=normalized)}
-        missing = [lid for lid in normalized if lid not in found]
-        if missing:
-            raise serializers.ValidationError({"prerequisites": [f"Not found: {', '.join(missing)}"]})
+        # Resolve referenced lessons (skip if we're clearing)
+        found = {}
+        if normalized:
+            found = {l.lesson_id: l for l in Lesson.objects.filter(lesson_id__in=normalized)}
+            missing = [lid for lid in normalized if lid not in found]
+            if missing:
+                raise serializers.ValidationError({"prerequisites": [f"Not found: {', '.join(missing)}"]})
 
         # Stash for view
         attrs["lesson"] = lesson
-        attrs["prereq_list"] = [found[lid] for lid in normalized]
+        attrs["prereq_list"] = [found[lid] for lid in normalized]  # empty list in clear-all case
+        attrs["mode"] = mode  # ensure mode is present in validated_data
         return attrs
-
 
 class LessonBulkCreateInSerializer(serializers.Serializer):
     count = serializers.IntegerField(min_value=1, max_value=50)  # cap to prevent abuse
@@ -704,13 +713,17 @@ class LessonBulkCreateInSerializer(serializers.Serializer):
     objectives = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 class LessonItemsBulkSerializer(serializers.Serializer):
-    lesson_id = serializers.CharField(required=True)
-    items = serializers.CharField(allow_blank=False, trim_whitespace=True)
+    # Let empty be valid only when mode=replace (to clear all)
+    items = serializers.CharField(allow_blank=True, trim_whitespace=True)
+    mode = serializers.ChoiceField(choices=["merge", "replace"], required=False, default="merge")
 
-    def validate_lesson_id(self, v):
-        if not Lesson.objects.filter(pk=v).exists():
-            raise serializers.ValidationError("Lesson not found.")
-        return v
+    def validate(self, attrs):
+        mode = attrs.get("mode", "merge")
+        items = attrs.get("items", "")
+        if (not items.strip()) and mode != "replace":
+            raise serializers.ValidationError({"items": "Provide at least one line or use mode='replace' to clear."})
+        return attrs
+    
     
 class LessonReadingSerializer(serializers.ModelSerializer):
     class Meta:

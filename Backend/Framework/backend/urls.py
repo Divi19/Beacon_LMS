@@ -36,6 +36,10 @@ urlpatterns = [
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #Instructors Courses
     path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
+    #Show Assignments, reading list, and prereqs in lesson form 
+    path('instructor/assignments/<str:lesson_id>/',AssignmentTextView.as_view()),
+    path('instructor/readings/<str:lesson_id>/',ReadingTextView.as_view()),
+    path('instructor/prereqs/<str:lesson_id>/',PrereqsTextView.as_view()),
     #Instructors Classrooms
         #Course specific - sendParams
     path("instructor/course/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),

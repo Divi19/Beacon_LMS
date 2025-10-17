@@ -3,6 +3,7 @@ import re
 from urllib.parse import urlparse
 from .forms import *
 from copy import deepcopy
+import traceback
 
 #django 
 from django.shortcuts import render, redirect
@@ -15,12 +16,14 @@ from django.contrib.auth.hashers import check_password
 from django.db import IntegrityError, transaction
 from django.db.models import OuterRef, Subquery, Q
 from django.db.models import Count
+from django.http import HttpResponse
 # views.py
 from itertools import chain
 from django.db.models import Value, IntegerField, TimeField, CharField
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
 
 #Res
 from rest_framework.decorators import api_view
@@ -160,6 +163,8 @@ class LinkingClassroomsView(APIView):
         POST
         Grab all unlinked classrooms and linked classrooms of the same course
         """
+        
+        
         linked_rows = (
             LessonClassroom.active
             .filter(lesson__course__course_id=course_id)
@@ -215,17 +220,34 @@ class LinkingClassroomsView(APIView):
             return {
                 "classroom_id": r["classroom_id"],
                 "location": r["location"],
-                "day_of_week": r["day_of_week"],
-                "time_start": r["time_start"],
-                "time_end": r["time_end"],
-                "duration_minutes": r["duration_minutes"],
+                "day_of_week": r["lessonclassroom__day_of_week"],
+                "time_start": r["lessonclassroom__time_start"].strftime("%H:%M") if r["lessonclassroom__time_start"] else None,
+                "time_end": r["lessonclassroom__time_end"].strftime("%H:%M") if r["lessonclassroom__time_end"] else None,
+                "duration_minutes": r["essonclassroom__duration_minutes"],
                 "capacity": r["capacity"],
                 "enrolled_count": r["enrolled_count"],                             
             }
+        DAY_ORDER = {
+            "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
+            "Friday": 5, "Saturday": 6, "Sunday": 7,
+        }
+        def day_rank(day):
+            """Return numeric rank for a weekday name (None or unknown -> 99)."""
+            return DAY_ORDER.get(day, 99)
 
-        data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
-        return Response(data)
+        def time_str(t):
+            """Return time formatted as HH:MM string or empty if None."""
+            return t.strftime("%H:%M") if t else ""
+
+        try:
+            data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
+            data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+            return Response(data)
+        except Exception as e:
+            return Response(
+                {"error": str(e), "trace": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
     
     def post(self, request, lesson_id):
         mutable_data = deepcopy(request.data)
@@ -270,7 +292,8 @@ class OnlineClassroomsView(APIView):
                 "enrolled_count",   
                 "classroom__zoom_link",
                 "classroom__is_online",   
-                "lesson__lesson_id"                                           
+                "lesson__lesson_id",
+                "duration_weeks"                                           
             )
         )
 
@@ -287,12 +310,33 @@ class OnlineClassroomsView(APIView):
                 "enrolled_count": r["enrolled_count"],   
                 "is_online": r["classroom__is_online"],
                 "zoom_link": r["classroom__zoom_link"], 
-                "lesson_id": r["lesson__lesson_id"]                      
+                "lesson_id": r["lesson__lesson_id"],
+                "duration_weeks": r["duration_weeks"]                      
             }
+        
+        DAY_ORDER = {
+            "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
+            "Friday": 5, "Saturday": 6, "Sunday": 7,
+        }
 
-        data = [*map(norm_linked, linked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
-        return Response(data)
+        def day_rank(day):
+            """Return numeric rank for a weekday name (None or unknown -> 99)."""
+            return DAY_ORDER.get(day, 99)
+
+        def time_str(t):
+            """Return time formatted as HH:MM string or empty if None."""
+            return t.strftime("%H:%M") if t else ""
+
+        try:
+            data = [*map(norm_linked, linked_rows)]
+            data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+            return Response(data)
+        except Exception as e:
+            return Response(
+                {"error": str(e), "trace": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+    
 
     @transaction.atomic
     def post(self, request, lesson_id):
@@ -300,7 +344,8 @@ class OnlineClassroomsView(APIView):
         mutable1 = deepcopy(request.data)
         mutable1["lesson"] = lesson_id
         mutable1["is_online"] = True #Just in case
-        online_classroom = ClassroomSerializer(data=request.data, context={"request": request})
+        mutable1["location"] = ""
+        online_classroom = ClassroomSerializer(data=mutable1, context={"request": request})
         if not  online_classroom.is_valid():
             print("ERR:", online_classroom.errors)
             return Response(online_classroom.errors, status=400)
@@ -338,12 +383,14 @@ class ActiveClassroomsView(APIView):
     def get(self, request):
         lesson_id = request.query_params.get("lesson_id", None)
         course_id = request.query_params.get("course_id", None)
+
         if lesson_id is not None:
             q = Q(lesson__lesson_id=lesson_id)
         elif course_id is not None:
             q = Q(lesson__course__course_id=course_id)
         else:
             return Response({"detail": "Provide lesson_id or course_id."}, status=400)
+    
 
         linked_rows = (
             LessonClassroom.active
@@ -362,7 +409,8 @@ class ActiveClassroomsView(APIView):
                 "enrolled_count",   
                 "classroom__zoom_link",
                 "classroom__is_online",   
-                "lesson__lesson_id"                                           
+                "lesson__lesson_id",  
+                "duration_weeks"                                        
             )
         )
 
@@ -379,12 +427,30 @@ class ActiveClassroomsView(APIView):
                 "enrolled_count": r["enrolled_count"],   
                 "is_online": r["classroom__is_online"],
                 "zoom_link": r["classroom__zoom_link"], 
-                "lesson_id": r["lesson__lesson_id"]                      
+                "lesson_id": r["lesson__lesson_id"],     
+                "duration_weeks": r["duration_weeks"]               
             }
+        
+        DAY_ORDER = {
+            "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
+            "Friday": 5, "Saturday": 6, "Sunday": 7,
+        }
 
-        data = [*map(norm_linked, linked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
-        return Response(data)
+        def day_rank(day):
+            """Return numeric rank for a weekday name (None or unknown -> 99)."""
+            return DAY_ORDER.get(day, 99)
+        
+        try:
+            data = [*map(norm_linked, linked_rows)]
+            data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+            return Response(data)
+        
+        except Exception as e:
+            return Response(
+                {"error": str(e), "trace": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+    
 
 
 class OwnClassroomsView(APIView):
@@ -554,7 +620,6 @@ class LessonsView(APIView):
         if not  ser.is_valid():
             print("ERR:", ser.errors)
             return Response(ser.errors, status=400)
-        online_lesson_classroom_obj = ser.save()
         return Response(ser.data, status=status.HTTP_200_OK)
     
 
@@ -575,7 +640,9 @@ class LessonDetails(APIView):
             "objectives": lesson.objectives, 
             "duration_weeks":lesson.duration_weeks,
             "status": lesson.status,
-            "created_by": lesson.created_by.full_name
+            "created_by": lesson.created_by.full_name,
+            "designer": lesson.designer.full_name,
+            "designer_email":lesson.designer.user.email
         }
         return Response(output, status=status.HTTP_200_OK)
 
@@ -705,9 +772,6 @@ class LessonPrereqBulkCreateView(APIView):
 
     @transaction.atomic
     def post(self, request, lesson_id):
-        """
-        Upsert prerequisites (merge/replace). Accepts list OR newline/comma-separated string.
-        """
         ser = PrereqInputSerializer(
             data=request.data,
             context={"request": request, "lesson_id": lesson_id}
@@ -718,35 +782,48 @@ class LessonPrereqBulkCreateView(APIView):
         prereq_list = ser.validated_data["prereq_list"]  # list[Lesson]
         mode = ser.validated_data["mode"]
 
-        if mode == "replace":
-            LessonPrerequisite.objects.filter(lesson=lesson).delete()
+        # Desired set
+        desired_ids = {p.lesson_id for p in prereq_list}
 
-        # Avoid duplicates
-        existing_ids = set(
+        if mode == "replace":
+            # Delete prerequisites not in the new list (handles empty desired_ids = clear-all)
+            LessonPrerequisite.objects.filter(
+                lesson=lesson
+            ).exclude(
+                prereq_lesson__lesson_id__in=desired_ids
+            ).delete()
+
+
+        # Recompute existing after possible deletes
+        existing_prereq_ids = set(
             LessonPrerequisite.objects
             .filter(lesson=lesson)
             .values_list("prereq_lesson__lesson_id", flat=True)
         )
 
-        to_create = [
-            LessonPrerequisite(lesson=lesson, prereq_lesson=p)
-            for p in prereq_list
-            if p.lesson_id not in existing_ids
-        ]
-        if to_create:
+        # Create only missing edges
+        missing_ids = desired_ids - existing_prereq_ids
+        if missing_ids:
+            id_to_obj = {p.lesson_id: p for p in prereq_list}
+            to_create = [LessonPrerequisite(lesson=lesson, prereq_lesson=id_to_obj[lid]) for lid in missing_ids]
+            # If you have a UniqueConstraint, you can optionally tolerate races:
+            # LessonPrerequisite.objects.bulk_create(to_create, batch_size=100, ignore_conflicts=True)
             LessonPrerequisite.objects.bulk_create(to_create, batch_size=100)
 
-        current = (
+        # Return stable, ordered list
+        current_prereqs = (
             LessonPrerequisite.objects
             .filter(lesson=lesson)
             .select_related("prereq_lesson")
+            .order_by("prereq_lesson__lesson_id")
         )
-        out = LessonPrereqOutSerializer(current, many=True).data
+        out = LessonPrereqOutSerializer(current_prereqs, many=True).data
+
+        # Optional: choose 200 vs 201 based on whether we created anything.
         return Response(
             {"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)},
             status=status.HTTP_201_CREATED
         )
-
 """
 See student list 
 """
@@ -1323,6 +1400,7 @@ class LessonReadingBulkCreateView(APIView):
                 out.append({"title": title, "url": url})
         return out
 
+        
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         lesson_id = kwargs.get("lesson_id")
@@ -1331,40 +1409,85 @@ class LessonReadingBulkCreateView(APIView):
         ser = LessonItemsBulkSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
 
-        parsed = self.parse_reading_items(ser.validated_data["items"])
+        raw_items = ser.validated_data["items"]
+        mode = ser.validated_data["mode"]
 
-        # in-memory de-dup on (title, url)
-        seen = set()
-        readings_to_create = []
-        for item in parsed:
-            key = (item["title"], item["url"])
+        parsed = self.parse_reading_items(raw_items)  # [{"title": str, "url": Optional[str]}]
+        # ---- CLEAR-ALL fast path ----
+        if mode == "replace" and len(parsed) == 0:
+            deleted, _ = LessonReading.objects.filter(lesson=lesson).delete()
+            current = (LessonReading.objects
+                    .filter(lesson=lesson)
+                    .order_by("-created_at", "-pk")
+                    .values("reading_id", "title", "url", "created_at"))
+            return Response(
+                {
+                    "lesson_id": lesson.lesson_id,
+                    "attempted": 0,
+                    "created_count": 0,
+                    "deleted_count": deleted,
+                    "items": list(current),
+                },
+                status=status.HTTP_200_OK,
+            )
+        # In-payload de-dup on (title, url)
+        seen, cleaned = set(), []
+        for it in parsed:
+            key = (it["title"], it["url"])
             if key in seen:
                 continue
             seen.add(key)
-            readings_to_create.append(
-                LessonReading(lesson=lesson, title=item["title"], url=item["url"])
+            cleaned.append(it)
+
+        desired = {(it["title"], it["url"]) for it in cleaned}
+
+        # Current state as exact pairs (note url can be None)
+        existing_qs = LessonReading.objects.filter(lesson=lesson)
+        existing = set(existing_qs.values_list("title", "url"))
+
+        if mode == "replace":
+            # DELETE exact pairs: existing - desired (NULL-safe)
+            to_delete = existing - desired
+            if to_delete:
+                q = Q(pk__isnull=True)
+                for t, u in to_delete:
+                    cond = Q(lesson=lesson, title=t)
+                    cond &= Q(url__isnull=True) if u is None else Q(url=u)
+                    q |= cond
+                LessonReading.objects.filter(q).delete()
+
+            # refresh
+            existing_qs = LessonReading.objects.filter(lesson=lesson)
+            existing = set(existing_qs.values_list("title", "url"))
+
+        # CREATE missing exact pairs: desired - existing
+        missing = desired - existing
+        if missing:
+            by_key = {(it["title"], it["url"]): it for it in cleaned}
+            LessonReading.objects.bulk_create(
+                [LessonReading(lesson=lesson, title=k[0], url=k[1]) for k in missing],
+                ignore_conflicts=True,  # safe even without the unique constraint
             )
 
-        # compute counts pre/post for accurate created_count
-        before = LessonReading.objects.filter(lesson=lesson).count()
-        LessonReading.objects.bulk_create(readings_to_create, ignore_conflicts=True)
-        after = LessonReading.objects.filter(lesson=lesson).count()
-
         current = (LessonReading.objects
-                   .filter(lesson=lesson)
-                   .order_by("-created_at", "-pk")
-                   .values("reading_id", "title", "url", "created_at"))
+                .filter(lesson=lesson)
+                .order_by("-created_at", "-pk")
+                .values("reading_id", "title", "url", "created_at"))
+        
+        print(f"Request data: {request.data}")
+        print(f"Validated data: {ser.validated_data}")
+        print(f"Parsed items: {parsed}")
+        print(f"Deleting {missing} items for lesson {lesson.lesson_id}")
 
         return Response(
             {
                 "lesson_id": lesson.lesson_id,
-                "attempted": len(readings_to_create),
-                "created_count": max(after - before, 0),
+                "attempted": len(cleaned),
+                "created_count": len(missing),
                 "items": list(current),
             },
-            status=status.HTTP_201_CREATED,
+            status=status.HTTP_201_CREATED if missing else status.HTTP_200_OK,
         )
-
 class LessonAssignmentBulkCreateView(APIView):
     """
     GET  /instructor/lessons/<lesson_id>/assignments/
@@ -1419,47 +1542,161 @@ class LessonAssignmentBulkCreateView(APIView):
         lesson_id = kwargs.get("lesson_id")
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
 
-        # Reuse the same input serializer you already have:
         ser = LessonItemsBulkSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
 
-        parsed = self.parse_assignment_items(ser.validated_data["items"])
+        raw_items = ser.validated_data["items"]
+        mode = ser.validated_data["mode"]
 
-        # In-memory de-dup (title, description) to avoid obvious duplicates in the same payload
-        seen = set()
-        objs = []
-        for item in parsed:
-            key = (item["title"], item["description"])
+        parsed = self.parse_assignment_items(raw_items)  # [{"title": str, "description": Optional[str]}]
+        # ---- CLEAR-ALL fast path ----
+        if mode == "replace" and len(parsed) == 0:
+            deleted, _ = LessonAssignment.objects.filter(lesson=lesson).delete()
+            current = (LessonAssignment.objects
+                    .filter(lesson=lesson)
+                    .order_by("-created_at", "-pk")
+                    .values("assignment_id", "title", "description", "created_at"))
+            return Response(
+                {
+                    "lesson_id": lesson.lesson_id,
+                    "attempted": 0,
+                    "created_count": 0,
+                    "deleted_count": deleted,
+                    "items": list(current),
+                },
+                status=status.HTTP_200_OK,
+        )
+        # In-payload de-dup on (title, description)
+        seen, cleaned = set(), []
+        for it in parsed:
+            key = (it["title"], it["description"])
             if key in seen:
                 continue
             seen.add(key)
-            objs.append(
-                LessonAssignment(
-                    lesson=lesson,
-                    title=item["title"],
-                    description=item["description"]
-                )
+            cleaned.append(it)
+
+        desired = {(it["title"], it["description"]) for it in cleaned}
+
+        existing_qs = LessonAssignment.objects.filter(lesson=lesson)
+        existing = set(existing_qs.values_list("title", "description"))
+
+        if mode == "replace":
+            to_delete = existing - desired
+            if to_delete:
+                q = Q(pk__isnull=True)
+                for t, d in to_delete:
+                    cond = Q(lesson=lesson, title=t)
+                    cond &= Q(description__isnull=True) if d is None else Q(description=d)
+                    q |= cond
+                LessonAssignment.objects.filter(q).delete()
+
+            existing_qs = LessonAssignment.objects.filter(lesson=lesson)
+            existing = set(existing_qs.values_list("title", "description"))
+
+        missing = desired - existing
+        if missing:
+            LessonAssignment.objects.bulk_create(
+                [
+                    LessonAssignment(
+                        lesson=lesson,
+                        title=t,
+                        description=d,
+                    )
+                    for (t, d) in missing
+                ],
+                ignore_conflicts=True,  # harmless even without a DB unique constraint
             )
 
-        before = LessonAssignment.objects.filter(lesson=lesson).count()
-        # If you add a DB unique constraint (see note below), ignore_conflicts=True will do the right thing.
-        LessonAssignment.objects.bulk_create(objs, ignore_conflicts=True)
-        after = LessonAssignment.objects.filter(lesson=lesson).count()
-
         current = (LessonAssignment.objects
-                   .filter(lesson=lesson)
-                   .order_by("-created_at", "-pk")
-                   .values("assignment_id", "title", "description", "created_at", "updated_at"))
-
+                .filter(lesson=lesson)
+                .order_by("-created_at", "-pk")
+                .values("assignment_id", "title", "description", "created_at", "updated_at"))
+        
         return Response(
             {
                 "lesson_id": lesson.lesson_id,
-                "attempted": len(objs),
-                "created_count": max(after - before, 0),
+                "attempted": len(cleaned),
+                "created_count": len(missing),
                 "items": list(current),
             },
-            status=status.HTTP_201_CREATED,
+            status=status.HTTP_201_CREATED if missing else status.HTTP_200_OK,
         )
+        
+
+class AssignmentTextView(APIView):
+    """
+    Return all assignments in a plain text format:
+    "title | description" per line.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+
+    def get(self, request, lesson_id):
+        # 1. Query all assignments
+        assignments = LessonAssignment.objects.filter(lesson__lesson_id = lesson_id).values("title", "description")
+
+        # 2. Build each line as "title | description"
+        lines = []
+        for a in assignments:
+            title = a.get("title", "").strip()
+            desc = a.get("description", "").strip()
+            lines.append(f"{title} | {desc}")
+
+        # 3. Join by newline
+        output_text = "\n".join(lines)
+
+        # 4. Return as plain text (or JSON if you prefer)
+        return Response({"assignments_text": output_text})
+
+class ReadingTextView(APIView):
+    """
+    Return all assignments in a plain text format:
+    "title | description" per line.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+
+    def get(self, request, lesson_id):
+        # 1. Query all assignments
+        readings = LessonReading.objects.filter(lesson__lesson_id = lesson_id).values("title", "url")
+
+        # 2. Build each line as "title | description"
+        lines = []
+        for a in readings:
+            title = a.get("title", "").strip()
+            desc = a.get("url", "").strip()
+            lines.append(f"{title} | {desc}")
+
+        # 3. Join by newline
+        output_text = "\n".join(lines)
+
+        # 4. Return as plain text (or JSON if you prefer)
+        return Response({"readings_text": output_text})
+
+class PrereqsTextView(APIView):
+    """
+    Return all prerequisites of a lesson as plain text.
+    Example output: "LES001, LES002, LES003"
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        # 1. Query prerequisites for this lesson
+        prereqs = (
+            LessonPrerequisite.objects
+            .filter(lesson__lesson_id=lesson_id)
+            .values_list("prereq_lesson__lesson_id", flat=True)  # fetch related lesson_id directly
+        )
+
+        # 2. Convert to comma-separated string
+        output_text = ", ".join(prereqs)
+
+        # 3. Return as JSON so frontend can use it easily
+        return Response({"prereqs_text": output_text})
+    
 
     
 class AdminLogin(APIView): 
