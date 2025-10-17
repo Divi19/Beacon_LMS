@@ -5,6 +5,9 @@
 
 .header {
   margin-bottom: clamp(16px, 3vw, 28px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .title {
@@ -64,4 +67,11 @@
   margin-right: calc(-1 * clamp(16px, 4vw, 40px)); 
   margin-top: calc(-1 * clamp(16px, 4vw, 40px));   
   background: #fff; 
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(16px, 3vw, 28px);
+  margin-top: 20px;
 }

@@ -6,7 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
-from django.db.models import Q
+from django.db.models import Sum, Q, F
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
@@ -100,6 +100,7 @@ class Enrollment(models.Model):
 class InstructorProfile(models.Model):
     instructor_profile_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('User', models.DO_NOTHING)
+    title = models.CharField(max_length=40, blank=True, null=True)
     full_name = models.CharField(max_length=255)
     staff_no = models.CharField(unique=True, max_length=50)
 
@@ -180,7 +181,7 @@ class LessonClassroom(models.Model):
     duration_minutes = models.IntegerField(blank=True, null=True)
     duration_weeks = models.IntegerField(choices=Weeks.choices, default=Weeks.TWO)
     linked_at = models.DateTimeField(auto_now_add=True)
-    director = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
+    supervisor = models.ForeignKey(InstructorProfile, models.DO_NOTHING)
     expires_at = models.DateTimeField(blank=True, null=True, db_index=True)
     objects = models.Manager()                
     active  = ActiveLessonClassroomManager()
@@ -189,12 +190,18 @@ class LessonClassroom(models.Model):
     class Meta:
         managed = True
         db_table = 'lesson_classroom'
+        constraints = [
+            models.CheckConstraint(
+                check=Q(time_end__gt=F("time_start")),
+                name="lessonclassroom_time_end_after_start",
+            ),
+        ]
 
     def clean(self):
         # sanity
         if self.time_end <= self.time_start:
             raise ValidationError({"time_end": "time_end must be after time_start."})
-        if not (self.classroom_id and self.director_id and self.day_of_week):
+        if not (self.classroom_id and self.supervisor_id and self.day_of_week):
             return  # skip until essentials present
 
         # only consider active rows (remove this if expired rows should still block)
@@ -212,8 +219,8 @@ class LessonClassroom(models.Model):
         if base.filter(classroom_id=self.classroom_id).filter(overlap).exists():
             raise ValidationError("Overlaps an existing session in this classroom.")
 
-        # same director clash?
-        if base.filter(director_id=self.director_id).filter(overlap).exists():
+        # same supervisor clash?
+        if base.filter(supervisor_id=self.supervisor.instructor_profile_id).filter(overlap).exists():
             raise ValidationError("Overlaps another session for this instructor.")
 
     def save(self, *args, **kwargs):
@@ -327,6 +334,16 @@ class StudentReading(models.Model):
         managed = True
         db_table = 'student_reading'
 
+
+class AdminProfile(models.Model):
+    admin_profile_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('User', models.DO_NOTHING)
+    full_name = models.CharField(max_length=255)
+    # staff_no = models.CharField(unique=True, max_length=50)
+
+    class Meta:
+        managed = True
+        db_table = 'admin_profile'
 
 class User(models.Model):
     class Roles(models.TextChoices):

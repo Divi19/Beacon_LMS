@@ -34,7 +34,7 @@ export default function AdminLogIn({ logoSrc }) {
   
     try {
       const { data } = await api.post(
-        "/admin/log-in/",
+        "/api/admin/login/",
         formData
       );
       // Backend returns: { access, refresh, user: {...} }

@@ -51,7 +51,7 @@ export default function InstructorClassrooms() {
             </h4>
             <h3 className={i.roomLabel}> Classroom {c.classroom_id}</h3>
             <p className={i.meta}>
-              Director: {c.director || "Unlinked"}
+              Supervisor: {c.supervisor || "Unlinked"}
             </p>
             <p className={i.meta}>
               Lesson linked: {c.lesson_id || "Unlinked"}

@@ -39,15 +39,15 @@ urlpatterns = [
     #Instructors Classrooms
         #Course specific - sendParams
     path("instructor/course/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
-        #Lesson specific - sendParams
+        #Lesson specific - sendParams 
     path("instructor/lesson/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
         #Own or unlinked classrooms
     path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),
-        #Linking classrooms
-    path("instructor/classrooms/<str:course_id>/get/", LinkingClassroomsView.as_view(), name="classrooms"),
-    path("instructor/classrooms/<str:lesson_id>/link/", LinkingClassroomsView.as_view(), name="classrooms"),
-        #Creating physical classrooms
+        #GET + POST Linking classrooms
+    path("instructor/classrooms/<str:course_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
     path("instructor/classrooms/create/", CreateClassroomView.as_view()),
+        #GET + POST Create and linking online classroom // showing online classrooms
+    path("intructor/classrooms/online/<str:lesson_id>/", OnlineClassroomsView.as_view()),
     
     
     #Instructor Lessons 
@@ -63,6 +63,12 @@ urlpatterns = [
     #Instructor Assignment 
     path("instructor/lessons/<str:lesson_id>/assignments/", LessonAssignmentBulkCreateView.as_view()),
 
+    #Admin login
+    path("api/admin/login/", AdminLogin.as_view(), name="admin-login"),
+    path('api/admin/instructors/', AdminInstructorListView.as_view(), name="admin-instructors"),
+    path('api/admin/instructors/<int:instructor_id>/', AdminInstructorDetailView.as_view(), name="admin-instructor-detail"),
+
+    #Students login TODO
     path("student/login/", StudentLogin.as_view(), name="student-login"),
     #Student registration
     path("student/signup/", StudentRegister.as_view(), name="student-register"),

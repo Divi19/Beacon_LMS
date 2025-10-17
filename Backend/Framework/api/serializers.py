@@ -85,6 +85,72 @@ class InstructorSerializer(serializers.ModelSerializer):
         model = InstructorProfile
         fields = ["instructor_profile_id", "user", "full_name", "staff_no"]
 
+"""
+Admin-related serializers
+"""
+class AdminSerializer(serializers.ModelSerializer):
+    user = UserSerializer() 
+    class Meta:
+        model = AdminProfile
+        fields = ["admin_profile_id", "user", "full_name"]
+
+class InstructorCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for admin creating new instructors
+    """
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
+    title = serializers.CharField(write_only=True)
+    full_name = serializers.CharField(write_only=True)
+    
+    class Meta:
+        model = InstructorProfile
+        fields = ['instructor_profile_id', 'title', 'full_name', 'email', 'password', 'full_name', 'staff_no']
+        read_only_fields = ['instructor_profile_id', 'staff_no']
+    
+    def create(self, validated_data):
+        email = validated_data.pop('email')
+        password = validated_data.pop('password')
+        full_name = validated_data.pop('full_name')
+        title = validated_data.pop('title', '')
+        
+        # full_name = f"{first_name} {last_name}".strip()
+        
+        def generate_staff_no():
+            digits = ''.join(random.choices(string.digits, k=5))
+            return f"I{digits}"
+        
+        staff_no = generate_staff_no()
+        while InstructorProfile.objects.filter(staff_no=staff_no).exists():
+            staff_no = generate_staff_no()
+        
+        user = User.objects.create(
+            email=email,
+            password_hash=password,
+            role='instructor',
+            is_active=True
+        )
+        
+        instructor = InstructorProfile.objects.create(
+            user=user,
+            title=title,
+            full_name=full_name,
+            staff_no=staff_no,
+            **validated_data
+        )
+        return instructor
+
+class InstructorListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing instructors (admin view)
+    """
+    email = serializers.EmailField(source='user.email', read_only=True)
+    password = serializers.CharField(source='user.password_hash', read_only=True)
+    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
+    
+    class Meta:
+        model = InstructorProfile
+        fields = ['instructor_profile_id', 'title', 'full_name', 'staff_no', 'email', 'password', 'is_active']
 
 """
 Student-related serializers
@@ -387,7 +453,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
     #Request
     capacity = serializers.IntegerField(min_value=1, max_value=100)
     zoom_link = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    is_online = serializers.BooleanField(default=False)
+    is_online = serializers.BooleanField(required=False)
     location = serializers.CharField(required=True, allow_blank=True)
 
     class Meta:
@@ -405,66 +471,40 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
     """
     Important for linking 
     """
-    time_start = serializers.TimeField(format="%H:%M")  # 24-hour, HH:MM only
-    time_end   = serializers.TimeField(format="%H:%M")
-    lesson = serializers.PrimaryKeyRelatedField(
-        queryset=Lesson.objects.all(), write_only=True
-    )
-    classroom = course = serializers.PrimaryKeyRelatedField(
-        queryset=Classroom.objects.all(), write_only=True
-    )
-    #session_times_json = models.JSONField(blank=True, null=True)
-    day_of_week = serializers.CharField(required=True)
-    time_start = serializers.TimeField(required=True)
-    time_end = serializers.TimeField(required=True)
-    duration_minutes = serializers.IntegerField(required=True)
-    linked_at = serializers.DateTimeField()
-    director = serializers.PrimaryKeyRelatedField(
-        queryset=InstructorProfile.objects.all(), write_only=True
-    )
-    enrolled_count = serializers.IntegerField(read_only = True)
-
-    class Meta:
-        model = LessonClassroom
-        fields = "__all__"
-
-    def create(self, validated_data):
-        owner_email = validated_data.pop('owner_instructor', None)
-        if owner_email:
-            #resolve by using instructor email
-            try:
-                user = User.objects.get(email=owner_email)
-                instructor = InstructorProfile.objects.get(user=user)
-                validated_data['owner_instructor'] = instructor
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError({"owner_instructor": "Instructor with this email does not exist."})
-        else:
-            #No email given, default to current logged in instructor 
-            req = self.context.get("request")
-            if req and getattr(req.user, "is_authenticated", False):
-                owner = InstructorProfile.objects.filter(user=req.user).first()
-                if owner:
-                    validated_data["owner_instructor"] = owner
-        return LessonClassroom.objects.create(**validated_data) 
+    time_start = serializers.TimeField(input_formats=["%H:%M"], format="%H:%M")
+    time_end   = serializers.TimeField(input_formats=["%H:%M"], format="%H:%M")
+    lesson = serializers.SlugRelatedField(
+                    slug_field="lesson_id",                 # the unique code field
+                    queryset=Lesson.objects.all(),
+                    write_only=True,
+                    required=True,                          # since you’re providing it in body
+                )
     
+    classroom = serializers.SlugRelatedField(
+        slug_field="classroom_id",                 # the unique code field
+        queryset=Classroom.objects.all(),
+        write_only=True,
+        required=True,                          # since you’re providing it in body
+    )
+
+    duration_minutes = serializers.IntegerField(read_only=True)
+    duration_weeks = serializers.IntegerField(required=False, allow_null=True)
+    supervisor = serializers.EmailField(write_only=True, required=False)
+    enrolled_count = serializers.IntegerField(read_only=True)
+    day_of_week = serializers.CharField()
+
     class Meta:
         model = LessonClassroom
         fields = [
-           "day", "start_time", "end_time", "duration_minutes", "classroom", "lesson"
+           "enrolled_count", "day_of_week", "duration_weeks", "time_start", "time_end", "duration_minutes", "classroom", "lesson", "supervisor"
         ]
-        read_only_fields = ["day_of_week", "time_start", "time_end"]
-        constraints = [
-            models.CheckConstraint(
-                check=Q(time_end__gt=F("time_start")),
-                name="lessonclassroom_time_end_after_start",
-            ),
-        ]
+        
     
     def validate(self, attrs):
         """
         Prevent overlaps (end-exclusive) on the same weekday for:
           - SAME classroom
-          - SAME director (instructor)
+          - SAME supervisor (instructor)
         """
         instance = getattr(self, "instance", None)
 
@@ -475,14 +515,14 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
         t_end     = attrs.get("time_end")      or (instance.time_end    if instance else None)
         lesson    = attrs.get("lesson")        or (instance.lesson      if instance else None)
 
-        # Resolve director (from request.user’s profile or instance)
+        # Resolve supervisor (from request.user’s profile or instance)
         request = self.context.get("request")
-        director = getattr(instance, "director", None)
-        if not director and request and getattr(request.user, "is_authenticated", False):
-            director = InstructorProfile.objects.filter(user=request.user).first()
+        supervisor = getattr(instance, "supervisor", None)
+        if not supervisor and request and getattr(request.user, "is_authenticated", False):
+            supervisor = InstructorProfile.objects.filter(user=request.user).first()
 
         # On create, require the essentials; on partial update, skip if incomplete
-        required = [("classroom", classroom), ("day_of_week", day), ("time_start", t_start), ("time_end", t_end), ("director", director)]
+        required = [("classroom", classroom), ("day_of_week", day), ("time_start", t_start), ("time_end", t_end), ("supervisor", supervisor)]
         if any(v is None for _, v in required):
             return attrs
 
@@ -500,8 +540,8 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
         # A) same classroom clash
         clash_room_qs = base.filter(classroom=classroom).filter(overlap_q)
 
-        # B) same director clash
-        clash_dir_qs  = base.filter(director=director).filter(overlap_q)
+        # B) same supervisor clash
+        clash_dir_qs  = base.filter(supervisor=supervisor).filter(overlap_q)
 
         room_clash = clash_room_qs.values("time_start", "time_end").first()
         dir_clash  = clash_dir_qs.values("time_start", "time_end").first()
@@ -520,26 +560,39 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def save(self, *args, **kwargs):
-        # compute duration first (not strictly required for validation)
-        if self.time_start and self.time_end:
-            delta = datetime.combine(date.min, self.time_end) - datetime.combine(date.min, self.time_start)
-            self.duration_minutes = int(delta.total_seconds() // 60)
-
-        # compute/update expires_at
-        if self.duration_weeks:
-            base = self.linked_at or timezone.now()
-            if self.pk and self.linked_at:
-                base = self.linked_at
-            self.expires_at = base + timedelta(weeks=int(self.duration_weeks))
+    def _compute_duration(self, start, end):
+        delta = datetime.combine(date.min, end) - datetime.combine(date.min, start)
+        return int(delta.total_seconds() // 60)
+    
+    def create(self, validated_data):
+         # resolve supervisor already done above (keep your logic)
+        t_start = validated_data["time_start"]
+        t_end   = validated_data["time_end"]
+        validated_data["duration_minutes"] = self._compute_duration(t_start, t_end)
+        owner_email = validated_data.pop('supervisor', None)
+        if owner_email:
+            #resolve by using instructor email
+            try:
+                instructor = InstructorProfile.objects.get(user__email=owner_email)
+                validated_data['supervisor'] = instructor
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError({"supervisor": "Instructor with this email does not exist."})
         else:
-            self.expires_at = None
-
-        # **Enforce validation on all save paths**
-        self.full_clean()
-
-        return super().save(*args, **kwargs)
-        
+            #No email given, default to current logged in instructor 
+            req = self.context.get("request")
+            if req and getattr(req.user, "is_authenticated", False):
+                owner = InstructorProfile.objects.filter(user=req.user).first()
+                if owner:
+                    validated_data["supervisor"] = owner
+        return LessonClassroom.objects.create(**validated_data) 
+    
+    def update(self, instance, validated_data):
+        for f in ("day_of_week", "time_start", "time_end", "classroom", "supervisor", "lesson", "duration_weeks"):
+            if f in validated_data:
+                setattr(instance, f, validated_data[f])
+        instance.duration_minutes = self._compute_duration(instance.time_start, instance.time_end)
+        instance.save()
+        return instance
   
 class LessonPrereqOutSerializer(serializers.ModelSerializer):
     """
