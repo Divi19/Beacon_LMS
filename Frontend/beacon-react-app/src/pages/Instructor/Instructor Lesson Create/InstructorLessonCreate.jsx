@@ -279,7 +279,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     };
 
     const payload = {
-      lesson_id: formData.lesson_id || lessonId,
+      lesson_id: lessonId,
       course: courseId,
       ...(formData.title?.trim() ? { title: formData.title } : {}),
       ...(formData.description?.trim()
@@ -299,7 +299,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     };
 
     try {
-      await api.patch(`/instructor/lessons/${lessonId}/update`, payload);
+      await api.patch(`/instructor/lessons/${lessonId}/update/`, payload);
       submitPrereqs();
 
       if (readingListInput.trim()) {
