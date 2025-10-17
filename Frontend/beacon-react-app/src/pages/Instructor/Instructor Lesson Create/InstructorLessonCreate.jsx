@@ -20,17 +20,17 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   // turn null/undefined into "", keep numbers as strings for <input>/<select>
   const asStr = (v) => (v === null || v === undefined ? "" : String(v));
   // --- API endpoints (NO url changes required on server) ---
-  const LIST_LESSON_CLASSROOMS_URL = ()  =>
-    `/instructor/lesson/classrooms/` //  existing GET
+  const LIST_LESSON_CLASSROOMS_URL = (lessonId) =>
+    `/instructor/lesson/${lessonId}/classrooms/`; // existing GET
 
+  // --- PLACEHOLDERS the backend can wire later ---
+  const ONLINE_LIST_SHOWING = (lessonId) =>
+    `/__placeholder__/online/list/${lessonId}/`; // GET: online classrooms for a lesson
 
-  const CREATE_ONLINE_CLASS_URL = (lessonId) => 
-    `/intructor/classrooms/online/${lessonId}/`
-  ;
+  const ONLINE_LINKING = (lessonId) =>
+    `/instructor/classrooms/online/${lessonId}/`;
 
-  const LINK_CLASSROOM_URLS = (lessonId, classroomId) => [
-    `/instructor/classrooms/${lessonId}/`
-  ];
+  const PHYSICAL_LINKING = (lessonId) => `/instructor/classrooms/${lessonId}/`;
 
   // POPUP + FORM STATE FOR ONLINE CLASSROOM
   const [showOnlineClassModal, setShowOnlineClassModal] = useState(false);
@@ -39,7 +39,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     time_start: "",
     time_end: "",
     zoom_link: "",
-    supervisor: "", 
+    supervisor: "",
     duration_weeks: "",
   });
   const [onlineClassrooms, setOnlineClassrooms] = useState([]);
@@ -69,7 +69,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   });
 
   // The card shown on the lesson form (single physical classroom)
-  const [linkedPhysical, setLinkedPhysical] = useState(null);
+  const [physicalClassrooms, setPhysicalClassrooms] = useState([]);
 
   const openModal = () => {
     setShowModal(true);
@@ -229,8 +229,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     if (!lessonId) return;
     (async () => {
       try {
-        const { data } = await api.get(`intructor/classrooms/online/${lessonId}/`);
-        setOnlineClassrooms(data)
+        const { data } = await api.get(
+          `instructor/classrooms/online/${lessonId}/`
+        );
+        setOnlineClassrooms(data);
       } catch (e) {
         // non-blocking
         console.warn("Could not load linked online classrooms yet:", e);
@@ -240,7 +242,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const durationNum = Number(formData.duration_weeks);
     const creditsNum =
       formData.credits === "" ? null : Number(formData.credits);
@@ -310,7 +312,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         );
       }
 
-      //----------for submitting readings and assignments 
+      //----------for submitting readings and assignments
       if (assignmentsInput.trim()) {
         await api.post(
           `/instructor/lessons/${lessonId}/assignments/`,
@@ -320,7 +322,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       }
 
       alert("Lesson saved successfully!");
-      navigate(`/instructor/course/${courseId}`);
+      setShowOptionalModal(true);
     } catch (error) {
       console.error("Error saving lesson:", error);
       alert("Error saving lesson. Please try again.");
@@ -356,32 +358,75 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     })();
   }, [showPhysicalList]);
 
-  //--------Display linked classroom
+  // Use effect to fetch one combined list:
   useEffect(() => {
     if (!lessonId) return;
 
     (async () => {
       try {
-        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL, {course_id: courseId});
-        const rows = Array.isArray(data) ? data : [];
-        // Physical heuristic: has location
-        const physicalLinked = rows.find((r) => r.location ?? null);
-        if (physicalLinked) {
-          setLinkedPhysical({
-            classroom_id: physicalLinked.classroom_id,
-            location: physicalLinked.location,
-            day_of_week: physicalLinked.day_of_week || "",
-            time_start: physicalLinked.time_start || "",
-            time_end: physicalLinked.time_end || "",
-            duration_minutes: physicalLinked.duration_minutes ?? null,
-            capacity: physicalLinked.capacity ?? null,
-            supervisor: physicalLinked.director || "", // if your serializer returns it
-          });
-        } else {
-          setLinkedPhysical(null);
+        // 1) Try the single combined endpoint
+        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId));
+        const rows = Array.isArray(data) ? data : data?.results || [];
+
+        // Split physical vs online heuristically
+        const physical = rows.filter(
+          (r) => !!r.location || r.is_online === false
+        );
+        const online = rows.filter(
+          (r) => r.is_online === true || (!!r.zoom_link && !r.location)
+        );
+
+        setPhysicalClassrooms(
+          physical.map((r) => ({
+            classroom_id: r.classroom_id,
+            location: r.location,
+            day_of_week: r.day_of_week || "",
+            time_start: r.time_start || "",
+            time_end: r.time_end || "",
+            duration_minutes: r.duration_minutes ?? null,
+            duration_weeks: r.duration_weeks ?? null,
+            capacity: r.capacity ?? null,
+            supervisor: r.supervisor || r.director || "",
+          }))
+        );
+
+        setOnlineClassrooms(
+          online.map((r) => ({
+            classroom_id: r.classroom_id,
+            zoom_link: r.zoom_link || "",
+            day_of_week: r.day_of_week || "",
+            time_start: r.time_start || "",
+            time_end: r.time_end || "",
+            duration_minutes: r.duration_minutes ?? null,
+            duration_weeks: r.duration_weeks ?? null,
+            capacity: r.capacity ?? 100,
+            supervisor: r.supervisor || r.director || "",
+          }))
+        );
+      } catch (e1) {
+        // 2) If the combined endpoint doesn’t exist yet, fall back to placeholders
+        try {
+          const [{ data: on }] = await Promise.all([
+            api.get(ONLINE_LIST_SHOWING(lessonId)),
+            // you can add a separate physical list endpoint if you have one
+          ]);
+
+          setOnlineClassrooms(
+            (Array.isArray(on) ? on : on?.results || []).map((r) => ({
+              classroom_id: r.classroom_id,
+              zoom_link: r.zoom_link || "",
+              day_of_week: r.day_of_week || "",
+              time_start: r.time_start || "",
+              time_end: r.time_end || "",
+              duration_minutes: r.duration_minutes ?? null,
+              duration_weeks: r.duration_weeks ?? null,
+              capacity: r.capacity ?? 100,
+              supervisor: r.supervisor || r.director || "",
+            }))
+          );
+        } catch (e2) {
+          console.warn("Could not load linked classrooms yet:", e1, e2);
         }
-      } catch (_) {
-        // Non-blocking
       }
     })();
   }, [lessonId]);
@@ -390,7 +435,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     e.preventDefault();
     if (!lessonId || !selectedClassroom) return;
 
-    const { day_of_week, time_start, time_end, duration_weeks, supervisor } = linkForm;
+    const { day_of_week, time_start, time_end, supervisor, duration_weeks } =
+      linkForm || {};
     if (!day_of_week) return alert("Please select class day.");
 
     // Calculate duration in minutes based on inputed.
@@ -402,70 +448,44 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       duration_minutes = diff > 0 ? diff : null;
     }
 
-    const bodyA = {
+    const body = {
       classroom_id: selectedClassroom.classroom_id,
       day_of_week,
       time_start: time_start || null,
       time_end: time_end || null,
       duration_weeks: duration_weeks || null,
       duration_minutes,
-      supervisor: supervisor
+      supervisor: supervisor || null,
     };
+    try {
+      // Prefer the single placeholder endpoint; keep your fallback list if you want
+      await api.post(PHYSICAL_LINKING(lessonId), body);
 
-    let saved = false;
-    for (const url of LINK_CLASSROOM_URLS(
-      lessonId,
-      selectedClassroom.classroom_id
-    )) {
-      try {
-        await api.post(url, bodyA);
-        saved = true;
-        break;
-      } catch (_) {
-        /* try next */
-      }
-    }
-
-    // Optimistic update of the card on the form
-    setLinkedPhysical({
-      classroom_id: selectedClassroom.classroom_id,
-      location: selectedClassroom.location,
-      day_of_week,
-      time_start,
-      time_end,
-      duration_minutes: duration_minutes,
-      capacity: selectedClassroom.capacity ?? null,
-      supervisor: linkForm.supervisor || "",
-      _pending: !saved,
-    });
-
-    closeLinkForm();
-
-    // If persistence succeeded, refresh fully from backend to show accurate duration/enrollment
-    if (saved) {
-      try {
-        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId));
-        const rows = Array.isArray(data) ? data : [];
-        const physicalLinked = rows.find((r) => r.location ?? null);
-        if (physicalLinked) {
-          setLinkedPhysical({
-            classroom_id: physicalLinked.classroom_id,
-            location: physicalLinked.location,
-            day_of_week: physicalLinked.day_of_week || "",
-            time_start: physicalLinked.time_start || "",
-            time_end: physicalLinked.time_end || "",
-            duration_minutes: physicalLinked.duration_minutes ?? null,
-            capacity: physicalLinked.capacity ?? null,
-            supervisor: physicalLinked.supervisor || "",
-          });
-        }
-      } catch (_) {
-        /* ignore */
-      }
-    } else {
-      console.info(
-        "Linked locally. Once backend link endpoint is added, this will persist automatically."
+      // on success: push into list
+      setPhysicalClassrooms((prev) => [
+        ...prev,
+        {
+          classroom_id: selectedClassroom.classroom_id,
+          location: selectedClassroom.location,
+          day_of_week,
+          time_start,
+          time_end,
+          duration_minutes,
+          duration_weeks,
+          capacity: selectedClassroom.capacity ?? null,
+          supervisor: supervisor || "",
+        },
+      ]);
+    } catch (err) {
+      console.error(
+        "Link physical classroom failed:",
+        err?.response?.data || err
       );
+      alert("Failed to link classroom. Please check the backend route.");
+      // no optimistic card on failure
+    } finally {
+      //  always let the user out of the modal
+      closeLinkForm();
     }
   };
 
@@ -475,34 +495,54 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       alert("Lesson ID is required to link a classroom.");
       return;
     }
-    const { day_of_week, time_start, time_end, zoom_link, supervisor } = onlineForm;
+    const {
+      day_of_week,
+      time_start,
+      time_end,
+      zoom_link,
+      supervisor,
+      duration_weeks,
+    } = onlineForm || {};
 
     if (!day_of_week) return alert("Please select class day.");
     if (!zoom_link.trim()) return alert("Please enter a Zoom link.");
 
+    let duration_minutes = null;
+    if (time_start && time_end) {
+      const [h1, m1] = time_start.split(":").map(Number);
+      const [h2, m2] = time_end.split(":").map(Number);
+      const diff = h2 * 60 + m2 - (h1 * 60 + m1);
+      duration_minutes = diff > 0 ? diff : null;
+    }
+
+    const payload = {
+      is_online: true,
+      zoom_link: zoom_link.trim(),
+      day_of_week,
+      time_start: time_start || null,
+      time_end: time_end || null,
+      duration_weeks: duration_weeks || null,
+      duration_minutes,
+      supervisor: supervisor || null,
+    };
+
     try {
-      // backend will:
-      // 1) create Classroom(is_online=True, zoom_link)
-      // 2) create LessonClassroom(lesson_id, classroom_id, day_of_week, time_start, time_end, director=auth instructor)
-      const payload = {
-        is_online: true,
-        zoom_link: zoom_link.trim(),
-        day_of_week,
-        time_start: time_start || null,
-        time_end: time_end || null,
-        capacity: 100,
-        location: "",
-        supervisor: supervisor
-      };
+      await api.post(ONLINE_LINKING(lessonId), payload);
 
-      const { data } = await api.post(
-        CREATE_ONLINE_CLASS_URL(lessonId),
-        payload
-      );
-      const newItem = {data};
-      setOnlineClassrooms((prev) => [...prev, newItem]);
-      closeOnlineClassModal();
-
+      setOnlineClassrooms((prev) => [
+        ...prev,
+        {
+          classroom_id: crypto?.randomUUID?.() || `${Date.now()}`,
+          zoom_link: zoom_link.trim(),
+          day_of_week,
+          time_start,
+          time_end,
+          duration_minutes,
+          duration_weeks,
+          capacity: 100,
+          supervisor: supervisor || "",
+        },
+      ]);
     } catch (err) {
       console.error(
         "Create+link online classroom failed:",
@@ -511,9 +551,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       alert(
         "Failed to create online classroom. Please check the backend route."
       );
+    } finally {
+      closeOnlineClassModal();
     }
   };
-
   return (
     <div className={i.wrap}>
       <div className={i.topBar}>
@@ -685,40 +726,41 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <label className={i.label}>Physical Classroom:</label>
 
               <div className={i.physPanel}>
-                {linkedPhysical ? (
-                  <div className={i.physCard}>
-                    <div>
-                      <strong>Location:</strong> {linkedPhysical.location}
-                    </div>
-                    <div className={i.physRow}>
-                      <span>
-                        <strong>Day:</strong>{" "}
-                        {linkedPhysical.day_of_week || "-"}
-                      </span>
-                      <span>
-                        <strong>Time:</strong>{" "}
-                        {linkedPhysical.time_start || "-"}
-                        {linkedPhysical.time_end
-                          ? ` - ${linkedPhysical.time_end}`
-                          : ""}
-                      </span>
-                      <span>
-                        <strong>Duration:</strong>{" "}
-                        {linkedPhysical.duration_minutes
-                          ? `${linkedPhysical.duration_minutes} mins`
-                          : "_"}
-                      </span>
-                    </div>
-                    {linkedPhysical._pending && (
-                      <div className={i.pending}>pending</div>
-                    )}
-                  </div>
-                ) : (
+                {physicalClassrooms.length === 0 ? (
                   <div className={i.physCardEmpty}>
                     No classroom linked yet.
                   </div>
+                ) : (
+                  physicalClassrooms.map((pc) => (
+                    <div key={pc.classroom_id} className={i.physCard}>
+                      <div>
+                        <strong>Location:</strong> {pc.location || "-"}
+                      </div>
+                      <div className={i.physRow}>
+                        <span>
+                          <strong>Supervisor:</strong> {pc.supervisor || "-"}
+                        </span>
+                        <span>
+                          <strong>Day:</strong> {pc.day_of_week || "-"}
+                        </span>
+                        <span>
+                          <strong>Time:</strong> {pc.time_start || "-"}
+                          {pc.time_end ? ` - ${pc.time_end}` : ""}
+                        </span>
+                        <span>
+                          <strong>Duration:</strong>{" "}
+                          {pc.duration_minutes
+                            ? `${pc.duration_minutes} mins`
+                            : "—"}
+                        </span>
+                        <span>
+                          <strong>Weeks:</strong>{" "}
+                          {pc.duration_weeks ? `${pc.duration_weeks}` : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  ))
                 )}
-
                 <button
                   type="button"
                   className={i.linkButton}
@@ -758,7 +800,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                         </span>
                       </div>
                       <div className={i.onlineRow}>
-                      <span>
+                        <span>
                           <strong>Day:</strong> {c.day_of_week || "-"}
                         </span>
                         <span>
@@ -768,12 +810,11 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
                         </span>
                         <span>
                           <strong>Duration:</strong>{" "}
-                            {c.duration_minutes
-                              ? `${c.duration_minutes} mins`
-                              : "-- mins"}
-                          </span>
+                          {c.duration_minutes
+                            ? `${c.duration_minutes} mins`
+                            : "-- mins"}
+                        </span>
                       </div>
-                      
                     </div>
                   ))
                 )}
@@ -933,19 +974,18 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <div className={i.modalRow}>
                 <label className={i.modalLabel}>Class Supervisor:</label>
                 <input
-                className={i.input}
-                type="text"
-                name="supervisor"
-                value={linkForm.supervisor}
-                onChange={(e) =>
-                  setLinkForm((s) => ({
-                    ...s,
-                    supervisor: e.target.value,
-                  }))
-                }
-                placeholder="Enter instructor email"
-              />                
-              
+                  className={i.input}
+                  type="email"
+                  name="supervisor"
+                  value={linkForm.supervisor}
+                  onChange={(e) =>
+                    setLinkForm((s) => ({
+                      ...s,
+                      supervisor: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter instructor email:  instructor@beacon.edu"
+                />
               </div>
 
               <div className={i.modalRow}>
@@ -1049,14 +1089,15 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <div className={i.modalRow}>
                 <label className={i.modalLabel}>Class Supervisor:</label>
                 <input
-                className={i.input}
-                type="text"
-                name="supervisor"
-                value={onlineForm.supervisor}
-                onChange={ (e) => setOnlineForm((s) => ({ ...s, supervisor: e.target.value }))}
-                placeholder="Enter instructor email"
-              />  
-                
+                  className={i.input}
+                  type="email"
+                  name="supervisor"
+                  value={onlineForm.supervisor}
+                  onChange={(e) =>
+                    setOnlineForm((s) => ({ ...s, supervisor: e.target.value }))
+                  }
+                  placeholder="Enter instructor email: instructor@beacon.edu"
+                />
               </div>
 
               <div className={i.modalRow}>
