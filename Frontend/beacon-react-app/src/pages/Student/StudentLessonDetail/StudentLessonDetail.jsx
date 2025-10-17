@@ -23,6 +23,11 @@ export default function StudentLessonDetail() {
     const saved = localStorage.getItem("checkedAssignments");
     return saved ? JSON.parse(saved) : {};
   });
+  const [readings, setReadings] = useState([]);
+  const [checkedReadings, setCheckedReadings] = useState(() => {
+    const saved = localStorage.getItem("checkedReadings");
+    return saved ? JSON.parse(saved) : {};
+  });
 
   // modal
   const [showModal, setShowModal] = useState(false);
@@ -57,6 +62,12 @@ export default function StudentLessonDetail() {
     console.log("Assignments API response:", res.data);
     return res.data;
   }
+
+    async function apiGetReadings() {
+    const res = await api.get(`/student/lessons/${lessonId}/readings/`);
+    console.log("Readings API response:", res.data);
+    return res.data;
+  }
   
   useEffect(() => {
     (async () => {
@@ -78,6 +89,9 @@ export default function StudentLessonDetail() {
 
         const a = await apiGetAssignments();
         setAssignments(a);
+
+        const b = await apiGetReadings();
+        setReadings(b);
         
       } catch (e) {
         setError("Failed to load lesson.");
@@ -105,6 +119,27 @@ async function toggleAssignment(assignmentId) {
     });
   } catch (err) {
     console.error("Failed to update assignment progress:", err);
+  }
+}
+
+useEffect(() => {
+    localStorage.setItem("checkedReadings", JSON.stringify(checkedReadings));
+  }, [checkedReadings]);
+
+async function toggleReading(readingId) {
+  const newCompleted = !checkedReadings[readingId];
+  setCheckedReadings(prev => ({
+    ...prev,
+    [readingId]: newCompleted
+  }));
+
+  try {
+    await api.post(`/student/lessons/${lessonId}/readings/`, {
+      reading_id: readingId,
+      completed: newCompleted
+    });
+  } catch (err) {
+    console.error("Failed to update reading progress:", err);
   }
 }
 
@@ -432,6 +467,43 @@ async function toggleAssignment(assignmentId) {
             {a.description && (
               <div style={{ fontSize: 13, color: "#666" }}>{a.description}</div>
             )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
+<section className={i.panelBox}>
+  <h3 className={i.panelTitle}>Reading List</h3>
+  {readings.length === 0 ? (
+    <p>No reading items yet.</p>
+  ) : (
+    <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+      {readings.map(b => (
+        <li
+          key={b.reading_id}
+          style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+        >
+          <input
+            type="checkbox"
+            checked={!!checkedReadings[b.reading_id]}
+            onChange={() => toggleReading(b.reading_id)}
+            style={{ marginRight: 10 }}
+          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {b.url && (
+              <a
+                href={b.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none", color: "#1a73e8", fontWeight: "bold" }}
+              >
+              </a>
+            )}
+            <strong>{b.title}</strong>
+            {/* {b.description && (
+              <div style={{ fontSize: 13, color: "#666" }}>{b.description}</div>
+            )} */}
           </div>
         </li>
       ))}
