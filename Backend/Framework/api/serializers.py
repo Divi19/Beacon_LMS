@@ -304,66 +304,84 @@ Shared serializers
 """
 
 class LessonSerializer(serializers.ModelSerializer):
-    course = serializers.PrimaryKeyRelatedField(
-        queryset=Course.objects.all(), write_only=True
-    )
+    # write-only foreign keys
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), write_only=True)
+    created_by = serializers.PrimaryKeyRelatedField(queryset=InstructorProfile.objects.all(), write_only=True, required=False)
+
+    # display-only: pulls full name from related 'designer'
+    designer_display = serializers.CharField(source="designer.full_name", read_only=True)
+
+    # incoming optional email to resolve designer; accepts "", null, or omit
+    designer_input = serializers.EmailField(write_only=True, required=False, allow_blank=True, allow_null=True)
+
+    # other fields
     enrolled_count = serializers.IntegerField(read_only=True)
-    created_by = serializers.PrimaryKeyRelatedField(
-        queryset=InstructorProfile.objects.all(), write_only=True
-    ) #Sets the instructor
-    designer = serializers.CharField(source="designer.full_name", read_only=True)
-    designer_input = serializers.EmailField(write_only=True)
-    title =  serializers.CharField(required=True, allow_blank=True)
+    title = serializers.CharField(required=True, allow_blank=True)
     credits = serializers.IntegerField(required=True)
     duration_weeks = serializers.CharField(required=True, allow_blank=True)
     description = serializers.CharField(required=True, allow_blank=True)
-    objectives = serializers.CharField(required=True, allow_blank=True)
     objectives = serializers.CharField(required=False, allow_blank=True)
     status = serializers.CharField(required=True)
-    
+
     class Meta:
         model = Lesson
-        fields = ["designer", "designer_input", "objectives", "lesson_id", "enrolled_count", "credits", "course", "title", "description", "objectives", "duration_weeks", "status", "created_by"]
-        read_only_fields = ["lesson_id", "created_by"] 
+        fields = [
+            "lesson_id",
+            "course",
+            "title",
+            "credits",
+            "duration_weeks",
+            "description",
+            "objectives",
+            "status",
+            "enrolled_count",
+            "designer_display",
+            "designer_input",
+            "created_by",
+        ]
+        read_only_fields = ["lesson_id"]
 
     def validate(self, attrs):
         """
-        Ensure 'designer' is always a valid InstructorProfile before model validation.
+        If a non-empty 'designer_input' email is provided, resolve it to an InstructorProfile
+        and set 'designer' (the FK on the Lesson model). If empty/missing, leave as-is.
         """
-        request = self.context.get("request")
+        # pop so it doesn't try to bind to a non-field later
+        designer_email = attrs.pop("designer_input", None)
 
-        # Extract designer email if provided
-        designer_email = attrs.get("designer_input")
-        if designer_email:
+        # treat empty string / whitespace as "not provided"
+        if designer_email and str(designer_email).strip():
             try:
                 user = User.objects.get(email=designer_email)
                 instructor = InstructorProfile.objects.get(user=user)
-                attrs["designer"] = instructor
+                attrs["designer"] = instructor   # assumes Lesson.designer FK exists
             except ObjectDoesNotExist:
                 raise serializers.ValidationError({
-                    "designer": f"Instructor with email '{designer_email}' does not exist."
+                    "designer_input": f"No InstructorProfile found for email '{designer_email}'."
                 })
-        elif request and getattr(request.user, "is_authenticated", False):
-            instructor = InstructorProfile.objects.filter(user=request.user).first()
-            if instructor:
-                attrs["designer"] = instructor
-            else:
-                raise serializers.ValidationError({
-                    "designer": "No InstructorProfile found for logged-in user."
-                })
-
-        # Case 3: Nothing works → reject
-        else:
-            raise serializers.ValidationError({
-                "designer": "Designer must be provided or resolvable from logged-in user."
-            })
 
         return attrs
-    
+
+    def create(self, validated_data):
+        """
+        Optional: if 'created_by' not provided, default to the logged-in user's InstructorProfile (if any).
+        """
+        if "designer_input" not in validated_data:
+            request = self.context.get("request")
+            if request and getattr(request.user, "is_authenticated", False):
+                instr = InstructorProfile.objects.filter(user=request.user).first()
+                if instr:
+                    validated_data["designer"] = instr
+
+        return super().create(validated_data)
+
     def update(self, instance, validated_data):
+        """
+        Prevent changing 'created_by' on update.
+        """
         validated_data.pop("created_by", None)
         return super().update(instance, validated_data)
-      
+    
 
 class CourseSerializer(serializers.ModelSerializer):
     lessons = LessonSerializer(many=True, read_only=True, source="lesson_set")
@@ -489,7 +507,7 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
 
     duration_minutes = serializers.IntegerField(read_only=True)
     duration_weeks = serializers.IntegerField(required=False, allow_null=True)
-    supervisor = serializers.EmailField(write_only=True, required=False)
+    supervisor = serializers.EmailField(write_only=True, required=False, allow_blank = True)
     enrolled_count = serializers.IntegerField(read_only=True)
     day_of_week = serializers.CharField()
 

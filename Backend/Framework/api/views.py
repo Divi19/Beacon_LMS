@@ -551,8 +551,10 @@ class LessonsView(APIView):
         """
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
         ser = LessonSerializer(lesson, data=request.data, partial=True, context={"request": request})
-        ser.is_valid(raise_exception=True)
-        ser.save()
+        if not  ser.is_valid():
+            print("ERR:", ser.errors)
+            return Response(ser.errors, status=400)
+        online_lesson_classroom_obj = ser.save()
         return Response(ser.data, status=status.HTTP_200_OK)
     
 
