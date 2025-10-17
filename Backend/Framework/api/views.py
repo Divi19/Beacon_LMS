@@ -1603,3 +1603,39 @@ class StudentAssignment(APIView):
         progress.save()
 
         return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+
+class StudentReading(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        readings=LessonReading.objects.filter(lesson=lesson)
+
+        progress_map = {
+            p.reading.reading_id: p.completed
+            for p in StudentReadingProgress.objects.filter(student=student, reading__lesson=lesson)
+        }
+        data = [
+            {
+                "reading_id": r.reading_id,
+                "title": r.title,
+                "url": r.url,
+                "completed": progress_map.get(r.reading_id, False),
+            }
+            for r in readings
+        ]
+        return Response(data)
+
+    def post(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        reading_id = request.data.get("reading_id")
+        completed = request.data.get("completed", False)
+
+        reading = get_object_or_404(LessonReading, reading_id=reading_id, lesson__lesson_id=lesson_id)
+        progress, _ = StudentReadingProgress.objects.get_or_create(student=student, reading=reading)
+        progress.completed = completed
+        progress.save()
+
+        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)

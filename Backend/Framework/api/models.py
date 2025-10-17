@@ -374,4 +374,10 @@ class StudentAssignmentProgress(models.Model):
     class Meta:
         unique_together = ('student', 'assignment')
 
+class StudentReadingProgress(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    reading = models.ForeignKey(LessonReading, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ('student', 'reading')
