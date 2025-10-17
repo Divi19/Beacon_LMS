@@ -1567,3 +1567,39 @@ class AdminInstructorDetailView(APIView):
         user.save()
         
         return Response({"detail": "Instructor deactivated successfully."}, status=status.HTTP_200_OK)
+
+class StudentAssignment(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        assignments=LessonAssignment.objects.filter(lesson=lesson)
+
+        progress_map = {
+            p.assignment.assignment_id: p.completed
+            for p in StudentAssignmentProgress.objects.filter(student=student, assignment__lesson=lesson)
+        }
+        data = [
+            {
+                "assignment_id": a.assignment_id,
+                "title": a.title,
+                "description": a.description,
+                "completed": progress_map.get(a.assignment_id, False),
+            }
+            for a in assignments
+        ]
+        return Response(data)
+
+    def post(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        assignment_id = request.data.get("assignment_id")
+        completed = request.data.get("completed", False)
+
+        assignment = get_object_or_404(LessonAssignment, assignment_id=assignment_id, lesson__lesson_id=lesson_id)
+        progress, _ = StudentAssignmentProgress.objects.get_or_create(student=student, assignment=assignment)
+        progress.completed = completed
+        progress.save()
+
+        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)

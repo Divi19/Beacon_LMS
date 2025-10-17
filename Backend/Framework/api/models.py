@@ -366,3 +366,12 @@ class User(models.Model):
     def is_authenticated(self):
         return True
 
+class StudentAssignmentProgress(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    assignment = models.ForeignKey(LessonAssignment, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('student', 'assignment')
+
+
