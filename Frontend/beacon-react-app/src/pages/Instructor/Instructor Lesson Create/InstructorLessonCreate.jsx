@@ -299,7 +299,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     };
 
     try {
-      await api.patch(`/instructor/lessons/${lessonId}/update`, payload);
+      await api.patch(`/instructor/lessons/${lessonId}/update/`, payload);
       submitPrereqs();
 
       if (readingListInput.trim()) {

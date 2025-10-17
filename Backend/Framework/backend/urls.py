@@ -44,8 +44,8 @@ urlpatterns = [
         #Own or unlinked classrooms
     path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),
         #GET + POST Linking classrooms
-    path("instructor/classrooms/<str:course_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
     path("instructor/classrooms/create/", CreateClassroomView.as_view()),
+    path("instructor/classrooms/<str:lesson_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
         #GET + POST Create and linking online classroom // showing online classrooms
     path("intructor/classrooms/online/<str:lesson_id>/", OnlineClassroomsView.as_view()),
     
@@ -53,7 +53,7 @@ urlpatterns = [
     #Instructor Lessons 
     path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
     path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
-    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
+    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>/", LessonsView.as_view(), name="get-lessons"), #patching 
     path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
     path("instructor/lessons/<str:lesson_id>/update/", LessonsView.as_view(), name="get-lessons"),
     #Instructor Lessons prerequisites 

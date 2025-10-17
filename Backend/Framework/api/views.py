@@ -903,7 +903,7 @@ class StudentEnrolledLessons(APIView):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
         lessons = (Lesson.objects
-                   .filter(lessonenrollment__student=student, course__course_id=course_id, status="Active")
+                   .filter(lessonenrollment__student=student, course__course_id=course_id)
                    .select_related("course", "designer") 
                    .distinct() )
         output = [{
@@ -1077,7 +1077,7 @@ class StudentUnenrolledLessons(APIView):
         student = get_object_or_404(StudentProfile, user=user)
         course = get_object_or_404(Course, course_id=course_id)
         unenrolled_lessons = Lesson.objects.filter(
-            Q(course=course) & Q(status="Active")
+            Q(course=course)
             ).exclude(lessonenrollment__student=student).distinct()
         serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
