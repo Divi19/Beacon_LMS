@@ -86,6 +86,9 @@ urlpatterns = [
     path("student/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enrolled/<str:classroom_id>/", StudentEnrolledClassrooms.as_view(), name="unenrolled-classrooms"),
 
+    #Student Assignment
+    path("student/lessons/<str:lesson_id>/assignments/", StudentAssignment.as_view(), name="student-lesson-assignment"),
+
     #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")
     
