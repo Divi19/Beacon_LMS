@@ -197,6 +197,10 @@ class StudentSerializer(serializers.ModelSerializer):
              **validated_data #unpack the rest of the validated data
         )
         return student 
+    
+"""
+Enrollment
+"""
 
 class EnrollmentSerializer(serializers.ModelSerializer):
     course_id = serializers.PrimaryKeyRelatedField(
@@ -230,6 +234,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             **validated_data #unpack the rest of the validated data
         )
         return enrollment 
+
 
 class LessonEnrollmentSerializer(serializers.ModelSerializer):
     # accept classroom id in the request body
@@ -471,9 +476,6 @@ class CourseSerializer(serializers.ModelSerializer):
         # Support updating owner via email or PK as in validate()
         return super().update(instance, validated_data)
 
-"""
-TODO: After model is done 
-"""
 class ClassroomSerializer(serializers.ModelSerializer):
     #Request
     capacity = serializers.IntegerField(min_value=1, max_value=100)
@@ -486,103 +488,148 @@ class ClassroomSerializer(serializers.ModelSerializer):
         fields = [
             "capacity", "zoom_link", "is_online", "location"
         ]
-    def create(self, validated_data):
-        is_online = validated_data.get("is_online", False)
-        if is_online:
-            validated_data["capacity"] = 100 
-        return Classroom.objects.create(**validated_data) 
 
+    def create(self, validated_data):
+        return Classroom.objects.create(**validated_data)
+    
+    def validate(self, attrs):
+        # defaults
+        is_online = attrs.get("is_online", False)
+
+        if is_online:
+            # online: require zoom_link, capacity forced to 100; location optional/ignored
+            if not attrs.get("zoom_link"):
+                raise serializers.ValidationError({"zoom_link": "Required for online classrooms."})
+            attrs["capacity"] = 100
+            # normalize location for online (optional)
+            if "location" not in attrs:
+                attrs["location"] = ""
+        else:
+            # physical: require location; zoom_link should be null/blank
+            loc = attrs.get("location")
+            if not (isinstance(loc, str) and loc.strip()):
+                raise serializers.ValidationError({"location": "Required for physical classrooms."})
+            # clear zoom for physical to keep data clean
+            attrs["zoom_link"] = None
+
+        return attrs
+
+
+"""
+Classroom Linking 
+"""
 class LessonClassroomSerializer(serializers.ModelSerializer):
     """
     Important for linking 
     """
     time_start = serializers.TimeField(input_formats=["%H:%M"], format="%H:%M")
     time_end   = serializers.TimeField(input_formats=["%H:%M"], format="%H:%M")
+
     lesson = serializers.SlugRelatedField(
-                    slug_field="lesson_id",                 # the unique code field
-                    queryset=Lesson.objects.all(),
-                    write_only=True,
-                    required=True,                          # since you’re providing it in body
-                )
-    
+        slug_field="lesson_id",
+        queryset=Lesson.objects.all(),
+        write_only=True,
+        required=True,
+    )
     classroom = serializers.SlugRelatedField(
-        slug_field="classroom_id",                 # the unique code field
+        slug_field="classroom_id",
         queryset=Classroom.objects.all(),
         write_only=True,
-        required=True,                          # since you’re providing it in body
+        required=True,
     )
 
     duration_minutes = serializers.IntegerField(read_only=True)
-    duration_weeks = serializers.IntegerField(required=False, allow_null=True)
-    supervisor_input = serializers.EmailField(write_only=True, required=False, allow_blank = True, allow_null=True)
+    duration_weeks   = serializers.IntegerField(required=False, allow_null=True)
+
+    # write-only email, used to select a supervisor other than the current user
+    supervisor_input = serializers.EmailField(write_only=True, required=False, allow_blank=True, allow_null=True)
+
     enrolled_count = serializers.IntegerField(read_only=True)
-    day_of_week = serializers.CharField()
+    day_of_week = serializers.CharField()  # consider a ChoiceField if you have fixed days
+
+    # read-only display
     supervisor = serializers.CharField(source="supervisor.full_name", read_only=True)
     
     class Meta:
         model = LessonClassroom
         fields = [
-           "supervisor_input", "enrolled_count", "day_of_week", "duration_weeks", "time_start", "time_end", "duration_minutes", "classroom", "lesson", "supervisor"
+            "supervisor_input", "enrolled_count", "day_of_week",
+            "duration_weeks", "time_start", "time_end",
+            "duration_minutes", "classroom", "lesson", "supervisor"
         ]
         
-    
+    def _resolve_supervisor_for_validation(self, attrs):
+        """
+        Resolve which InstructorProfile we should validate against:
+        - supervisor_input (email) if provided
+        - else existing instance.supervisor (on update)
+        - else current logged-in instructor
+        """
+        # 1) explicit email from payload
+        email = attrs.get("supervisor_input")
+        if email:
+            return InstructorProfile.objects.filter(user__email=email).first()
+
+        # 2) existing instance (PATCH/PUT)
+        instance = getattr(self, "instance", None)
+        if instance and getattr(instance, "supervisor_id", None):
+            return instance.supervisor
+
+        # 3) current user
+        req = self.context.get("request")
+        if req and getattr(req.user, "is_authenticated", False):
+            return InstructorProfile.objects.filter(user=req.user).first()
+
+        return None
+
     def validate(self, attrs):
         """
         Prevent overlaps (end-exclusive) on the same weekday for:
           - SAME classroom
           - SAME supervisor (instructor)
         """
-        instance = getattr(self, "instance", None)
+        instance  = getattr(self, "instance", None)
 
-        # Resolve effective values regardless of create/partial update
-        classroom = attrs.get("classroom")     or (instance.classroom if instance else None)
-        day       = attrs.get("day_of_week")   or (instance.day_of_week if instance else None)
-        t_start   = attrs.get("time_start")    or (instance.time_start  if instance else None)
-        t_end     = attrs.get("time_end")      or (instance.time_end    if instance else None)
-        lesson    = attrs.get("lesson")        or (instance.lesson      if instance else None)
+        # Effective values (handle create/update)
+        classroom = attrs.get("classroom")   or (instance.classroom if instance else None)
+        day       = attrs.get("day_of_week") or (instance.day_of_week if instance else None)
+        t_start   = attrs.get("time_start")  or (instance.time_start if instance else None)
+        t_end     = attrs.get("time_end")    or (instance.time_end if instance else None)
+        lesson    = attrs.get("lesson")      or (instance.lesson if instance else None)
 
-        # Resolve supervisor (from request.user’s profile or instance)
-        request = self.context.get("request")
-        supervisor = getattr(instance, "supervisor", None)
-        if not supervisor and request and getattr(request.user, "is_authenticated", False):
-            supervisor = InstructorProfile.objects.filter(user=request.user).first()
+        supervisor = self._resolve_supervisor_for_validation(attrs)
 
-        # On create, require the essentials; on partial update, skip if incomplete
-        required = [("classroom", classroom), ("day_of_week", day), ("time_start", t_start), ("time_end", t_end), ("supervisor", supervisor)]
+        # Require essentials on create; on partial update, skip until all present
+        required = [("classroom", classroom), ("day_of_week", day), ("time_start", t_start),
+                    ("time_end", t_end), ("supervisor", supervisor)]
         if any(v is None for _, v in required):
             return attrs
 
         if t_end <= t_start:
-            raise serializers.ValidationError({"end_time": "end_time must be after start_time."})
+            raise serializers.ValidationError({"time_end": "time_end must be after time_start."})
 
-        # Consider only active rows as clashes (optional). Remove active_q if expired rows must still block.
-        now = timezone.now()
-        # Overlap predicate (back-to-back allowed)
+        # Overlap predicate (end-exclusive)
         overlap_q = Q(time_start__lt=t_end) & Q(time_end__gt=t_start)
 
-        base = LessonClassroom.active.filter(day_of_week=day).exclude(pk=instance.pk) if instance \
-               else LessonClassroom.active.filter(day_of_week=day)
+        base = LessonClassroom.active.filter(day_of_week=day)
+        if instance:
+            base = base.exclude(pk=instance.pk)
 
-        # A) same classroom clash
-        clash_room_qs = base.filter(classroom=classroom).filter(overlap_q)
+        # Conflicts
+        clash_room = base.filter(classroom=classroom).filter(overlap_q).values("time_start", "time_end").first()
+        clash_instructor = base.filter(supervisor=supervisor).filter(overlap_q).values("time_start", "time_end").first()
 
-        # B) same supervisor clash
-        clash_dir_qs  = base.filter(supervisor=supervisor).filter(overlap_q)
-
-        room_clash = clash_room_qs.values("time_start", "time_end").first()
-        dir_clash  = clash_dir_qs.values("time_start", "time_end").first()
-
-        if room_clash or dir_clash:
-            errs = []
-            if room_clash:
-                errs.append(
-                    f"classroom conflict {room_clash['time_start'].strftime('%H:%M')}–{room_clash['time_end'].strftime('%H:%M')}"
+        if clash_room or clash_instructor:
+            msgs = []
+            if clash_room:
+                msgs.append(
+                    f"classroom conflict {clash_room['time_start'].strftime('%H:%M')}–{clash_room['time_end'].strftime('%H:%M')}"
                 )
-            if dir_clash:
-                errs.append(
-                    f"instructor conflict {dir_clash['time_start'].strftime('%H:%M')}–{dir_clash['time_end'].strftime('%H:%M')}"
+            if clash_instructor:
+                msgs.append(
+                    f"instructor conflict {clash_instructor['time_start'].strftime('%H:%M')}–{clash_instructor['time_end'].strftime('%H:%M')}"
                 )
-            raise serializers.ValidationError({"non_field_errors": [f"Overlapping slot: {', '.join(errs)}. Pick a different time."]})
+            raise serializers.ValidationError({"non_field_errors": [f"Overlapping slot: {', '.join(msgs)}. Pick a different time."]})
 
         return attrs
 
@@ -591,35 +638,47 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
         return int(delta.total_seconds() // 60)
     
     def create(self, validated_data):
-         # resolve supervisor already done above (keep your logic)
+        # duration
         t_start = validated_data["time_start"]
         t_end   = validated_data["time_end"]
         validated_data["duration_minutes"] = self._compute_duration(t_start, t_end)
-        owner_email = validated_data.pop('supervisor', None)
+
+        # map supervisor_input -> supervisor (InstructorProfile)
+        owner_email = validated_data.pop("supervisor_input", None)
         if owner_email:
-            #resolve by using instructor email
             try:
                 instructor = InstructorProfile.objects.get(user__email=owner_email)
-                validated_data['supervisor'] = instructor
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError({"supervisor": "Instructor with this email does not exist."})
+            except InstructorProfile.DoesNotExist:
+                raise serializers.ValidationError({"supervisor_input": "Instructor with this email does not exist."})
+            validated_data["supervisor"] = instructor
         else:
-            #No email given, default to current logged in instructor 
+            # default to current logged-in instructor
             req = self.context.get("request")
             if req and getattr(req.user, "is_authenticated", False):
                 owner = InstructorProfile.objects.filter(user=req.user).first()
                 if owner:
                     validated_data["supervisor"] = owner
-        return LessonClassroom.objects.create(**validated_data) 
+
+        return LessonClassroom.objects.create(**validated_data)
     
     def update(self, instance, validated_data):
-        for f in ("day_of_week", "time_start", "time_end", "classroom", "supervisor", "lesson", "duration_weeks"):
+        for f in ("day_of_week", "time_start", "time_end", "classroom", "lesson", "duration_weeks"):
             if f in validated_data:
                 setattr(instance, f, validated_data[f])
+
+        # allow reassignment via supervisor_input in updates too
+        owner_email = validated_data.pop("supervisor_input", None)
+        if owner_email:
+            try:
+                instructor = InstructorProfile.objects.get(user__email=owner_email)
+            except InstructorProfile.DoesNotExist:
+                raise serializers.ValidationError({"supervisor_input": "Instructor with this email does not exist."})
+            instance.supervisor = instructor
+
         instance.duration_minutes = self._compute_duration(instance.time_start, instance.time_end)
         instance.save()
         return instance
-  
+
 class LessonPrereqOutSerializer(serializers.ModelSerializer):
     """
     Serialize each prerequisite relation, exposing the target lesson's id/title.
@@ -724,7 +783,10 @@ class LessonItemsBulkSerializer(serializers.Serializer):
             raise serializers.ValidationError({"items": "Provide at least one line or use mode='replace' to clear."})
         return attrs
     
-    
+"""
+For showing assignments and readings in the fields
+"""
+
 class LessonReadingSerializer(serializers.ModelSerializer):
     class Meta:
         model = LessonReading

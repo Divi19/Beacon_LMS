@@ -160,111 +160,75 @@ class LinkingClassroomsView(APIView):
 
     def get(self, request, course_id):
         """
-        POST
-        Grab all unlinked classrooms and linked classrooms of the same course
+        GET
+        Grab all linked classrooms for the course and unlinked physical classrooms.
         """
-        
-        
+        # Classrooms with lesson classroom linked to a specific course 
         linked_rows = (
-            LessonClassroom.active
-            .filter(lesson__course__course_id=course_id)
-            .select_related("classroom")
-            .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
-            .values(
-                "classroom__classroom_id",
-                "classroom__location",
-                "day_of_week",
-                "time_start",
-                "time_end",
-                "duration_minutes",
-                "classroom__capacity",
-                "enrolled_count",                                                  
-            )
-        )
-
-        unlinked_rows = (
             Classroom.objects
-            .filter(lessonclassroom__isnull=True, is_online=False)
-            .annotate(
-                day_of_week=Value(None, output_field=CharField()),
-                time_start=Value(None, output_field=TimeField()),
-                time_end=Value(None, output_field=TimeField()),
-                duration_minutes=Value(None, output_field=IntegerField()),
-                enrolled_count=Value(0, output_field=IntegerField()),              
-            )
+            .filter(lessonclassroom__lesson__course__course_id=course_id)
             .values(
                 "classroom_id",
                 "location",
-                "day_of_week",
-                "time_start",
-                "time_end",
-                "duration_minutes",
                 "capacity",
-                "enrolled_count",                                                  
+            )
+            .distinct()
+        )
+
+        # Unlinked classrooms: alias placeholders with the SAME names used above
+        unlinked_rows = (
+            Classroom.objects
+            .filter(lessonclassroom__isnull=True, is_online=False)
+            .values(
+                "classroom_id",
+                "location",
+                "capacity",
             )
         )
 
-        def norm_linked(r):
-            return {
-                "classroom_id": r["classroom__classroom_id"],
-                "location": r["classroom__location"],
-                "day_of_week": r["day_of_week"],
-                "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
-                "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
-                "duration_minutes": r["duration_minutes"],
-                "capacity": r["classroom__capacity"],
-                "enrolled_count": r["enrolled_count"],                             
-            }
-
-        def norm_unlinked(r):
+        def norm(r):
             return {
                 "classroom_id": r["classroom_id"],
                 "location": r["location"],
-                "day_of_week": r["lessonclassroom__day_of_week"],
-                "time_start": r["lessonclassroom__time_start"].strftime("%H:%M") if r["lessonclassroom__time_start"] else None,
-                "time_end": r["lessonclassroom__time_end"].strftime("%H:%M") if r["lessonclassroom__time_end"] else None,
-                "duration_minutes": r["essonclassroom__duration_minutes"],
                 "capacity": r["capacity"],
-                "enrolled_count": r["enrolled_count"],                             
             }
+
         DAY_ORDER = {
             "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
             "Friday": 5, "Saturday": 6, "Sunday": 7,
         }
-        def day_rank(day):
-            """Return numeric rank for a weekday name (None or unknown -> 99)."""
+
+        def day_rank(day):  # None or unknown -> 99
             return DAY_ORDER.get(day, 99)
 
-        def time_str(t):
-            """Return time formatted as HH:MM string or empty if None."""
-            return t.strftime("%H:%M") if t else ""
-
         try:
-            data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
-            data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+            data = [*map(norm, linked_rows), *map(norm, unlinked_rows)]
+            # CHANGED: use .get() and fallback so missing keys don’t raise KeyError
+            data.sort(key=lambda x: (
+                x.get("classroom_id"),
+                day_rank(x.get("day_of_week")),
+                x.get("time_start") or ""
+            ))
             return Response(data)
         except Exception as e:
             return Response(
                 {"error": str(e), "trace": traceback.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+            )
     
     def post(self, request, lesson_id):
         mutable_data = deepcopy(request.data)
         mutable_data.pop("lesson_id", None)
         if "classroom_id" in mutable_data and "classroom" not in mutable_data:
             mutable_data["classroom"] = mutable_data.pop("classroom_id")
-       
-       
         mutable_data["lesson"] = lesson_id
         serializer = LessonClassroomSerializer(
             data=mutable_data,
             context={"request": request}  #needed for supervisor fallback
         )
-        if not serializer.is_valid():
-            print("ERR:", serializer.errors)
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
         lesson_classroom = serializer.save()
+        print()
         return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
 
 class OnlineClassroomsView(APIView):
@@ -323,10 +287,6 @@ class OnlineClassroomsView(APIView):
             """Return numeric rank for a weekday name (None or unknown -> 99)."""
             return DAY_ORDER.get(day, 99)
 
-        def time_str(t):
-            """Return time formatted as HH:MM string or empty if None."""
-            return t.strftime("%H:%M") if t else ""
-
         try:
             data = [*map(norm_linked, linked_rows)]
             data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
@@ -358,6 +318,7 @@ class OnlineClassroomsView(APIView):
             print("ERR:", online_lesson_classroom.errors)
             return Response(online_lesson_classroom.errors, status=400)
         online_lesson_classroom_obj = online_lesson_classroom.save()
+        
         
         
         return Response(
@@ -395,7 +356,7 @@ class ActiveClassroomsView(APIView):
         linked_rows = (
             LessonClassroom.active
             .filter(q)
-            .select_related("classroom", "supervisor")
+            .select_related("classroom")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
                 "classroom__classroom_id",
@@ -410,7 +371,8 @@ class ActiveClassroomsView(APIView):
                 "classroom__zoom_link",
                 "classroom__is_online",   
                 "lesson__lesson_id",  
-                "duration_weeks"                                        
+                "duration_weeks",
+                "lesson_classroom_id"                                        
             )
         )
 
@@ -428,7 +390,8 @@ class ActiveClassroomsView(APIView):
                 "is_online": r["classroom__is_online"],
                 "zoom_link": r["classroom__zoom_link"], 
                 "lesson_id": r["lesson__lesson_id"],     
-                "duration_weeks": r["duration_weeks"]               
+                "duration_weeks": r["duration_weeks"],
+                "lesson_classroom_id"   : r["lesson_classroom_id"   ]          
             }
         
         DAY_ORDER = {
@@ -439,7 +402,6 @@ class ActiveClassroomsView(APIView):
         def day_rank(day):
             """Return numeric rank for a weekday name (None or unknown -> 99)."""
             return DAY_ORDER.get(day, 99)
-        
         try:
             data = [*map(norm_linked, linked_rows)]
             data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
@@ -519,6 +481,7 @@ class OwnClassroomsView(APIView):
 
         def norm_linked(r):
             return {
+                "is_supervised": True,
                 "classroom_id": r["classroom__classroom_id"],
                 "location": r["classroom__location"],
                 "day_of_week": r["day_of_week"],
@@ -536,6 +499,7 @@ class OwnClassroomsView(APIView):
 
         def norm_unlinked(r):
             return {
+                "is_supervised": False,
                 "classroom_id": r["classroom_id"],
                 "location": r["location"],
                 "day_of_week": r["day_of_week"],
@@ -553,6 +517,7 @@ class OwnClassroomsView(APIView):
         data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
         data.sort(
             key=lambda x: (
+                 x.get("is_supervised", False) is False,
                 str(x["classroom_id"]) if x["classroom_id"] is not None else 0,
                 str(x["day_of_week"]) if x["day_of_week"] else "ZZZ",
                 str(x["time_start"]) if x["time_start"] else ""
@@ -562,7 +527,6 @@ class OwnClassroomsView(APIView):
 
 class CreateClassroomView(APIView):
     """
-    Specific to instructor 
     Creating online classrooms 
     """
     permission_classes = [IsAuthenticated]
@@ -580,6 +544,7 @@ class CreateClassroomView(APIView):
         classroom = serializer.save()
         return Response(ClassroomSerializer(classroom).data, status=201)
         
+
 
 
 """
