@@ -122,28 +122,7 @@ return (
                 </div>
             </header>
             <header className={i.header}>
-                <Button
-                    variant="blue"
-                    className={i.enrollBtn}
-                    onClick={() => navigate(`/student/course/${courseId}/my-lessons`)}
-                >
-                    <span>Back to MY LESSONS</span>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 8 16 12 12 16" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
-                    </svg>
-                </Button>
+              
                 <div className={i.rect1}>
            
                 <div className={i.label2}>

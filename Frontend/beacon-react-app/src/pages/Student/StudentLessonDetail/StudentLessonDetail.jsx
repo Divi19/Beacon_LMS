@@ -18,6 +18,16 @@ export default function StudentLessonDetail() {
   const [isLessonEnrolled, setIsLessonEnrolled] = useState(false);
   const [classrooms, setClassrooms] = useState([]);
   const [chosenClassroom, setChosenClassroom] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [checkedAssignments, setCheckedAssignments] = useState(() => {
+    const saved = localStorage.getItem("checkedAssignments");
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [readings, setReadings] = useState([]);
+  const [checkedReadings, setCheckedReadings] = useState(() => {
+    const saved = localStorage.getItem("checkedReadings");
+    return saved ? JSON.parse(saved) : {};
+  });
 
   // modal
   const [showModal, setShowModal] = useState(false);
@@ -46,6 +56,18 @@ export default function StudentLessonDetail() {
     const res = await api.delete(`/student/lessons/${lessonId}/classrooms/enrolled/${classroom_id}/`);
     return res.data;
   }
+
+  async function apiGetAssignments() {
+    const res = await api.get(`/student/lessons/${lessonId}/assignments/`);
+    console.log("Assignments API response:", res.data);
+    return res.data;
+  }
+
+    async function apiGetReadings() {
+    const res = await api.get(`/student/lessons/${lessonId}/readings/`);
+    console.log("Readings API response:", res.data);
+    return res.data;
+  }
   
   useEffect(() => {
     (async () => {
@@ -64,6 +86,13 @@ export default function StudentLessonDetail() {
         } else {
           setClassrooms([]);
         }
+
+        const a = await apiGetAssignments();
+        setAssignments(a);
+
+        const b = await apiGetReadings();
+        setReadings(b);
+        
       } catch (e) {
         setError("Failed to load lesson.");
       } finally {
@@ -71,6 +100,49 @@ export default function StudentLessonDetail() {
       }
     })();
   }, [courseId, lessonId, refreshKey]);
+
+  useEffect(() => {
+    localStorage.setItem("checkedAssignments", JSON.stringify(checkedAssignments));
+  }, [checkedAssignments]);
+
+async function toggleAssignment(assignmentId) {
+  const newCompleted = !checkedAssignments[assignmentId];
+  setCheckedAssignments(prev => ({
+    ...prev,
+    [assignmentId]: newCompleted
+  }));
+
+  try {
+    await api.post(`/student/lessons/${lessonId}/assignments/`, {
+      assignment_id: assignmentId,
+      completed: newCompleted
+    });
+  } catch (err) {
+    console.error("Failed to update assignment progress:", err);
+  }
+}
+
+useEffect(() => {
+    localStorage.setItem("checkedReadings", JSON.stringify(checkedReadings));
+  }, [checkedReadings]);
+
+async function toggleReading(readingId) {
+  const newCompleted = !checkedReadings[readingId];
+  setCheckedReadings(prev => ({
+    ...prev,
+    [readingId]: newCompleted
+  }));
+
+  try {
+    await api.post(`/student/lessons/${lessonId}/readings/`, {
+      reading_id: readingId,
+      completed: newCompleted
+    });
+  } catch (err) {
+    console.error("Failed to update reading progress:", err);
+  }
+}
+
 
   const objectiveItems = useMemo(() => {
     if (!lesson) return [];
@@ -369,12 +441,75 @@ export default function StudentLessonDetail() {
                 <h3 className={i.panelTitle}>Course Progress</h3>
               </section>
             </div>
-
-            <section className={i.panelBox}>
-              <h3 className={i.panelTitle}>Assignment List</h3>
-            </section>
           </div>
         )}
+  {/* Temporarily outside the showChosenClass, since no classroom is selected yet and that is a conditional
+  to check if there is a classroom, with it assignment list would not render, move it back once that is figured out */}
+            <section className={i.panelBox}>
+  <h3 className={i.panelTitle}>Assignment List</h3>
+  {assignments.length === 0 ? (
+    <p>No assignments yet.</p>
+  ) : (
+    <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+      {assignments.map(a => (
+        <li
+          key={a.assignment_id}
+          style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+        >
+          <input
+            type="checkbox"
+            checked={!!checkedAssignments[a.assignment_id]}
+            onChange={() => toggleAssignment(a.assignment_id)}
+            style={{ marginRight: 10 }}
+          />
+          <div>
+            <strong>{a.title}</strong>
+            {a.description && (
+              <div style={{ fontSize: 13, color: "#666" }}>{a.description}</div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
+<section className={i.panelBox}>
+  <h3 className={i.panelTitle}>Reading List</h3>
+  {readings.length === 0 ? (
+    <p>No reading items yet.</p>
+  ) : (
+    <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+      {readings.map(b => (
+        <li
+          key={b.reading_id}
+          style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+        >
+          <input
+            type="checkbox"
+            checked={!!checkedReadings[b.reading_id]}
+            onChange={() => toggleReading(b.reading_id)}
+            style={{ marginRight: 10 }}
+          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {b.url && (
+              <a
+                href={b.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none", color: "#1a73e8", fontWeight: "bold" }}
+              >
+              </a>
+            )}
+            <strong>{b.title}</strong>
+            {/* {b.description && (
+              <div style={{ fontSize: 13, color: "#666" }}>{b.description}</div>
+            )} */}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
       </div>
 
 

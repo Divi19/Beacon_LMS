@@ -39,21 +39,21 @@ urlpatterns = [
     #Instructors Classrooms
         #Course specific - sendParams
     path("instructor/course/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
-        #Lesson specific - sendParams
+        #Lesson specific - sendParams 
     path("instructor/lesson/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
         #Own or unlinked classrooms
     path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),
-        #Linking classrooms
-    path("instructor/classrooms/<str:course_id>/get/", LinkingClassroomsView.as_view(), name="classrooms"),
-    path("instructor/classrooms/<str:lesson_id>/link/", LinkingClassroomsView.as_view(), name="classrooms"),
-        #Creating physical classrooms
+        #GET + POST Linking classrooms
     path("instructor/classrooms/create/", CreateClassroomView.as_view()),
+    path("instructor/classrooms/<str:lesson_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
+        #GET + POST Create and linking online classroom // showing online classrooms
+    path("intructor/classrooms/online/<str:lesson_id>/", OnlineClassroomsView.as_view()),
     
     
     #Instructor Lessons 
     path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
     path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
-    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
+    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>/", LessonsView.as_view(), name="get-lessons"), #patching 
     path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
     path("instructor/lessons/<str:lesson_id>/update/", LessonsView.as_view(), name="get-lessons"),
     #Instructor Lessons prerequisites 
@@ -63,6 +63,12 @@ urlpatterns = [
     #Instructor Assignment 
     path("instructor/lessons/<str:lesson_id>/assignments/", LessonAssignmentBulkCreateView.as_view()),
 
+    #Admin login
+    path("api/admin/login/", AdminLogin.as_view(), name="admin-login"),
+    path('api/admin/instructors/', AdminInstructorListView.as_view(), name="admin-instructors"),
+    path('api/admin/instructors/<int:instructor_id>/', AdminInstructorDetailView.as_view(), name="admin-instructor-detail"),
+
+    #Students login TODO
     path("student/login/", StudentLogin.as_view(), name="student-login"),
     #Student registration
     path("student/signup/", StudentRegister.as_view(), name="student-register"),
@@ -79,6 +85,12 @@ urlpatterns = [
     path("student/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enrolled/<str:classroom_id>/", StudentEnrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+
+    #Student Assignment
+    path("student/lessons/<str:lesson_id>/assignments/", StudentAssignment.as_view(), name="student-lesson-assignment"),
+
+    #Student Reading
+    path("student/lessons/<str:lesson_id>/readings/", StudentReading.as_view(), name="student-lesson-reading"),
 
     #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")

@@ -34,7 +34,7 @@ import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMy
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
 import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
-import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
+// import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
 
 export default function App(){
   const [details, setDetails] = useState([]);
@@ -96,7 +96,7 @@ export default function App(){
       <Route path="/admin/log-in" element={<AdminLogIn />}/>
       <Route path="/admin/main-page" element={<AdminMainPage />}/>
       <Route path="/admin/create-instructor" element={<AdminCreateInstructor />}/>
-      <Route path="/admin/instructor-list" element={<AdminInstructorList />}/>
+      {/* <Route path="/admin/instructor-list" element={<AdminInstructorList />}/> */}
 
      {/*<Route path="/student/own-lessons" element={<StudentMyLessonsPage />}/>
       <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>/*/}

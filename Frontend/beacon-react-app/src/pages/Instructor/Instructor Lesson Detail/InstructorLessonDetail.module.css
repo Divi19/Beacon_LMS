@@ -28,6 +28,25 @@
 .classrooms {
 }
 
+.rect3 {
+  border-radius: 18px;
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+}
+
+.label1 {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.label {
+  color:  #9c440c;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
 .summaryTop {
   display: flex;
   align-items: baseline;

@@ -65,6 +65,7 @@ export default function InstructorCourseCreate({ onCourseCreated }) {
     setLessons([]);
     setLessonInput("");
     setLessonsNumber(0);
+    navigate("/instructor/course-list");
   };
 
   const handleSubmit = async (e) => {

@@ -14,7 +14,7 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #ffc07d 0%, #93be77 70%, #0dbad8);
+  background: linear-gradient(to bottom, #ffc07d 0%, #f0c89b 70%, #0dbad8);
 }
 
 .body {
@@ -23,19 +23,19 @@
 .title {
   margin: 0 0 10px 0;
   font-size: clamp(18px, 2.6vw, 20px);
-  color: #0e5f6b;
+  color: #9c440c;
   font-weight: 800;
 }
 .metaRow {
   display: flex;
   gap: 28px;
-  color: #0e5f6b;
+  color: #9c440c;
   margin: 6px 0;
   font-weight: 600;
 }
 
 .cta {
-  background: rgba(106, 195, 209, 0.9);
+  background:#ff9c5f ;
   color: #fff;
   border: none;
   border-radius: 25px;
