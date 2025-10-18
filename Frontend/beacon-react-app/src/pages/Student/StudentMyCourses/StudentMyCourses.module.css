@@ -1,10 +1,18 @@
 .wrap {
   padding: clamp(16px, 4vw, 40px);
-   padding-top: 22vh;
+  padding-top: 22vh;
 }
 
 .header {
+  display: flex;
+  align-items: center;
   margin-bottom: clamp(16px, 3vw, 28px);
+  justify-content: space-between;
+}
+
+.right {
+  display: flex;
+  align-items: center;
 }
 
 .title {
@@ -47,10 +55,18 @@
   max-width: 340px;
   display: grid;
   grid-auto-flow: column;
+  background-color: #71bfcd;
   align-items: center;
   justify-content: center;
   gap: 10px;
   font-size: clamp(16px, 2.2vw, 20px);
+}
+
+.enrollBtn:hover {
+  transform: scale(1.05);
+  background-color: #07464f;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 .arrow {

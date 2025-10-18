@@ -6,14 +6,14 @@ import {api} from "../../../api"
 
 // Optional: pass a logo URL via props if you prefer
 // Usage: <StudentLogin logoSrc="/assets/beacon-logo.png" />
-export default function AdminCreateInstructor({ logoSrc }) {
+export default function AdminCreateInstructor() {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     email: "",
-    first_name: "",
-    last_name: "",
+    full_name: "",
+    // last_name: "",
     password: "",
   })
   const handleChange = (e) => {
@@ -29,45 +29,33 @@ export default function AdminCreateInstructor({ logoSrc }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLoading) return; 
-  
+    if (isLoading) return;
+
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
-  
+
     try {
-      const { data } = await api.post(
-        "/student/signup/",
-        formData
-      );
-  
-      // Backend returns: { access, refresh, user: {...} }
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
-      setSuccessMessage("Sign up successful");
-      navigate("/student/login", { replace: true });
+      const { data } = await api.post("/api/admin/instructors/", formData);
+
+      setSuccessMessage("Instructor created successfully!");
+      
+      // Redirect to main page after 1.5 seconds
+      setTimeout(() => {
+        navigate("/admin/main-page", { replace: true });
+      }, 1500);
     } catch (err) {
-      // Robust error extraction
       if (err.response && err.response.data) {
         const payload = err.response.data;
-        // DRF ValidationError often uses {field: [msgs]} or {"detail": "..."} or your {"error": "..."}
         if (payload.detail) setError(payload.detail);
         else if (payload.error) setError(payload.error);
         else if (typeof payload === "string") setError(payload);
         else {
-          // field-wise
-          Object.keys(payload).some((field) => {
-            const msgs = payload[field];
-            if (Array.isArray(msgs) && msgs.length) {
-              setError(String(msgs[0]));
-              return true;
-            }
-            if (typeof msgs === "string") {
-              setError(msgs);
-              return true;
-            }
-            return false;
-          });
+          // Field-wise errors
+          const firstError = Object.values(payload).find(v => 
+            Array.isArray(v) ? v.length > 0 : !!v
+          );
+          setError(Array.isArray(firstError) ? firstError[0] : firstError || "Validation error");
         }
       } else {
         setError("Network error. Please try again.");
@@ -118,25 +106,25 @@ export default function AdminCreateInstructor({ logoSrc }) {
             aria-required="true"
           />
 
-          <label htmlFor="first_name" className={styles.label}>
+          <label htmlFor="full_name" className={styles.label}>
             Full Name:
           </label>
           <input
-            id="first_name"
-            name="first_name"
-            type="first_name"
-            inputMode="first_name"
-            autoComplete="first_name"
+            id="full_name"
+            name="full_name"
+            type="full_name"
+            inputMode="full_name"
+            autoComplete="full_name"
             className={styles.input}
             // placeholder="you@example.com"
-            value={formData.first_name}
+            value={formData.full_name}
             onChange={handleChange}
             required
             aria-required="true"
           />
 
-          <label htmlFor="last_name" className={styles.label}>
-            Account status:
+          {/* <label htmlFor="last_name" className={styles.label}>
+            Last name:
           </label>
           <input
             id="last_name"
@@ -150,7 +138,7 @@ export default function AdminCreateInstructor({ logoSrc }) {
             onChange={handleChange}
             required
             aria-required="true"
-          />
+          /> */}
 
           <label htmlFor="password" className={styles.label}>
             Password:
@@ -199,7 +187,7 @@ export default function AdminCreateInstructor({ logoSrc }) {
 
         {/* Optional small print / links area */}
         <div className={styles.footerLinks}>
-          <Link to="/" className={styles.backLink}>Back to entry</Link>
+          <Link to="/admin/main-page" className={styles.backLink}>Back to Dashboard</Link>
         </div>
       </section>
     </main>

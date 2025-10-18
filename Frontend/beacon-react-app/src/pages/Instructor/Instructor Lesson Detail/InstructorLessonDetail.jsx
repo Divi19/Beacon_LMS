@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import s from "./InstructorLessonDetail.module.css";
@@ -12,6 +12,17 @@ export default function LessonDetail() {
   const [classrooms, setClassrooms] = useState([]);
   const navigate = useNavigate();
   const [students, setStudents] = useState([])
+
+  const objectiveItems = useMemo(() => {
+    if (!lesson) return [];
+    const raw = Array.isArray(lesson.objectives)
+      ? lesson.objectives.join("\n")
+      : String(lesson.objectives || "");
+    return raw
+      .split(/\r?\n|•/g)
+      .map((t) => t.trim())
+      .filter(Boolean);
+  }, [lesson]);
 
   // replace with real API call later
   async function loadLesson() {
@@ -52,6 +63,8 @@ export default function LessonDetail() {
       </div>
     );
   if (!lesson) return null;
+
+  
 
   return (
     <div>
@@ -96,12 +109,18 @@ export default function LessonDetail() {
               </button> {/*Needs navigation*/}
             </article>
 
-            <aside className={`${s.cardBase} ${s.objectiveCard}`}>
-              <h3 className={s.objTitle}>Objective</h3>
-              <ul className={s.objList}>
-                {lesson.objectives}
-              </ul>
-            </aside>
+            <div className={s.rect3}>
+                <div className={s.label}>
+                    <strong>Objective</strong>
+                </div>
+                    <div className={s.label1}>
+                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                          {objectiveItems.map((o, idx) => (
+                            <li key={idx}>{o}</li>
+                          ))}
+                        </ul>
+                    </div>
+                </div>
           </div>
 
           <section className={`${s.cardBase} ${s.classrooms}`}>
@@ -131,12 +150,31 @@ export default function LessonDetail() {
                         <div className={s.clsTime}>
                           {c.time_start} – {c.time_end}
                         </div>
+
                         <div className={s.clsMetaRow}>
                           <span>{enrolled} students</span>
                           <span>Availability: {availability}</span>
                           <span>ID: {c.classroom_id}</span>
+                          <span>Supervisor {c.supervisor}</span>
                         </div>
+                        
+                        {c.is_online && <div className={s.clsMetaRow}>
+                          <span><strong>ONLINE &nbsp;</strong>
+                          <a
+                            href={c.zoom_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'blue', textDecoration: 'underline' }}
+                          >
+                            {c.zoom_link}
+                          </a>
+                          </span>
+                        </div>}
                       </div>
+
+                      
+
+
 
                       <div className={s.clsColActions}>
                         <button

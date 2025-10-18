@@ -2,6 +2,7 @@ from contextvars import Token
 import re
 from urllib.parse import urlparse
 from .forms import *
+from copy import deepcopy
 
 #django 
 from django.shortcuts import render, redirect
@@ -151,6 +152,9 @@ class LinkingClassroomsView(APIView):
     """
     Shows all classrooms for linking 
     """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+
     def get(self, request, course_id):
         """
         POST
@@ -224,12 +228,106 @@ class LinkingClassroomsView(APIView):
         return Response(data)
     
     def post(self, request, lesson_id):
+        mutable_data = deepcopy(request.data)
+        mutable_data.pop("lesson_id", None)
+        if "classroom_id" in mutable_data and "classroom" not in mutable_data:
+            mutable_data["classroom"] = mutable_data.pop("classroom_id")
+       
+       
+        mutable_data["lesson"] = lesson_id
+        serializer = LessonClassroomSerializer(
+            data=mutable_data,
+            context={"request": request}  #needed for supervisor fallback
+        )
+        if not serializer.is_valid():
+            print("ERR:", serializer.errors)
+            return Response(serializer.errors, status=400)
+        lesson_classroom = serializer.save()
+        return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
+
+class OnlineClassroomsView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+
+    def get(self, request, lesson_id):
+        q = Q(lesson__lesson_id=lesson_id) & Q(classroom__is_online = True)
+
+        linked_rows = (
+            LessonClassroom.active
+            .filter(q)
+            .select_related("classroom", "supervisor")
+            .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
+            .values(
+                "classroom__classroom_id",
+                "classroom__location",
+                "day_of_week",
+                "time_start",
+                "time_end",
+                "supervisor__full_name",
+                "duration_minutes",
+                "classroom__capacity",
+                "enrolled_count",   
+                "classroom__zoom_link",
+                "classroom__is_online",   
+                "lesson__lesson_id"                                           
+            )
+        )
+
+        def norm_linked(r):
+            return {
+                "classroom_id": r["classroom__classroom_id"],
+                "location": r["classroom__location"],
+                "day_of_week": r["day_of_week"],
+                "supervisor": r["supervisor__full_name"],
+                "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
+                "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
+                "duration_minutes": r["duration_minutes"],
+                "capacity": r["classroom__capacity"],
+                "enrolled_count": r["enrolled_count"],   
+                "is_online": r["classroom__is_online"],
+                "zoom_link": r["classroom__zoom_link"], 
+                "lesson_id": r["lesson__lesson_id"]                      
+            }
+
+        data = [*map(norm_linked, linked_rows)]
+        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+        return Response(data)
+
+    @transaction.atomic
+    def post(self, request, lesson_id):
+        #classroom first 
+        mutable1 = deepcopy(request.data)
+        mutable1["lesson"] = lesson_id
+        mutable1["is_online"] = True #Just in case
+        online_classroom = ClassroomSerializer(data=request.data, context={"request": request})
+        if not  online_classroom.is_valid():
+            print("ERR:", online_classroom.errors)
+            return Response(online_classroom.errors, status=400)
+        online_classroom_obj = online_classroom.save()
+
+        mutable2 = deepcopy(mutable1)
+        mutable2["classroom"] = online_classroom_obj.classroom_id 
+        online_lesson_classroom = LessonClassroomSerializer(data=mutable2, context={"request": request})    
+        if not  online_lesson_classroom.is_valid():
+            print("ERR:", online_lesson_classroom.errors)
+            return Response(online_lesson_classroom.errors, status=400)
+        online_lesson_classroom_obj = online_lesson_classroom.save()
         
-        return 
+        
+        return Response(
+            {
+                "online_lesson_classroom": LessonClassroomSerializer(online_lesson_classroom_obj).data,
+                "online_classroom": ClassroomSerializer(online_classroom_obj).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
 
 class ActiveClassroomsView(APIView):
     """
-    Showing classrooms or multiple linked classrooms with self as director 
+    Showing classrooms or multiple linked classrooms with self as supervisor 
     Both online and physical 
     lesson_id given: shows only classrooms linked to that lesson 
     course_id given: shows only classrooms linked to the lessons in this course
@@ -250,7 +348,7 @@ class ActiveClassroomsView(APIView):
         linked_rows = (
             LessonClassroom.active
             .filter(q)
-            .select_related("classroom", "director")
+            .select_related("classroom", "supervisor")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
                 "classroom__classroom_id",
@@ -258,12 +356,13 @@ class ActiveClassroomsView(APIView):
                 "day_of_week",
                 "time_start",
                 "time_end",
-                "director__full_name",
+                "supervisor__full_name",
                 "duration_minutes",
                 "classroom__capacity",
                 "enrolled_count",   
                 "classroom__zoom_link",
-                "classroom__is_online"                                               
+                "classroom__is_online",   
+                "lesson__lesson_id"                                           
             )
         )
 
@@ -272,23 +371,25 @@ class ActiveClassroomsView(APIView):
                 "classroom_id": r["classroom__classroom_id"],
                 "location": r["classroom__location"],
                 "day_of_week": r["day_of_week"],
-                "director": r["director__full_name"],
+                "supervisor": r["supervisor__full_name"],
                 "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
                 "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["classroom__capacity"],
                 "enrolled_count": r["enrolled_count"],   
                 "is_online": r["classroom__is_online"],
-                "zoom_link": r["classroom__zoom_link"]                         
+                "zoom_link": r["classroom__zoom_link"], 
+                "lesson_id": r["lesson__lesson_id"]                      
             }
 
         data = [*map(norm_linked, linked_rows)]
         data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
         return Response(data)
 
+
 class OwnClassroomsView(APIView):
     """
-    Showing own classrooms (as director) and unlinked classrooms 
+    Showing own classrooms (as supervisor) and unlinked classrooms 
     """
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
@@ -305,7 +406,7 @@ class OwnClassroomsView(APIView):
 
         linked_rows = (
             LessonClassroom.active
-            .filter(director=instructor)
+            .filter(supervisor=instructor)
             .select_related("classroom")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
@@ -317,15 +418,16 @@ class OwnClassroomsView(APIView):
                 "duration_minutes",
                 "classroom__capacity",
                 "enrolled_count", 
-                "director__full_name",
+                "supervisor__full_name",
                 "classroom__zoom_link",
-                "classroom__is_online"                                                
+                "classroom__is_online",
+                "lesson__lesson_id"                                           
             )
         )
 
         unlinked_rows = (
             Classroom.objects
-            .filter(Q(lessonclassroom__director=instructor) | Q(lessonclassroom__isnull=True))
+            .filter(Q(lessonclassroom__supervisor=instructor) | Q(lessonclassroom__isnull=True))
             .annotate(
                 day_of_week=Value(None, output_field=CharField()),
                 time_start=Value(None, output_field=TimeField()),
@@ -342,9 +444,10 @@ class OwnClassroomsView(APIView):
                 "duration_minutes",
                 "capacity",
                 "enrolled_count",
-                "lessonclassroom__director__full_name",      
+                "lessonclassroom__supervisor__full_name",      
                 "zoom_link",
-                "is_online"                                             
+                "is_online",
+                "lessonclassroom__lesson__lesson_id"                                          
             )
         )
 
@@ -358,9 +461,10 @@ class OwnClassroomsView(APIView):
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["classroom__capacity"],
                 "enrolled_count": r["enrolled_count"], 
-                "director": r["director__full_name"],
+                "supervisor": r["supervisor__full_name"],
                 "is_online": r["classroom__is_online"],
-                "zoom_link": r["classroom__zoom_link"]    
+                "zoom_link": r["classroom__zoom_link"],
+                "lesson_id": r["lesson__lesson_id"]  
                                        
             }
 
@@ -374,9 +478,10 @@ class OwnClassroomsView(APIView):
                 "duration_minutes": r["duration_minutes"],
                 "capacity": r["capacity"],
                 "enrolled_count": r["enrolled_count"],    
-                "director": r["lessonclassroom__director__full_name"],
+                "supervisor": r["lessonclassroom__supervisor__full_name"],
                 "is_online": r["is_online"],
-                "zoom_link": r["zoom_link"]                            
+                "zoom_link": r["zoom_link"],
+                "lesson_id": r["lessonclassroom__lesson__lesson_id"]                           
             }
 
         data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
@@ -798,7 +903,7 @@ class StudentEnrolledLessons(APIView):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
         lessons = (Lesson.objects
-                   .filter(lessonenrollment__student=student, course__course_id=course_id, status="Active")
+                   .filter(lessonenrollment__student=student, course__course_id=course_id)
                    .select_related("course", "designer") 
                    .distinct() )
         output = [{
@@ -972,7 +1077,7 @@ class StudentUnenrolledLessons(APIView):
         student = get_object_or_404(StudentProfile, user=user)
         course = get_object_or_404(Course, course_id=course_id)
         unenrolled_lessons = Lesson.objects.filter(
-            Q(course=course) & Q(status="Active")
+            Q(course=course)
             ).exclude(lessonenrollment__student=student).distinct()
         serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
@@ -1353,3 +1458,184 @@ class LessonAssignmentBulkCreateView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+    
+class AdminLogin(APIView): 
+    """
+    Posting login request. 
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = [] #Bypassing authentication
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user'] #in the post json
+        token = RefreshToken.for_user(user) #Creates a token
+
+        admin = (
+            AdminProfile.objects
+            .select_related("user")
+            .filter(user=user)
+            .first()
+        )
+        if not admin:
+            # Auth succeeded, but user lacks instructor privileges
+            return Response({"error": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        
+        payload = {
+            "access": str(token.access_token),
+            "refresh": str(token),
+            "user": {
+                "admin_profile_id": admin.admin_profile_id,
+                "full_name": admin.full_name,
+                "role": "admin",
+                "email": user.email,
+                "user_id": user.user_id,
+            },
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+
+class AdminInstructorListView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+    
+    def get(self, request):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructors = InstructorProfile.objects.select_related('user').all()
+        serializer = InstructorListSerializer(instructors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = InstructorCreateSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            instructor = serializer.save()
+            return Response(
+                InstructorListSerializer(instructor).data,
+                status=status.HTTP_201_CREATED
+            )
+
+class AdminInstructorDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+    
+    def get(self, request, instructor_id):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructor = get_object_or_404(InstructorProfile, instructor_profile_id=instructor_id)
+        serializer = InstructorListSerializer(instructor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def patch(self, request, instructor_id):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructor = get_object_or_404(InstructorProfile, instructor_profile_id=instructor_id)
+        
+        if 'is_active' in request.data:
+            instructor.user.is_active = request.data['is_active']
+            instructor.user.save()
+        
+        for field in ['title', 'full_name']:
+            if field in request.data:
+                setattr(instructor, field, request.data[field])
+        
+        instructor.save()
+        serializer = InstructorListSerializer(instructor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, instructor_id):
+        admin = AdminProfile.objects.filter(user=request.user).first()
+        if not admin:
+            return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+        
+        instructor = get_object_or_404(InstructorProfile, instructor_profile_id=instructor_id)
+        user = instructor.user
+        
+        user.is_active = False
+        user.save()
+        
+        return Response({"detail": "Instructor deactivated successfully."}, status=status.HTTP_200_OK)
+
+class StudentAssignment(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        assignments=LessonAssignment.objects.filter(lesson=lesson)
+
+        progress_map = {
+            p.assignment.assignment_id: p.completed
+            for p in StudentAssignmentProgress.objects.filter(student=student, assignment__lesson=lesson)
+        }
+        data = [
+            {
+                "assignment_id": a.assignment_id,
+                "title": a.title,
+                "description": a.description,
+                "completed": progress_map.get(a.assignment_id, False),
+            }
+            for a in assignments
+        ]
+        return Response(data)
+
+    def post(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        assignment_id = request.data.get("assignment_id")
+        completed = request.data.get("completed", False)
+
+        assignment = get_object_or_404(LessonAssignment, assignment_id=assignment_id, lesson__lesson_id=lesson_id)
+        progress, _ = StudentAssignmentProgress.objects.get_or_create(student=student, assignment=assignment)
+        progress.completed = completed
+        progress.save()
+
+        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+
+class StudentReading(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        readings=LessonReading.objects.filter(lesson=lesson)
+
+        progress_map = {
+            p.reading.reading_id: p.completed
+            for p in StudentReadingProgress.objects.filter(student=student, reading__lesson=lesson)
+        }
+        data = [
+            {
+                "reading_id": r.reading_id,
+                "title": r.title,
+                "url": r.url,
+                "completed": progress_map.get(r.reading_id, False),
+            }
+            for r in readings
+        ]
+        return Response(data)
+
+    def post(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        reading_id = request.data.get("reading_id")
+        completed = request.data.get("completed", False)
+
+        reading = get_object_or_404(LessonReading, reading_id=reading_id, lesson__lesson_id=lesson_id)
+        progress, _ = StudentReadingProgress.objects.get_or_create(student=student, reading=reading)
+        progress.completed = completed
+        progress.save()
+
+        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)

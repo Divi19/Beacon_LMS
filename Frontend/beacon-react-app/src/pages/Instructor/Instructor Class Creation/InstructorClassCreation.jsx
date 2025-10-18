@@ -22,7 +22,7 @@ export default function InstructorClassCreation() {
     }
     setSubmitting(true);
 
-    const payload = {capacity: capacity, location: location.trim(), is_online: false, zoom_link: null};
+    const payload = {capacity: capacity, location: location.trim(), is_online: false, zoom_link: ""};
     if (capacity > 10){
         alert("Classroom capacity must be less than 10")
         return 

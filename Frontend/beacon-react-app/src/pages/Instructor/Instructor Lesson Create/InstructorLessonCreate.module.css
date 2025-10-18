@@ -226,6 +226,9 @@ textarea.input {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  align-self: flex-start;
+  font-weight: 600;
+  border-radius: 10px;
 }
 
 .linkButton:hover {
@@ -283,8 +286,6 @@ textarea.input {
   cursor: pointer;
   font-weight: 600;
 }
-
-
 
 /* Popup */
 .modalOverlay {
@@ -368,7 +369,7 @@ textarea.input {
   font-weight: 700;
 }
 
-.modalCreate:hover{
+.modalCreate:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   background-color: #df9b4c;
@@ -378,5 +379,78 @@ textarea.input {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   background-color: #df714c;
+}
 
+/* physical card area */
+.physPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+}
+.physCard {
+  background: #f4b27a;
+  color: #2b1c12;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.physCardEmpty {
+  background: #ffe9d3;
+  color: #795548;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-style: italic;
+}
+.physRow {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.pending {
+  background: #fff3cd;
+  color: #8a6d3b;
+  border-radius: 8px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.8rem;
+}
+
+/* list popup */
+.pickList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+.pickItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+  background: #f7d9bd;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+}
+.smallSelect {
+  background: #a64a12;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.smallSelect:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #df714c;
+}
+
+.metaRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0.3rem 0 1rem;
 }
