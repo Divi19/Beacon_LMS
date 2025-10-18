@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from .forms import *
 from copy import deepcopy
 import traceback
+from .utils import _LINE_SPLIT, _split_title_second, _yield_lines, _SEPS, _FORBIDDEN
 
 #django 
 from django.shortcuts import render, redirect
@@ -17,6 +18,8 @@ from django.db import IntegrityError, transaction
 from django.db.models import OuterRef, Subquery, Q
 from django.db.models import Count
 from django.http import HttpResponse
+from django.core.validators import URLValidator
+_url_validator = URLValidator(schemes=["http", "https"])
 # views.py
 from itertools import chain
 from django.db.models import Value, IntegerField, TimeField, CharField
@@ -1310,149 +1313,86 @@ class LessonReadingBulkCreateView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
-    _LINE_SPLIT = re.compile(r"[\r\n]+")  # newline oriented; commas allowed in titles
-    _SEP_CANDIDATES = (" | ", " - ")
-
     def get(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
         qs = LessonReading.objects.filter(lesson=lesson).order_by("-created_at", "-pk")
         serializer = LessonReadingSerializer(qs, many=True)
         return Response(serializer.data)
 
-    def _looks_like_url(self, s: str) -> bool:
-        """
-        Treat 'example.com' as URL-like by assuming http:// if no scheme.
-        """
-        probe = s.strip()
-        parsed = urlparse(probe if "://" in probe else f"http://{probe}")
-        return bool(parsed.scheme and parsed.netloc and "." in parsed.netloc)
+    def _validate_item(self, title: str, url: str):
+        t = (title or "").strip()
+        if not t:
+            raise serializers.ValidationError({"title": "Title cannot be empty."})
+        if any(ch in t for ch in _FORBIDDEN):
+            raise serializers.ValidationError({"title": "Title must not contain '|' or '-'."})
+        u = (url or "").strip()
+        if u:
+            try:
+                _url_validator(u)
+            except ValidationError:
+                raise serializers.ValidationError({"url": "Invalid URL."})
+        return t, u
 
-    def _normalize_url(self, s: str) -> str | None:
-        if not s:
-            return None
-        s = s.strip()
-        if not self._looks_like_url(s):
-            return None
-        # Add http:// if missing
-        return s if "://" in s else f"http://{s}"
-
-    def parse_reading_items(self, raw: str):
-        """
-        Split by newline; within each line split on ' | ' or ' - ' if present.
-        Return list of dicts: {"title": str, "url": Optional[str]}.
-        """
-        lines = [ln.strip() for ln in self._LINE_SPLIT.split(raw or "") if ln.strip()]
-        out = []
-        for ln in lines:
-            title, url = None, None
-            # prefer explicit separators
-            for sep in self._SEP_CANDIDATES:
-                if sep in ln:
-                    left, right = [x.strip() for x in ln.split(sep, 1)]
-                    title = (left or right)[:255] if left else None
-                    url = self._normalize_url(right)
-                    break
-            else:
-                # no explicit sep: URL-only or Title-only
-                if self._looks_like_url(ln):
-                    title = ln[:255]
-                    url = self._normalize_url(ln)
-                else:
-                    title = ln[:255]
-                    url = None
-
-            if title:
-                out.append({"title": title, "url": url})
-        return out
-
-        
     @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        lesson_id = kwargs.get("lesson_id")
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+    def post(self, request, lesson_id):
+        existing = list(LessonReading.objects.filter(lesson__lesson_id=lesson_id))
+        by_title = {o.title: o for o in existing}
+        by_url   = {(o.url or "").strip(): o for o in existing if (o.url or "").strip()}
 
         ser = LessonItemsBulkSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
+        items = ser.validated_data["items"]
+        mode  = ser.validated_data["mode"]
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
 
-        raw_items = ser.validated_data["items"]
-        mode = ser.validated_data["mode"]
+        parsed = []
+        try:
+            for line in _yield_lines(items):
+                title, url = _split_title_second(line)
+                t, u = self._validate_item(title, url)
+                parsed.append((t, u))
+        except serializers.ValidationError as e:
+            return Response(e.detail, status=400)
 
-        parsed = self.parse_reading_items(raw_items)  # [{"title": str, "url": Optional[str]}]
-        # ---- CLEAR-ALL fast path ----
-        if mode == "replace" and len(parsed) == 0:
-            deleted, _ = LessonReading.objects.filter(lesson=lesson).delete()
-            current = (LessonReading.objects
-                    .filter(lesson=lesson)
-                    .order_by("-created_at", "-pk")
-                    .values("reading_id", "title", "url", "created_at"))
-            return Response(
-                {
-                    "lesson_id": lesson.lesson_id,
-                    "attempted": 0,
-                    "created_count": 0,
-                    "deleted_count": deleted,
-                    "items": list(current),
-                },
-                status=status.HTTP_200_OK,
-            )
-        # In-payload de-dup on (title, url)
-        seen, cleaned = set(), []
-        for it in parsed:
-            key = (it["title"], it["url"])
-            if key in seen:
-                continue
-            seen.add(key)
-            cleaned.append(it)
+        incoming_titles = {t for (t, _) in parsed}
+        saved = []
 
-        desired = {(it["title"], it["url"]) for it in cleaned}
+        for t, u in parsed:
+            u = (u or "").strip()
 
-        # Current state as exact pairs (note url can be None)
-        existing_qs = LessonReading.objects.filter(lesson=lesson)
-        existing = set(existing_qs.values_list("title", "url"))
+            if t in by_title:
+                # same title → normal update (only if URL provided)
+                obj = by_title[t]
+                if u != "":
+                    obj.url = u
+                    obj.save()
+            elif u != "" and u in by_url:
+                # SAME URL, NEW TITLE → DISCARD old and CREATE new
+                old = by_url[u]
+                if old.title != t:
+                    old.delete()
+                obj = LessonReading.objects.create(lesson=lesson, title=t, url=u)
+            else:
+                # brand new (seed empty url when not provided)
+                obj = LessonReading.objects.create(llesson=lesson, title=t, url=u or "")
 
+            saved.append(obj)
+
+        deleted_count = 0
         if mode == "replace":
-            # DELETE exact pairs: existing - desired (NULL-safe)
-            to_delete = existing - desired
-            if to_delete:
-                q = Q(pk__isnull=True)
-                for t, u in to_delete:
-                    cond = Q(lesson=lesson, title=t)
-                    cond &= Q(url__isnull=True) if u is None else Q(url=u)
-                    q |= cond
-                LessonReading.objects.filter(q).delete()
-
-            # refresh
-            existing_qs = LessonReading.objects.filter(lesson=lesson)
-            existing = set(existing_qs.values_list("title", "url"))
-
-        # CREATE missing exact pairs: desired - existing
-        missing = desired - existing
-        if missing:
-            by_key = {(it["title"], it["url"]): it for it in cleaned}
-            LessonReading.objects.bulk_create(
-                [LessonReading(lesson=lesson, title=k[0], url=k[1]) for k in missing],
-                ignore_conflicts=True,  # safe even without the unique constraint
-            )
-
-        current = (LessonReading.objects
-                .filter(lesson=lesson)
-                .order_by("-created_at", "-pk")
-                .values("reading_id", "title", "url", "created_at"))
-        
-        print(f"Request data: {request.data}")
-        print(f"Validated data: {ser.validated_data}")
-        print(f"Parsed items: {parsed}")
-        print(f"Deleting {missing} items for lesson {lesson.lesson_id}")
+            qs_del = LessonReading.objects.exclude(title__in=incoming_titles)
+            deleted_count = qs_del.count()
+            qs_del.delete()
 
         return Response(
             {
-                "lesson_id": lesson.lesson_id,
-                "attempted": len(cleaned),
-                "created_count": len(missing),
-                "items": list(current),
+                "saved": LessonReadingSerializer(saved, many=True).data,
+                "mode": mode,
+                "deleted_count": deleted_count,
             },
-            status=status.HTTP_201_CREATED if missing else status.HTTP_200_OK,
+            status=status.HTTP_201_CREATED,
         )
+    
 class LessonAssignmentBulkCreateView(APIView):
     """
     GET  /instructor/lessons/<lesson_id>/assignments/
@@ -1460,14 +1400,10 @@ class LessonAssignmentBulkCreateView(APIView):
 
     items (comma- or newline-separated lines, we split by newline):
       - "Title | Description"
-      - "Title - Description"
       - "Only a Title"
     """
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
-
-    _LINE_SPLIT = re.compile(r"[\r\n]+")   # newline-oriented split; commas are allowed inside
-    _SEP_CANDIDATES = (" | ", " - ")
 
     def get(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
@@ -1476,117 +1412,80 @@ class LessonAssignmentBulkCreateView(APIView):
               .order_by("-created_at", "-pk")
               .values("assignment_id", "title", "description", "created_at", "updated_at"))
         return Response(list(qs), status=status.HTTP_200_OK)
-
-    def parse_assignment_items(self, raw: str):
-        """
-        Split by newline; for each line:
-          - if contains " | " or " - ", treat right side as description
-          - else it's title-only
-        Returns list[{"title": str, "description": Optional[str]}]
-        """
-        lines = [ln.strip() for ln in self._LINE_SPLIT.split(raw or "") if ln.strip()]
-        out = []
-        for ln in lines:
-            title, desc = None, None
-            for sep in self._SEP_CANDIDATES:
-                if sep in ln:
-                    left, right = [x.strip() for x in ln.split(sep, 1)]
-                    title = (left or right)[:255] if left else None
-                    desc = right or None
-                    break
-            else:
-                title = ln[:255]
-                desc = None
-
-            if title:
-                out.append({"title": title, "description": desc})
-        return out
+    
+    def _validate_item(self, title: str, desc: str):
+        t = (title or "").strip()
+        if not t:
+            raise serializers.ValidationError({"title": "Title cannot be empty."})
+        if any(ch in t for ch in _FORBIDDEN):
+            raise serializers.ValidationError({"title": "Title must not contain '|' or '-'."})
+        d = (desc or "").strip()
+        if d and any(ch in d for ch in _FORBIDDEN):
+            raise serializers.ValidationError({"description": "Description must not contain '|' or '-'."})
+        return t, d
 
     @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        lesson_id = kwargs.get("lesson_id")
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+    def post(self, request, lesson_id):
+        existing = list(LessonAssignment.objects.filter(lesson__lesson_id=lesson_id))
+        by_title = {o.title: o for o in existing}
+        by_desc   = {(o.description or "").strip(): o for o in existing if (o.description or "").strip()}
 
         ser = LessonItemsBulkSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
 
-        raw_items = ser.validated_data["items"]
-        mode = ser.validated_data["mode"]
+        items = ser.validated_data["items"]
+        mode  = ser.validated_data["mode"]  # "merge" or "replace"
 
-        parsed = self.parse_assignment_items(raw_items)  # [{"title": str, "description": Optional[str]}]
-        # ---- CLEAR-ALL fast path ----
-        if mode == "replace" and len(parsed) == 0:
-            deleted, _ = LessonAssignment.objects.filter(lesson=lesson).delete()
-            current = (LessonAssignment.objects
-                    .filter(lesson=lesson)
-                    .order_by("-created_at", "-pk")
-                    .values("assignment_id", "title", "description", "created_at"))
-            return Response(
-                {
-                    "lesson_id": lesson.lesson_id,
-                    "attempted": 0,
-                    "created_count": 0,
-                    "deleted_count": deleted,
-                    "items": list(current),
-                },
-                status=status.HTTP_200_OK,
-        )
-        # In-payload de-dup on (title, description)
-        seen, cleaned = set(), []
-        for it in parsed:
-            key = (it["title"], it["description"])
-            if key in seen:
-                continue
-            seen.add(key)
-            cleaned.append(it)
+        parsed = []
+        try:
+            for line in _yield_lines(items):
+                title, desc = _split_title_second(line)
+                t, d = self._validate_item(title, desc)
+                parsed.append((t, d))
+        except serializers.ValidationError as e:
+            print("Encountered error")
+            return Response(e.detail, status=400)
 
-        desired = {(it["title"], it["description"]) for it in cleaned}
+        incoming_titles = {t for (t, _) in parsed}
+        saved = []
 
-        existing_qs = LessonAssignment.objects.filter(lesson=lesson)
-        existing = set(existing_qs.values_list("title", "description"))
+        for t, d in parsed:
+            d = (d or "").strip()
 
+            if t in by_title:
+                # same title → normal update (only if URL provided)
+                obj = by_title[t]
+                if d != "":
+                    obj.url = d
+                    obj.save()
+            elif d != "" and d in by_desc:
+                # SAME URL, NEW TITLE → DISCARD old and CREATE new
+                old = by_desc[d]
+                if old.title != t:
+                    old.delete()
+                obj = LessonAssignment.objects.create(lesson=lesson, title=t, description=d)
+            else:
+                # brand new (seed empty url when not provided)
+                obj = LessonAssignment.objects.create(lesson=lesson, title=t, description=d or "")
+
+            saved.append(obj)
+
+
+        deleted_count = 0
         if mode == "replace":
-            to_delete = existing - desired
-            if to_delete:
-                q = Q(pk__isnull=True)
-                for t, d in to_delete:
-                    cond = Q(lesson=lesson, title=t)
-                    cond &= Q(description__isnull=True) if d is None else Q(description=d)
-                    q |= cond
-                LessonAssignment.objects.filter(q).delete()
+            qs_del = LessonAssignment.objects.exclude(title__in=incoming_titles)
+            deleted_count = qs_del.count()
+            qs_del.delete()
 
-            existing_qs = LessonAssignment.objects.filter(lesson=lesson)
-            existing = set(existing_qs.values_list("title", "description"))
-
-        missing = desired - existing
-        if missing:
-            LessonAssignment.objects.bulk_create(
-                [
-                    LessonAssignment(
-                        lesson=lesson,
-                        title=t,
-                        description=d,
-                    )
-                    for (t, d) in missing
-                ],
-                ignore_conflicts=True,  # harmless even without a DB unique constraint
-            )
-
-        current = (LessonAssignment.objects
-                .filter(lesson=lesson)
-                .order_by("-created_at", "-pk")
-                .values("assignment_id", "title", "description", "created_at", "updated_at"))
-        
         return Response(
             {
-                "lesson_id": lesson.lesson_id,
-                "attempted": len(cleaned),
-                "created_count": len(missing),
-                "items": list(current),
+                "saved": LessonAssignmentSerializer(saved, many=True).data,
+                "mode": mode,
+                "deleted_count": deleted_count,
             },
-            status=status.HTTP_201_CREATED if missing else status.HTTP_200_OK,
+            status=status.HTTP_201_CREATED,
         )
-        
 
 class AssignmentTextView(APIView):
     """
