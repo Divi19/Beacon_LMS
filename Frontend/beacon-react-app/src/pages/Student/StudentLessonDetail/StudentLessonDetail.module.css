@@ -17,9 +17,8 @@
 }
 
 .rectBtn {
-  position: absolute;
-  bottom: clamp(12px, 2vw, 24px);
-  right: clamp(12px, 2vw, 24px);
+  position: static;
+  justify-self: end;
 }
 
 .rect,
@@ -34,7 +33,7 @@
   padding: 24px;
   display: grid;
   align-content: start;
-  position: relative;
+  row-gap: 10px;
 }
 
 .courseHeader {
@@ -251,9 +250,9 @@
 .panelBoxSmall {
   margin: 20px 0 20px 0;
   border-radius: 16px;
-  background: linear-gradient(180deg, #a8d7e0 0%, #f4c69b 100%);
+  background: linear-gradient(180deg, #8ac9cf 0%, #f5c79d 100%);
   min-height: 160px;
-  padding: 18px;
+  padding: 24px;
 }
 .panelTitle {
   font-size: 22px;
