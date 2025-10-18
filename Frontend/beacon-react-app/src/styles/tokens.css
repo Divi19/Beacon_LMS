@@ -20,4 +20,12 @@
   --brand-aqua: #6dc7d3;
   --brand-aqua-600: #5bb2be;
   --topbar-h: 100px;
+
+  /*Global colours for student side*/
+  --brand-student-title: #0097b2;
+  --brand-student-label:#005b70;
+  --brand-student-subtitle:#0b4f59;
+  --brand-student-pale-gradient: linear-gradient(to bottom, #71bfcd 0%, #b6c2ae 70%, #f1cea8 100%);
+
+
 }
