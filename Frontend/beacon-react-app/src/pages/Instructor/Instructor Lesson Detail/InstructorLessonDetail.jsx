@@ -193,20 +193,6 @@ export default function LessonDetail() {
                 })}
               </div>
             )}
-
-            <div className={s.clsFooter}>
-              <button
-                className={s.addBottomBtn}
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/instructor/course/${courseId}/lesson/${lessonId}/classroom/new`
-                  )
-                }
-              >
-                Add Classroom →
-              </button>
-            </div>
           </section>
         </section>
       </main>

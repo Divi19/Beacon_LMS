@@ -28,6 +28,7 @@ import StudentLessonDetail from "./pages/Student/StudentLessonDetail/StudentLess
 import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
+import StudentProfile from "./pages/Student/Student Profile/StudentProfile";
 //Deleted StudentOwnLessons
 import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
 
@@ -67,6 +68,7 @@ export default function App(){
       <Route path="/student/course/:courseId" element={<CourseDetailEnrolled />} />
       <Route path="/student/login" element={<StudentLogin/>} />
       <Route path="/student/signup" element={<StudentSignUp/>} />
+      <Route path="/student/profile" element={<StudentProfile />} />
 
 
       {/* Instructor Side */}
