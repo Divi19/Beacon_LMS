@@ -772,17 +772,18 @@ class LessonBulkCreateInSerializer(serializers.Serializer):
     objectives = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 class LessonItemsBulkSerializer(serializers.Serializer):
-    # Let empty be valid only when mode=replace (to clear all)
-    items = serializers.CharField(allow_blank=True, trim_whitespace=True)
+    items = serializers.CharField(allow_blank=True, allow_null=True, trim_whitespace=True)
     mode = serializers.ChoiceField(choices=["merge", "replace"], required=False, default="merge")
 
     def validate(self, attrs):
         mode = attrs.get("mode", "merge")
-        items = attrs.get("items", "")
+        items = (attrs.get("items") or "")  # coerce None→""
         if (not items.strip()) and mode != "replace":
-            raise serializers.ValidationError({"items": "Provide at least one line or use mode='replace' to clear."})
+            raise serializers.ValidationError(
+                {"items": "Provide at least one line or use mode='replace' to clear."}
+            )
+        attrs["items"] = items  # keep normalized
         return attrs
-    
 """
 For showing assignments and readings in the fields
 """
