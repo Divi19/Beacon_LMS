@@ -305,7 +305,7 @@ class LessonEnrollment(models.Model):
     lesson_enrollment_id = models.AutoField(primary_key=True)
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     student = models.ForeignKey('StudentProfile', models.DO_NOTHING)
-    enrolled_at = models.DateTimeField(auto_now_add=True)
+    enrolled_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 
     class Meta:
         managed = True
@@ -327,19 +327,20 @@ class LessonEnrollment(models.Model):
 
         # student’s completed items for this lesson
         done_assignments = StudentAssignment.objects.filter(
-            student_id=self.student_id, lesson_id=self.lesson_id, is_completed=True
+            student=self.student, student__lessonenrollment__lesson=self.lesson, is_completed=True
         ).count()
         done_readings = StudentReading.objects.filter(
-            student_id=self.student_id, lesson_id=self.lesson_id,  is_completed=True
+            student=self.student, student__lessonenrollment__lesson=self.lesson,  is_completed=True
         ).count()
         completed_items = done_assignments + done_readings
 
         # check if all completed
         all_done = total_items > 0 and completed_items == total_items
 
-        # check duration
+        print("enrolled at:", self.enrolled_at)
         duration = getattr(self.lesson, "duration_week", 0) or 0
-        end_date = self.enrolled_at + timedelta(weeks=duration)
+        enrolled_at = self.enrolled_at or timezone.now()
+        end_date = enrolled_at + timedelta(weeks=duration)
         duration_reached = timezone.now() >= end_date
 
         if all_done and duration_reached:
