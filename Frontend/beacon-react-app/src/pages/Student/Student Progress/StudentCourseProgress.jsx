@@ -16,58 +16,57 @@ function Bar({ percent = 0 }) {
 export default function StudentCourseProgress() {
   const navigate = useNavigate();
   const { courseId } = useParams();
+  const [course, setCourse] = useState({
+    course_id: courseId || "",
+    course_title: "",
+    credits: 0,
+  });
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Dummy data just for frontend (replace via API when ready) 
-  const [course, setCourse] = useState({
-    course_id: courseId || "BCS120",
-    course_title: "Bachelor of computer science",
-    credits: 120,
-  });
-
-  const [lessons, setLessons] = useState([
-    {
-      lesson_id: "GFX1243",
-      title: "Introduction to statistics",
-      duration_weeks: 2,
-      credits: 4,
-      progress_percent: 40,
-    },
-    {
-      lesson_id: "GFX1123",
-      title: "Introduction to science",
-      duration_weeks: 3,
-      credits: 10,
-      progress_percent: 90,
-    },
-    {
-      lesson_id: "GFX1248",
-      title: "Introduction to data",
-      duration_weeks: 2,
-      credits: 8,
-      progress_percent: 10,
-    },
-    {
-      lesson_id: "GFX1249",
-      title: "Introduction to statistics",
-      duration_weeks: 2,
-      credits: 7,
-      progress_percent: 50,
-    },
-  ]);
-
   // API placeholders
   useEffect(() => {
-    // (async () => {
-    //   const { data: courseData } = await api.get(`/student/courses/${courseId}/detail/`);
-    //   setCourse({
-    //     course_id: courseData.course_id,
-    //     course_title: courseData.course_title,
-    //     credits: courseData.course_credits,
-    //   });
-    //   const { data: lessonData } = await api.get(`/student/courses/${courseId}/lessons/enrolled/`);
-    //   // lessonData: [{ lesson_id, title, duration_weeks, credits, progress_percent }, ...]
-    //   setLessons(lessonData);
-    // })();
+    let cancelled = false;
+
+    async function fetchCourseAndLessons() {
+      try {
+        setLoading(true);
+        const { data: courseData } = await api.get(`/courses/${courseId}/detail/`);
+        if (!cancelled) {
+          setCourse({
+            course_id: courseData.course_id,
+            course_title: courseData.course_title,
+            credits: courseData.course_credits,
+          });
+        }
+        const { data: lessonData } = await api.get(`/student/courses/${courseId}/lessons/enrolled/`);
+        console.log("Fetched lessonData:", lessonData)
+
+        const lessonsProgress = await Promise.all(
+          lessonData.map(async (lesson) => {
+            try {
+              const { data: progressData } = await api.get(
+                `/student/courses/${courseId}/lessons/${lesson.lesson_id}/progress/`
+              );
+              return { ...lesson, progress_percent: progressData.progress_percent };
+            } catch {
+              return { ...lesson, progress_percent: 0 };
+            }
+          })
+        );
+        setLessons(lessonsProgress)
+      } catch(err) {
+        console.error("Failed to fetch lessons", err);
+        setError("Failed to fetch course or lessons.");
+      } finally {
+        if (! cancelled) setLoading(false);
+      }
+    }
+    
+    fetchCourseAndLessons();
+    return () => { cancelled = true };
   }, [courseId]);
 
   // Derive course progress as an average of lesson progress
@@ -117,17 +116,17 @@ export default function StudentCourseProgress() {
           {lessons.map((ls) => (
             <div className={s.lessonItem} key={ls.lesson_id}>
               <div className={s.lessonMeta}>
-                <div className={s.lessonTitle}>{ls.title}</div>
+                <div className={s.lessonTitle}>{ls.lesson_title || ls.title}</div>
                 <div className={s.metaLine}>
-                  <span>Duration: {ls.duration_weeks} week</span>
+                  <span>Duration: {ls.lesson_duration || ls.duration_weeks} week</span>
                   <span>lesson code: {ls.lesson_id}</span>
-                  <span>credits: {ls.credits}</span>
+                  <span>credits: {ls.lesson_credits || ls.credits}</span>
                 </div>
               </div>
 
               <div className={s.lessonRight}>
-                <Bar percent={ls.progress_percent} />
-                <div className={s.lessonPct}>{ls.progress_percent}%<br />credits</div>
+                <Bar percent={ls.progress_percent || 0} />
+                <div className={s.lessonPct}>{ls.progress_percent || 0}%<br />credits</div>
               </div>
             </div>
           ))}
