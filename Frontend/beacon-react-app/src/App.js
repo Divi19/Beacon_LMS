@@ -29,6 +29,7 @@ import StudentLogin from "./pages/Student/Student Login/StudentLogin";
 import StudentSignUp from "./pages/Student/Student Sign Up/StudentSignUp";
 import StudentEnrollmentPage from "./pages/Student/StudentMyCourses/StudentMyCourses";
 import StudentProfile from "./pages/Student/Student Profile/StudentProfile";
+import StudentProgress from "./pages/Student/Student Progress/StudentProgress";
 //Deleted StudentOwnLessons
 import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMyLessonsPage";
 
@@ -69,6 +70,8 @@ export default function App(){
       <Route path="/student/login" element={<StudentLogin/>} />
       <Route path="/student/signup" element={<StudentSignUp/>} />
       <Route path="/student/profile" element={<StudentProfile />} />
+      <Route path="/student/reports" element={<StudentProgress />} />
+
 
 
       {/* Instructor Side */}
