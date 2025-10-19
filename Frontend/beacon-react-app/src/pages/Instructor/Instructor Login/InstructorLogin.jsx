@@ -37,7 +37,6 @@ export default function InstructorLogin({ logoSrc }) {
         "/instructor/login/",
         formData
       );
-  
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);

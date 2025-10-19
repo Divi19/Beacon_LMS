@@ -1,0 +1,62 @@
+.card {
+  background: linear-gradient(to bottom, #f1cea8 0%, #b6c2ae 70%, #71bfcd 100%);
+  border-radius: 13px;
+  padding: clamp(18px, 3vw, 28px);
+  display: grid;
+  grid-template-columns: 1fr;
+  flex-direction: column;
+  gap: 12px;
+  align-items: end;
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition: transform 0.08s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(to bottom, #ffc07d 0%, #93be77 70%, #0dbad8);
+}
+
+.body {
+  padding-right: 12px;
+}
+.title {
+  margin: 0 0 10px 0;
+  font-size: clamp(18px, 2.6vw, 20px);
+  color: #0e5f6b;
+  font-weight: 800;
+}
+.metaRow {
+  display: flex;
+  gap: 28px;
+  color: #0e5f6b;
+  margin: 6px 0;
+  font-weight: 600;
+}
+
+.cta {
+  background: rgba(106, 195, 209, 0.9);
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 600;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: background 0.2s ease, filter 0.2s ease;
+}
+.cta:hover {
+  background: var(--brand-teal-600);
+}
+
+.footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}

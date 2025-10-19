@@ -1,6 +1,7 @@
 -- =========================================================
 -- Switch default schema
-SET search_path = lms_schema;
+SET search_path = public;
+SET client_min_messages TO WARNING;  -- hides NOTICE lines
 
 -- =========================================================
 -- 1) DROP tables (children first, then parents)
@@ -180,7 +181,7 @@ CREATE TABLE lesson_assignment (
   updated_at    TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- STUDENT_ASSIGNMENT
+-- STUDENT_ASSIGNMENT (surrogate PK + restore uniqueness)
 CREATE TABLE student_assignment (
   student_assignment_id SERIAL PRIMARY KEY,
   assignment_id         INT NOT NULL REFERENCES lesson_assignment(assignment_id) ON DELETE RESTRICT,

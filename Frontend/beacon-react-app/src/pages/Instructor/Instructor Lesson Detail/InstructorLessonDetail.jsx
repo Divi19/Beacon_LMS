@@ -28,7 +28,7 @@ export default function LessonDetail() {
           loadLesson(),
         ]);
         setLesson(lessonData);
-        await api.get(`instructor/${lessonId}/classrooms/`).then(
+        await api.get(`instructor/lesson/classrooms/`, {params: {lesson_id: lessonId}}).then(
           res => setClassrooms(res.data)
         )
       } catch (e) {

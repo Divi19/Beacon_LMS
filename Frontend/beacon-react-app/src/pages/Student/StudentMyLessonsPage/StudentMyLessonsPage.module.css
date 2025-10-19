@@ -1,5 +1,6 @@
 .wrap {
   padding: clamp(16px, 4vw, 40px);
+  padding-top: 150px;
 }
 
 .header {
@@ -116,4 +117,10 @@ width: 200px;
 height: 50px;
 background: linear-gradient(to bottom, #88ccd8 0%, #88ccd8 50%, #f1cea8 100%);
 border-radius: 6px;
+}
+
+.grid1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
 }
