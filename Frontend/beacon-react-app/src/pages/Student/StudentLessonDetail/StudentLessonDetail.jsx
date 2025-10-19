@@ -326,12 +326,13 @@ export default function StudentLessonDetail() {
                 <li key={idx}>{o}</li>
               ))}
             </ul>
+            </div>
           </div>
         </div>
       </header>
 
       {/* --- Classrooms section --- */}
-      <div className={i.rect4}>
+      {/* <div className={i.rect4}>
         <div className={i.label}>
           <strong>My Classrooms</strong>
         </div>
@@ -415,7 +416,7 @@ export default function StudentLessonDetail() {
                         </ul>
                     </div>
                 </div>
-            </header>
+            </header> */}
 
             {/* --- Classrooms section --- */}
             <div className={i.rect4}>
@@ -588,8 +589,74 @@ export default function StudentLessonDetail() {
                                 </Button>
                             </div>
                         </div>
+                        <section className={i.panelBox}>
+                <h3 className={i.panelTitle}>Assignment List</h3>
+                {assignments.length === 0 ? (
+                  <p>No assignments yet.</p>
+                ) : (
+                  <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+                    {assignments.map(a => (
+                      <li
+                        key={a.assignment_id}
+                        style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!checkedAssignments[a.assignment_id]}
+                          onChange={() => toggleAssignment(a.assignment_id)}
+                          style={{ marginRight: 10 }}
+                        />
+                        <div>
+                          <strong>{a.title}</strong>
+                          {a.description && (
+                            <div style={{ fontSize: 13, color: "#666" }}>{a.description}</div>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              <section className={i.panelBox}>
+                <h3 className={i.panelTitle}>Reading List</h3>
+                {readings.length === 0 ? (
+                  <p>No reading items yet.</p>
+                ) : (
+                  <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+                    {readings.map(b => (
+                      <li
+                        key={b.reading_id}
+                        style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!checkedReadings[b.reading_id]}
+                          onChange={() => toggleReading(b.reading_id)}
+                          style={{ marginRight: 10 }}
+                        />
+                        <div style={{ marginBottom: 8 }}>
+                          <strong>{b.title}</strong>: {" "}
+                          {b.url && (
+                            <a
+                              href={b.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ textDecoration: "underline", color: "#1a73e8", fontWeight: "bold", marginRight: 8 }}
+                            >
+                              Link
+                            </a>
+                          )}
+                          {/* {b.description && (
+                            <div style={{ fontSize: 13, color: "#666" }}>{b.description}</div>
+                          )} */}
+                                                  </div>
+                                              </li>
+                                          ))}
+                                      </ul>
+                                  )}
+                              </section>
 
-                        <div className={i.readingAndProgress}>
+                        {/* <div className={i.readingAndProgress}>
                             <section className={i.panelBox}>
                                 <h3 className={i.panelTitle}>Reading List</h3>
                             </section>
@@ -598,79 +665,12 @@ export default function StudentLessonDetail() {
                                     Course Progress
                                 </h3>
                             </section>
-                        </div>
+                        </div> */}
                     </div>
                 )}
                 {/* Temporarily outside the showChosenClass, since no classroom is selected yet and that is a conditional
   to check if there is a classroom, with it assignment list would not render, move it back once that is figured out */}
             </div>
-
-            <section className={i.panelBox}>
-  <h3 className={i.panelTitle}>Assignment List</h3>
-  {assignments.length === 0 ? (
-    <p>No assignments yet.</p>
-  ) : (
-    <ul style={{ listStyle: "none", paddingLeft: 0 }}>
-      {assignments.map(a => (
-        <li
-          key={a.assignment_id}
-          style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
-        >
-          <input
-            type="checkbox"
-            checked={!!checkedAssignments[a.assignment_id]}
-            onChange={() => toggleAssignment(a.assignment_id)}
-            style={{ marginRight: 10 }}
-          />
-          <div>
-            <strong>{a.title}</strong>
-            {a.description && (
-              <div style={{ fontSize: 13, color: "#666" }}>{a.description}</div>
-            )}
-          </div>
-        </li>
-      ))}
-    </ul>
-  )}
-</section>
-<section className={i.panelBox}>
-  <h3 className={i.panelTitle}>Reading List</h3>
-  {readings.length === 0 ? (
-    <p>No reading items yet.</p>
-  ) : (
-    <ul style={{ listStyle: "none", paddingLeft: 0 }}>
-      {readings.map(b => (
-        <li
-          key={b.reading_id}
-          style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
-        >
-          <input
-            type="checkbox"
-            checked={!!checkedReadings[b.reading_id]}
-            onChange={() => toggleReading(b.reading_id)}
-            style={{ marginRight: 10 }}
-          />
-          <div style={{ marginBottom: 8 }}>
-            <strong>{b.title}</strong>: {" "}
-            {b.url && (
-              <a
-                href={b.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: "underline", color: "#1a73e8", fontWeight: "bold", marginRight: 8 }}
-              >
-                Link
-              </a>
-            )}
-            {/* {b.description && (
-              <div style={{ fontSize: 13, color: "#666" }}>{b.description}</div>
-            )} */}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </section>
 
             {showModal && (
                 <div className={i.modalOverlay} role="dialog" aria-modal="true">
