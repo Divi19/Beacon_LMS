@@ -37,6 +37,30 @@ from .models import *
 from .auth import CustomJWTAuthentication
 
 
+"""
+Helper functions
+"""
+def update_lesson_progress(student, lesson):
+    total_assignments = LessonAssignment.objects.filter(lesson=lesson).count()
+    completed_assignments = StudentAssignmentProgress.objects.filter(
+    student=student, assignment__lesson=lesson, completed=True
+    ).count()
+
+    total_readings = LessonReading.objects.filter(lesson=lesson).count()
+    completed_readings = StudentReadingProgress.objects.filter(
+    student=student, reading__lesson=lesson, completed=True
+    ).count()
+
+    total_items = total_assignments + total_readings
+    completed_items = completed_assignments + completed_readings
+
+    progress_percent = (completed_items / total_items * 100) if total_items > 0 else 0.0
+
+    StudentLessonProgress.objects.update_or_create(
+        student=student,
+        lesson=lesson,
+        defaults={"progress_percent": progress_percent}
+    )
 
 """
 Shared Part
@@ -1601,6 +1625,8 @@ class StudentAssignment(APIView):
         progress, _ = StudentAssignmentProgress.objects.get_or_create(student=student, assignment=assignment)
         progress.completed = completed
         progress.save()
+        
+        update_lesson_progress(student, assignment.lesson)
 
         return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
 
@@ -1638,4 +1664,20 @@ class StudentReading(APIView):
         progress.completed = completed
         progress.save()
 
+        update_lesson_progress(student, reading.lesson)
+
         return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+
+class StudentLessonProgressView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, course_id, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+
+        progress, _ = StudentLessonProgress.objects.get_or_create(student=student, lesson=lesson)
+        return Response({
+            "lesson_id": lesson.lesson_id,
+            "progress_percent": progress.progress_percent
+        }, status=status.HTTP_200_OK)
