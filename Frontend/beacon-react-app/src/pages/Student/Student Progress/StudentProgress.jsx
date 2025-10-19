@@ -25,7 +25,7 @@ export default function StudentProgress() {
       course_id: "BCS120",
       course_title: "Bachelor of computer science",
       credits: 120,
-      progress_percent: 33, // % of course credits completed
+      progress_percent: 100, // % of course credits completed
       is_completed: false,
     },
     {
@@ -37,7 +37,7 @@ export default function StudentProgress() {
     },
   ]);
 
-  // --- when backend is ready, replace with the API call below --------------
+  // when backend is ready, replace with the API call below 
   useEffect(() => {
     // (async () => {
     //   const { data } = await api.get("/student/reports/courses/"); // <- example

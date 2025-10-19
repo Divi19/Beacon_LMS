@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import s from "./StudentCourseProgress.module.css";
 import { api } from "../../../api"; 
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 
 function Bar({ percent = 0 }) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -29,32 +30,32 @@ export default function StudentCourseProgress() {
       title: "Introduction to statistics",
       duration_weeks: 2,
       credits: 4,
-      progress_percent: 70,
+      progress_percent: 40,
     },
     {
       lesson_id: "GFX1123",
       title: "Introduction to science",
       duration_weeks: 3,
       credits: 10,
-      progress_percent: 70,
+      progress_percent: 90,
     },
     {
       lesson_id: "GFX1248",
       title: "Introduction to data",
       duration_weeks: 2,
       credits: 8,
-      progress_percent: 70,
+      progress_percent: 10,
     },
     {
       lesson_id: "GFX1249",
       title: "Introduction to statistics",
       duration_weeks: 2,
       credits: 7,
-      progress_percent: 70,
+      progress_percent: 50,
     },
   ]);
 
-  // --- API placeholders -----------------------------------------------------
+  // API placeholders
   useEffect(() => {
     // (async () => {
     //   const { data: courseData } = await api.get(`/student/courses/${courseId}/detail/`);
@@ -78,6 +79,7 @@ export default function StudentCourseProgress() {
 
   return (
     <div className={s.page}>
+        <StudentTopBar />
       <h1 className={s.pageTitle}>STUDENT LESSON PROGRESS</h1>
 
       <section className={s.card}>
