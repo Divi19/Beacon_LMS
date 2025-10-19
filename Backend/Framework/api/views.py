@@ -61,6 +61,7 @@ def update_lesson_progress(student, lesson):
     completed_items = completed_assignments + completed_readings
 
     progress_percent = (completed_items / total_items * 100) if total_items > 0 else 0.0
+    progress_percent = round(progress_percent, 2)
 
     StudentLessonProgress.objects.update_or_create(
         student=student,
@@ -1398,7 +1399,7 @@ class LessonReadingBulkCreateView(APIView):
                 obj = LessonReading.objects.create(lesson=lesson, title=t, url=u)
             else:
                 # brand new (seed empty url when not provided)
-                obj = LessonReading.objects.create(llesson=lesson, title=t, url=u or "")
+                obj = LessonReading.objects.create(lesson=lesson, title=t, url=u or "")
 
             saved.append(obj)
 

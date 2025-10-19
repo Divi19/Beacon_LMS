@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import s from "./StudentProgress.module.css";
 import { api } from "../../../api";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
@@ -18,32 +18,64 @@ function ProgressBar({ percent = 0, labelRight }) {
 
 export default function StudentProgress() {
   const navigate = useNavigate();
-
-  // dummy data just for frontend (shape matches expected backend payload)
-  const [courses, setCourses] = useState([
-    {
-      course_id: "BCS120",
-      course_title: "Bachelor of computer science",
-      credits: 120,
-      progress_percent: 100, // % of course credits completed
-      is_completed: false,
-    },
-    {
-      course_id: "MTH101",
-      course_title: "Introduction to Mathematics",
-      credits: 120,
-      progress_percent: 70,
-      is_completed: false,
-    },
-  ]);
+  // const { courseId } = useParams();
+  const [courses, setCourses] = useState([])
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // when backend is ready, replace with the API call below 
-  useEffect(() => {
-    // (async () => {
-    //   const { data } = await api.get("/student/reports/courses/"); // <- example
-    //   // expected data: [{ course_id, course_title, credits, progress_percent, is_completed }, ...]
-    //   setCourses(data);
-    // })();
+useEffect(() => {
+    let cancelled = false;
+
+    async function fetchCourseAndLessons() {
+      try {
+        setLoading(true);
+        const { data: enrolledCourses } = await api.get(`/student/my_courses`);
+console.log("Fetched enrolled courses:", enrolledCourses);
+
+const courseProgressData = await Promise.all(
+  enrolledCourses.map(async (course) => {
+    const { data: lessonData } = await api.get(
+      `/student/courses/${course.course_id}/lessons/enrolled/`
+    );
+
+    const lessonsProgress = await Promise.all(
+      lessonData.map(async (lesson) => {
+        try {
+          const { data: progressData } = await api.get(
+            `/student/courses/${course.course_id}/lessons/${lesson.lesson_id}/progress/`
+          );
+          return progressData.progress_percent || 0;
+        } catch {
+          return 0;
+        }
+      })
+    );
+
+    const courseProgress =
+      lessonsProgress.length > 0
+        ? Math.round(
+            lessonsProgress.reduce((a, b) => a + b, 0) /
+              lessonsProgress.length
+          )
+        : 0;
+
+    return { ...course, progress_percent: courseProgress };
+  })
+);
+
+if (!cancelled) setCourses(courseProgressData);
+      } catch(err) {
+        console.error("Failed to fetch lessons", err);
+        setError("Failed to fetch course or lessons.");
+      } finally {
+        if (! cancelled) setLoading(false);
+      }
+    }
+    
+    fetchCourseAndLessons();
+    return () => { cancelled = true };
   }, []);
 
   const handleViewLessons = (course_id) => {
