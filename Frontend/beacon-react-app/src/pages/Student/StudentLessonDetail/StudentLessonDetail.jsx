@@ -285,6 +285,29 @@ async function toggleReading(readingId) {
               <line x1="8" y1="12" x2="16" y2="12" />
             </svg>
           </Button>
+          
+          <Button
+            variant="blue"
+            className={i.rectBtn}
+            onClick={() => navigate(`/student/courses/${courseId}/lessons/${lessonId}/progress`)}
+          >
+            <span>View Progress</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 8 16 12 12 16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </Button>
         </div>
 
         <div className={i.rect3}>
@@ -490,17 +513,18 @@ async function toggleReading(readingId) {
             onChange={() => toggleReading(b.reading_id)}
             style={{ marginRight: 10 }}
           />
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ marginBottom: 8 }}>
+            <strong>{b.title}</strong>: {" "}
             {b.url && (
               <a
                 href={b.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ textDecoration: "none", color: "#1a73e8", fontWeight: "bold" }}
+                style={{ textDecoration: "underline", color: "#1a73e8", fontWeight: "bold", marginRight: 8 }}
               >
+                Link
               </a>
             )}
-            <strong>{b.title}</strong>
             {/* {b.description && (
               <div style={{ fontSize: 13, color: "#666" }}>{b.description}</div>
             )} */}
