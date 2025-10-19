@@ -42,6 +42,31 @@ from .models import *
 from .auth import CustomJWTAuthentication
 
 
+"""
+Helper functions
+"""
+def update_lesson_progress(student, lesson):
+    total_assignments = LessonAssignment.objects.filter(lesson=lesson).count()
+    completed_assignments = StudentAssignmentProgress.objects.filter(
+    student=student, assignment__lesson=lesson, completed=True
+    ).count()
+
+    total_readings = LessonReading.objects.filter(lesson=lesson).count()
+    completed_readings = StudentReadingProgress.objects.filter(
+    student=student, reading__lesson=lesson, completed=True
+    ).count()
+
+    total_items = total_assignments + total_readings
+    completed_items = completed_assignments + completed_readings
+
+    progress_percent = (completed_items / total_items * 100) if total_items > 0 else 0.0
+    progress_percent = round(progress_percent, 2)
+
+    StudentLessonProgress.objects.update_or_create(
+        student=student,
+        lesson=lesson,
+        defaults={"progress_percent": progress_percent}
+    )
 
 """
 Shared Part
@@ -1054,7 +1079,7 @@ class StudentEnrolledLessons(APIView):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
         lessons = (Lesson.objects
-                   .filter(lessonenrollment__student=student, course__course_id=course_id, status="Active")
+                   .filter(lessonenrollment__student=student, course__course_id=course_id)
                    .select_related("course", "designer") 
                    .distinct() )
         output = [{
@@ -1228,7 +1253,7 @@ class StudentUnenrolledLessons(APIView):
         student = get_object_or_404(StudentProfile, user=user)
         course = get_object_or_404(Course, course_id=course_id)
         unenrolled_lessons = Lesson.objects.filter(
-            Q(course=course) & Q(status="Active")
+            Q(course=course)
             ).exclude(lessonenrollment__student=student).distinct()
         serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
         return Response(serializer.data,  status=status.HTTP_200_OK)
@@ -1478,7 +1503,7 @@ class LessonReadingBulkCreateView(APIView):
                 obj = LessonReading.objects.create(lesson=lesson, title=t, url=u)
             else:
                 # brand new (seed empty url when not provided)
-                obj = LessonReading.objects.create(llesson=lesson, title=t, url=u or "")
+                obj = LessonReading.objects.create(lesson=lesson, title=t, url=u or "")
 
             saved.append(obj)
 
@@ -1772,4 +1797,93 @@ class AdminInstructorDetailView(APIView):
         user.save()
         
         return Response({"detail": "Instructor deactivated successfully."}, status=status.HTTP_200_OK)
-      
+
+class StudentAssignment(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        assignments=LessonAssignment.objects.filter(lesson=lesson)
+
+        progress_map = {
+            p.assignment.assignment_id: p.completed
+            for p in StudentAssignmentProgress.objects.filter(student=student, assignment__lesson=lesson)
+        }
+        data = [
+            {
+                "assignment_id": a.assignment_id,
+                "title": a.title,
+                "description": a.description,
+                "completed": progress_map.get(a.assignment_id, False),
+            }
+            for a in assignments
+        ]
+        return Response(data)
+
+    def post(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        assignment_id = request.data.get("assignment_id")
+        completed = request.data.get("completed", False)
+
+        assignment = get_object_or_404(LessonAssignment, assignment_id=assignment_id, lesson__lesson_id=lesson_id)
+        progress, _ = StudentAssignmentProgress.objects.get_or_create(student=student, assignment=assignment)
+        progress.completed = completed
+        progress.save()
+        
+        update_lesson_progress(student, assignment.lesson)
+
+        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+
+class StudentReading(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+        readings=LessonReading.objects.filter(lesson=lesson)
+
+        progress_map = {
+            p.reading.reading_id: p.completed
+            for p in StudentReadingProgress.objects.filter(student=student, reading__lesson=lesson)
+        }
+        data = [
+            {
+                "reading_id": r.reading_id,
+                "title": r.title,
+                "url": r.url,
+                "completed": progress_map.get(r.reading_id, False),
+            }
+            for r in readings
+        ]
+        return Response(data)
+
+    def post(self, request, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        reading_id = request.data.get("reading_id")
+        completed = request.data.get("completed", False)
+
+        reading = get_object_or_404(LessonReading, reading_id=reading_id, lesson__lesson_id=lesson_id)
+        progress, _ = StudentReadingProgress.objects.get_or_create(student=student, reading=reading)
+        progress.completed = completed
+        progress.save()
+
+        update_lesson_progress(student, reading.lesson)
+
+        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+
+class StudentLessonProgressView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, course_id, lesson_id):
+        student = get_object_or_404(StudentProfile, user=request.user)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+
+        progress, _ = StudentLessonProgress.objects.get_or_create(student=student, lesson=lesson)
+        return Response({
+            "lesson_id": lesson.lesson_id,
+            "progress_percent": progress.progress_percent
+        }, status=status.HTTP_200_OK)

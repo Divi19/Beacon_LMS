@@ -25,12 +25,12 @@ export default function StudentTopBar() {
 
           <li className={s.navItem}>
             <NavLink
-              to="/student/progress"
+              to="/student/profile"
               className={({ isActive }) =>
                 [s.navLink, isActive ? s.active : ""].join(" ")
               }
             >
-              <span>Student Progress</span>
+              <span>Student Profile</span>
               <span className={s.underline} />
             </NavLink>
           </li>
@@ -49,7 +49,7 @@ export default function StudentTopBar() {
 
           <li className={s.navItem}>
             <NavLink
-              to="/student/enrollment"
+              to="/student/reports"
               className={({ isActive }) =>
                 [s.navLink, isActive ? s.active : ""].join(" ")
               }
