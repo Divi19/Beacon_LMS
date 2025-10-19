@@ -713,3 +713,8 @@ class LessonAssignmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["assignment_id", "created_at", "updated_at"]
 
+class StudentLessonProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentLessonProgress
+        fields = ["lesson", "student", "progress_percent"]
+        read_only_fields = ["lesson", "student", "progress_percent"]
