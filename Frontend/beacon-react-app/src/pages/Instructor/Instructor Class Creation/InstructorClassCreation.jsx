@@ -22,7 +22,12 @@ export default function InstructorClassCreation() {
     }
     setSubmitting(true);
 
-    const payload = {capacity: capacity, location: location.trim(), is_online: false, zoom_link: ""};
+    const payload = {
+      capacity: capacity, 
+      location: location.trim(), 
+      is_online: false, 
+      zoom_link: null
+    };
     if (capacity > 10){
         alert("Classroom capacity must be less than 10")
         return 
@@ -30,7 +35,9 @@ export default function InstructorClassCreation() {
 
     let saved = false;
     try {
-      await api.post("/instructor/classrooms/create/", payload);
+      await api.post("/instructor/classrooms/create/", payload,{
+        headers: { "Content-Type": "application/json" },
+      });
       saved = true
       setPersisted(saved);
       setSuccessOpen(true);

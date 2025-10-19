@@ -149,13 +149,18 @@ class LessonAssignment(models.Model):
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    #points = models.IntegerField(blank=True, null=True) #not needed
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = True
         db_table = 'lesson_assignment'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lesson", "title"],
+                name="uniq_lesson_title",
+            )
+        ]
 
 
 class LessonClassroom(models.Model):
