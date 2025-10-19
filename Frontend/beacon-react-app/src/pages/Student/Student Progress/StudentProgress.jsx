@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import s from "./StudentProgress.module.css";
-import { api } from "../../../api"; 
+import { api } from "../../../api";
+import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
 
 function ProgressBar({ percent = 0, labelRight }) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -24,7 +25,7 @@ export default function StudentProgress() {
       course_id: "BCS120",
       course_title: "Bachelor of computer science",
       credits: 120,
-      progress_percent: 70, // % of course credits completed
+      progress_percent: 33, // % of course credits completed
       is_completed: false,
     },
     {
@@ -52,7 +53,9 @@ export default function StudentProgress() {
   const handleCompleteCourse = (course_id) => {
     setCourses((prev) =>
       prev.map((c) =>
-        c.course_id === course_id ? { ...c, is_completed: true, progress_percent: 100 } : c
+        c.course_id === course_id
+          ? { ...c, is_completed: true, progress_percent: 100 }
+          : c
       )
     );
     // Backend later:
@@ -61,14 +64,18 @@ export default function StudentProgress() {
 
   return (
     <div className={s.page}>
+        <StudentTopBar />
       <h1 className={s.pageTitle}>STUDENT PROGRESS</h1>
 
       {courses.map((c) => {
-        const canComplete = Number(c.progress_percent) >= 100 && !c.is_completed;
+        const canComplete =
+          Number(c.progress_percent) >= 100 && !c.is_completed;
         return (
           <section className={s.card} key={c.course_id}>
             <div className={s.cardHeader}>
-              <div className={s.small}>Enrolled Course{c.credits ? ` (${c.credits} credits)` : ""}:</div>
+              <div className={s.small}>
+                Enrolled Course{c.credits ? ` (${c.credits} credits)` : ""}:
+              </div>
               <h2 className={s.courseTitle}>{c.course_title}</h2>
             </div>
 
@@ -76,9 +83,7 @@ export default function StudentProgress() {
               <div className={s.progressLabel}>PROGRESS</div>
 
               {c.is_completed ? (
-                <div className={s.completedPill}>
-                  COURSE COMPLETED
-                </div>
+                <div className={s.completedPill}>COURSE COMPLETED</div>
               ) : (
                 <ProgressBar
                   percent={c.progress_percent}
@@ -105,7 +110,11 @@ export default function StudentProgress() {
                 className={s.success}
                 disabled={!canComplete}
                 onClick={() => handleCompleteCourse(c.course_id)}
-                title={!canComplete ? "You can only complete when progress is 100%" : ""}
+                title={
+                  !canComplete
+                    ? "You can only complete when progress is 100%"
+                    : ""
+                }
               >
                 Complete Course
               </button>
