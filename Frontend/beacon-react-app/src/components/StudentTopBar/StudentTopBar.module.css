@@ -4,7 +4,7 @@
   justify-content: space-between;
   align-items: center;
   padding: clamp(12px, 2vw, 15px) 4rem;
-  background: linear-gradient(to bottom, #71bfcd 0%, #b6c2ae 70%, #f1cea8 100%);
+  background: var(--brand-student-pale-gradient);
   border-bottom: 2px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: fixed;
@@ -47,7 +47,7 @@
   cursor: pointer;
   font-weight: 500;
   font-size: clamp(14px, 1.8vw, 18px);
-  color: #07464f;
+  color: var(--brand-student-subtitle);
 }
 
 .profileLogoTop {

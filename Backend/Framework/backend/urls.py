@@ -36,18 +36,27 @@ urlpatterns = [
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #Instructors Courses
     path('instructor/courses/', InstructorCoursesView.as_view(), name="courses"),
+    #Show Assignments, reading list, and prereqs in lesson form 
+    path('instructor/assignments/<str:lesson_id>/',AssignmentTextView.as_view()),
+    path('instructor/readings/<str:lesson_id>/',ReadingTextView.as_view()),
+    path('instructor/prereqs/<str:lesson_id>/',PrereqsTextView.as_view()),
     #Instructors Classrooms
+         #Own or unlinked classrooms 
+    path("instructor/classrooms/own/", OwnClassroomsView.as_view(), name="classrooms"),
         #Course specific - sendParams
     path("instructor/course/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
         #Lesson specific - sendParams 
     path("instructor/lesson/classrooms/", ActiveClassroomsView.as_view(), name="classrooms"),
-        #Own or unlinked classrooms
-    path("instructor/classrooms/", OwnClassroomsView.as_view(), name="classrooms"),
-        #GET + POST Linking classrooms
+       #POST Create Physical Classrooms
     path("instructor/classrooms/create/", CreateClassroomView.as_view()),
-    path("instructor/classrooms/<str:lesson_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
+        #Linking classrooms
+            #POST
+    path("instructor/link_classrooms/link/<str:lesson_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
+            #GET
+    path("instructor/link_classrooms/get/<str:course_id>/", LinkingClassroomsView.as_view(), name="classrooms"),        #Creating physical classrooms
+
         #GET + POST Create and linking online classroom // showing online classrooms
-    path("intructor/classrooms/online/<str:lesson_id>/", OnlineClassroomsView.as_view()),
+    path("instructor/classrooms/online/<str:lesson_id>/", OnlineClassroomsView.as_view()),
     
     
     #Instructor Lessons 
