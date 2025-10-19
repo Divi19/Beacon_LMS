@@ -19,7 +19,7 @@ function ProgressBar({ percent = 0, labelRight }) {
 export default function StudentProgress() {
   const navigate = useNavigate();
 
-  // --- DUMMY DATA (shape matches expected backend payload) -------------------
+  // dummy data just for frontend (shape matches expected backend payload)
   const [courses, setCourses] = useState([
     {
       course_id: "BCS120",
