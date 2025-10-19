@@ -49,6 +49,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
   const [formData, setFormData] = useState({
     title: "",
     credits: "",
+    estimated_effort:0,
     duration_weeks: "",
     designer_email: "",
     description: "",
@@ -151,6 +152,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       director: "",
       description: "",
       objectives: "",
+      estimated_effort: 0,
     });
     setLessons([]);
     setLessonInput("");
@@ -208,6 +210,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           ...prev,
           lesson_id: asStr(data.lesson_id),
           title: asStr(data.title),
+          estimated_effort: 
+            data.estimated_effort? Number(data.estimated_effort) : 0,
           credits:
             data.credits === null || data.credits === undefined
               ? ""
@@ -302,6 +306,9 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       ...(formData.designer_email?.trim()
         ? { designer_input: formData.designer_email.trim() } //email string
         : {}),
+        ...(formData.estimated_effort?
+        { estimated_effort: formData.estimated_effort} 
+        : {}),
     };
 
     try {
@@ -340,8 +347,19 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       alert("Lesson saved successfully!");
       setShowOptionalModal(true);
     } catch (error) {
-      console.error("Error saving lesson:", error);
-      alert("Error saving lesson. Please try again.");
+      if (error.response && error.response.status === 400) {
+        const data = error.response.data;
+        const message =
+          data.credits?.[0] ||                 // e.g. {"credits": ["Credits exceed limit"]}
+          data.non_field_errors?.[0] ||        // e.g. {"non_field_errors": ["..."]}
+          "Validation failed. Please check your input.";
+        alert(message)
+      } else {
+        console.error("Error saving lesson:", error);
+        alert("Error saving lesson. Please try again.");
+      }
+
+     
     }
   };
 

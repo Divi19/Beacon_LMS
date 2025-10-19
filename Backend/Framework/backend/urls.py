@@ -31,7 +31,9 @@ urlpatterns = [
     
     
     #Number of students showing, use {params: {course_id}} within get() or lesson_id or classroom_id 
-    path("show/", StudentsEnrolledView.as_view(), name="show-enrolled"),
+    path("instructor/show/enrolled/", StudentsEnrolledView.as_view(), name="show-enrolled"),
+    #Whole enrolled student progress for either lesson or course
+    path("instructor/show/progress/", InstructorStudentProgress.as_view()),
     #Instructors
     path("instructor/login/", InstructorLogin.as_view(), name="instructor-login"),
     #Instructors Courses
