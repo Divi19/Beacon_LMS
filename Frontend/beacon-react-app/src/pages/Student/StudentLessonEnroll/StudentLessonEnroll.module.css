@@ -4,6 +4,7 @@
 }
 
 .header {
+  margin-top: 20px;
   margin-bottom: clamp(16px, 3vw, 28px);
   display: flex;
   align-items: center;
