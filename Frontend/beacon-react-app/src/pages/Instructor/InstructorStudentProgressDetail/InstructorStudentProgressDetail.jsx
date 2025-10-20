@@ -230,57 +230,89 @@ export default function InstructorCourseProgressDetail() {
 
             {activeTab === "lessons" && (
                 <div className={s.lessonsCard}>
-                    <div className={s.lessonFile}>
-                        {sortedLessons.length > 0 ? (
-                            sortedLessons.map((lesson, idx) => (
+                    {sortedLessons.length > 0 ? (
+                        sortedLessons.map((lesson, idx) => (
+                            <div
+                                key={idx}
+                                className={s.card}
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    padding: "12px",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() =>
+                                    navigate(
+                                        `/instructor/course/${course.course_id}/lesson/${lesson.lesson_id}`,
+                                    )
+                                }
+                            >
+                                
                                 <div
-                                    key={idx}
-                                    className={s.card}
-                                    style={{ cursor: "pointer" }}
-                                    onClick={() =>
-                                        navigate(
-                                            `/instructor/course/${course.course_id}/lesson/${lesson.lesson_id}`,
-                                        )
-                                    }
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "4px",
+                                    }}
                                 >
-                                    <h2 className={s.cardTitle}>
-                                        {lesson.title}
-                                    </h2>
-                                    <div className={s.cardDesc1}>
-                                        <div className={s.leftGroup}>
-                                            <span>Code:</span>
-                                            <span className={s.spacing}>
-                                                <strong>
-                                                    {lesson.lesson_id}
-                                                </strong>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className={s.cardDesc2}>
-                                        <span>Course Director:</span>
-                                        <span> {course.course_director}</span>
-                                    </div>
-                                    <div className={s.cardDesc2}>
-                                        <span>Lesson Designer:</span>
-                                        <span> {lesson.designer}</span>
-                                    </div>
-                                    <div className={s.cardDesc3}>
-                                        <span>Duration:</span>
-                                        <span>
-                                            {" "}
-                                            {lesson.duration_weeks} weeks
-                                        </span>
-                                    </div>
-                                    <div className={s.cardDesc3}>
-                                        <span>Enrolled Students:</span>
-                                        <span> {lesson.enrolled_count}</span>
-                                    </div>
+                                    <span
+                                        style={{
+                                            fontWeight: "bold",
+                                            fontSize: "16px",
+                                        }}
+                                    >
+                                        {lesson.lesson_id} - {lesson.title}
+                                    </span>
+                                    <span
+                                        style={{
+                                            color: "#555",
+                                            fontSize: "14px",
+                                        }}
+                                    >
+                                        Students Enrolled:{" "}
+                                        {lesson.enrolled_count}
+                                    </span>
                                 </div>
-                            ))
-                        ) : (
-                            <span className={s.noLessons}>No Lessons</span>
-                        )}
-                    </div>
+
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                        minWidth: "200px",
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            flex: 1,
+                                            height: "12px",
+                                            background: "#eee",
+                                            borderRadius: "8px",
+                                            overflow: "hidden",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                width: `${(lesson.average_progress || 0) * 100}%`,
+                                                height: "100%",
+                                                background: "#1a73e8",
+                                            }}
+                                        />
+                                    </div>
+                                    <span>
+                                        {Math.round(
+                                            (lesson.average_progress || 0) *
+                                                100,
+                                        )}
+                                        %
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <span className={s.noLessons}>No Lessons</span>
+                    )}
                 </div>
             )}
         </div>
