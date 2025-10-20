@@ -67,7 +67,25 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 12,
                         progress: 0.8,
-                        enrolled_date: "2025-01-02"
+                        enrolled_date: "2025-01-02",
+                        enrolledCourses: [
+                            {
+                                courseCode: "CS101",
+                                courseTitle: "Intro to Computer Science",
+                                progress: 0.8,
+                                lessonsCompleted: 4,
+                                totalLessons: 5,
+                                enrolledDate: "2025-01-02",
+                            },
+                            {
+                                courseCode: "CS102",
+                                courseTitle: "Data Structures",
+                                progress: 0.6,
+                                lessonsCompleted: 2,
+                                totalLessons: 4,
+                                enrolledDate: "2025-03-10",
+                            },
+                        ],
                     },
                     {
                         id: "S2",
@@ -77,7 +95,25 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 9,
                         progress: 0.6,
-                        enrolled_date: "2023-01-02"
+                        enrolled_date: "2023-01-02",
+                        enrolledCourses: [
+                            {
+                                courseCode: "CS101",
+                                courseTitle: "Intro to Computer Science",
+                                progress: 0.8,
+                                lessonsCompleted: 4,
+                                totalLessons: 5,
+                                enrolledDate: "2025-01-02",
+                            },
+                            {
+                                courseCode: "CS102",
+                                courseTitle: "Data Structures",
+                                progress: 0.6,
+                                lessonsCompleted: 2,
+                                totalLessons: 4,
+                                enrolledDate: "2025-03-10",
+                            },
+                        ],
                     },
                     {
                         id: "S3",
@@ -87,7 +123,25 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 6,
                         progress: 0.4,
-                        enrolled_date: "2025-01-02"
+                        enrolled_date: "2025-01-02",
+                        enrolledCourses: [
+                            {
+                                courseCode: "CS101",
+                                courseTitle: "Intro to Computer Science",
+                                progress: 0.8,
+                                lessonsCompleted: 4,
+                                totalLessons: 5,
+                                enrolledDate: "2025-01-02",
+                            },
+                            {
+                                courseCode: "CS102",
+                                courseTitle: "Data Structures",
+                                progress: 0.6,
+                                lessonsCompleted: 2,
+                                totalLessons: 4,
+                                enrolledDate: "2025-03-10",
+                            },
+                        ],
                     },
                     {
                         id: "S4",
@@ -97,7 +151,25 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 15,
                         progress: 1.0,
-                        enrolled_date: "2023-01-02"
+                        enrolled_date: "2023-01-02",
+                        enrolledCourses: [
+                            {
+                                courseCode: "CS101",
+                                courseTitle: "Intro to Computer Science",
+                                progress: 0.8,
+                                lessonsCompleted: 4,
+                                totalLessons: 5,
+                                enrolledDate: "2025-01-02",
+                            },
+                            {
+                                courseCode: "CS102",
+                                courseTitle: "Data Structures",
+                                progress: 0.6,
+                                lessonsCompleted: 2,
+                                totalLessons: 4,
+                                enrolledDate: "2025-03-10",
+                            },
+                        ],
                     },
                 ];
                 setStudents(mockStudents);
@@ -321,7 +393,6 @@ export default function InstructorCourseProgressDetail() {
                                     minWidth: "200px",
                                 }}
                             >
-
                                 <div
                                     style={{
                                         display: "flex",
@@ -362,8 +433,7 @@ export default function InstructorCourseProgressDetail() {
                                         fontStyle: "italic",
                                     }}
                                 >
-                                    Enrolled:{" "}
-                                    {student.enrolled_date}
+                                    Enrolled: {student.enrolled_date}
                                 </span>
                             </div>
                         </div>

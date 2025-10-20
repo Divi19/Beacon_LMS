@@ -7,15 +7,15 @@ import Button from "../../../components/Button/Button";
 export default function InstructorStudentLesson() {
     const { courseId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [students, setStudents] = useState([]);
-    const [sortHighToLow, setSortHighToLow] = useState(true);
     const [lessons, setLessons] = useState([]);
-    const [lessonSortBy, setLessonSortBy] = useState("duration");
-    const [lessonSortHighToLow, setLessonSortHighToLow] = useState(true);
     const [activeTab, setActiveTab] = useState(null);
-    const location = useLocation();
+    const [studentCourses, setStudentCourses] = useState([]);
+
     const { lessonName = "Unknown Lesson", lessonCredit = 0 } =
         location.state || {};
     const {
@@ -26,7 +26,44 @@ export default function InstructorStudentLesson() {
         enrolledDate,
         creditsEarned,
         enrolledHour,
+        enrolledCourses = [],
     } = location.state || {};
+
+    // Populate studentCourses state
+    useEffect(() => {
+        const formattedCourses = (
+            enrolledCourses.length
+                ? enrolledCourses
+                : [
+                      // Mock courses
+                      {
+                          courseCode: "CS101",
+                          courseTitle: "Intro to Computer Science",
+                          enrolledDate: "2025-09-01",
+                          progress: 0.65, // 65% completed
+                          lessonsCompleted: 5,
+                          totalLessons: 8,
+                      },
+                      {
+                          courseCode: "DS201",
+                          courseTitle: "Data Structures",
+                          enrolledDate: "2025-09-10",
+                          progress: 0.4, // 40% completed
+                          lessonsCompleted: 4,
+                          totalLessons: 10,
+                      },
+                  ]
+        ).map(course => ({
+            courseCode: course.courseCode,
+            courseTitle: course.courseTitle,
+            enrolledDate: course.enrolledDate,
+            progress: course.progress || 0,
+            lessonsCompleted: course.lessonsCompleted || 0,
+            totalLessons: course.totalLessons || 0,
+        }));
+
+        setStudentCourses(formattedCourses);
+    }, [enrolledCourses]);
 
     const handleToggleLessons = () => {
         const willOpen = activeTab !== "lessons";
@@ -53,6 +90,7 @@ export default function InstructorStudentLesson() {
         }
     };
 
+    // Mock fetch course data
     useEffect(() => {
         const fetchCourse = async () => {
             setLoading(true);
@@ -66,12 +104,10 @@ export default function InstructorStudentLesson() {
                     course_credits: courseId === "CS101" ? 3 : 4,
                     students_enrolled: courseId === "CS101" ? 25 : 30,
                     average_progress: courseId === "CS101" ? 0.45 : 0.78,
-                    course_director: "Dr. Smith", // added mock director
+                    course_director: "Dr. Smith",
                 };
                 setCourse(mockCourse);
-
-                const mockStudents = [];
-                setStudents(mockStudents);
+                setStudents([]); // Mock empty student list
             } catch (err) {
                 console.error("Failed to fetch course details", err);
                 alert("Failed to load course details.");
@@ -86,20 +122,11 @@ export default function InstructorStudentLesson() {
     if (loading) return <div>Loading course details…</div>;
     if (!course) return <div>No course found.</div>;
 
-    const sortedStudents = [...students].sort((a, b) =>
-        sortHighToLow ? b.progress - a.progress : a.progress - b.progress,
-    );
-
-    const sortedLessons = [...lessons].sort((a, b) => {
-        const key = "duration_weeks";
-        return sortHighToLow ? b[key] - a[key] : a[key] - b[key];
-    });
-    const totalProgress = students.reduce((sum, s) => sum + s.progress, 0);
-    const avgProgress = students.length ? totalProgress / students.length : 0;
-
     return (
         <div className={s.wrap}>
             <InstructorTopBar />
+
+            {/* Header */}
             <header className={s.header}>
                 <div
                     className={s.headerTop}
@@ -121,7 +148,6 @@ export default function InstructorStudentLesson() {
                         <h1 className={s.title} style={{ margin: 0 }}>
                             STUDENT PROGRESS - LESSONS
                         </h1>
-
                         <Button
                             className={s.enrollBtn}
                             onClick={() =>
@@ -187,24 +213,54 @@ export default function InstructorStudentLesson() {
             </div>
 
             <div className={s.container}>
-                <div className={s.card}>
-                    <div className={s.cardTitle}>Courses Enrolled</div>
-                    <div className={s.allCourses}>
-                        <div className={s.cardTitle}>{studentName}</div>
-                        <div className={s.cardDesc1}>
-                            <span>
-                                Email: <strong>{studentGmail}</strong>
-                            </span>
-                            <span style={{ marginLeft: "20px" }}>
-                                Student ID: <strong>{studentId}</strong>
-                            </span>
-                            <span style={{ marginLeft: "20px" }}>
-                                Registered at:{" "}
-                                <strong>
-                                    {enrolledDate} {enrolledHour}
-                                </strong>
-                            </span>
-                        </div>
+                <div className={s.card1}>
+                    <div>
+                        <div className={s.cardTitle}>Courses Enrolled</div>
+                        {studentCourses.length === 0 ? (
+                            <div>No enrolled courses found.</div>
+                        ) : (
+                            studentCourses.map(course => (
+                                <div
+                                    key={course.courseCode}
+                                    className={s.card2}
+                                >
+                                    <div className={s.cardTitleRow}>
+                                        <div className={s.cardTitle}>
+                                            <strong>{course.courseCode}</strong>{" "}
+                                            - {course.courseTitle}
+                                        </div>
+                                        <div className={s.enrolledAt}>
+                                            Enrolled at: {course.enrolledDate}{" "}
+                                            {enrolledHour}
+                                        </div>
+                                    </div>
+
+                                    <div className={s.courseBody}>
+                                        <div className={s.progressWrapper}>
+                                            <div className={s.progressBar}>
+                                                <div
+                                                    className={s.progressFill}
+                                                    style={{
+                                                        width: `${course.progress * 100}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                            <span className={s.progressText}>
+                                                {Math.round(
+                                                    course.progress * 100,
+                                                )}
+                                                % Completion
+                                            </span>
+                                        </div>
+
+                                        <div className={s.lessonsText}>
+                                            Lessons: {course.lessonsCompleted}/
+                                            {course.totalLessons} completed
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
