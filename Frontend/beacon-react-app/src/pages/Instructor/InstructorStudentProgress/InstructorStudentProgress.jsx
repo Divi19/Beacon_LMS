@@ -114,7 +114,7 @@ export default function InstructorStudentProgress() {
                                     <div
                                         style={{
                                             width: `${(c.average_progress || 0) * 100}%`,
-                                            background: "#1a73e8",
+                                            background: "#7ad1d8",
                                             height: "100%",
                                         }}
                                     />

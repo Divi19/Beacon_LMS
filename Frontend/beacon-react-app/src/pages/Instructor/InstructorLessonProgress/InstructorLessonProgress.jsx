@@ -369,7 +369,7 @@ export default function InstructorLessonProgress() {
                                         style={{
                                             width: `${(student.progress || 0) * 100}%`,
                                             height: "100%",
-                                            background: "#1a73e8",
+                                            background: "#7ad1d8",
                                         }}
                                     />
                                 </div>

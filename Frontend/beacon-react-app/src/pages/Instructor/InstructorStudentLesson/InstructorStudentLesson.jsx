@@ -63,7 +63,7 @@ export default function InstructorStudentLesson() {
         }));
 
         setStudentCourses(formattedCourses);
-    }, [enrolledCourses]);
+    }, []);
 
     const handleToggleLessons = () => {
         const willOpen = activeTab !== "lessons";
@@ -150,11 +150,9 @@ export default function InstructorStudentLesson() {
                         </h1>
                         <Button
                             className={s.enrollBtn}
-                            onClick={() =>
-                                navigate("/instructor/student-progress")
-                            }
+                            onClick={() => navigate(-1)}
                         >
-                            Back to Course Progress
+                            Back
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="22"
@@ -223,6 +221,24 @@ export default function InstructorStudentLesson() {
                                 <div
                                     key={course.courseCode}
                                     className={s.card2}
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() =>
+                                        navigate(
+                                            `/instructor/student-course/${course.courseCode}/lessons`,
+                                            {
+                                                state: {
+                                                    studentName,
+                                                    studentGmail,
+                                                    studentId,
+                                                    enrolledDate,
+                                                    enrolledHour,
+                                                    courseName: course.courseTitle,
+                                                    courseCode: course.courseCode,
+                                                    lessonCredit: course.lessonCredit,
+                                                },
+                                            },
+                                        )
+                                    }
                                 >
                                     <div className={s.cardTitleRow}>
                                         <div className={s.cardTitle}>
@@ -230,8 +246,11 @@ export default function InstructorStudentLesson() {
                                             - {course.courseTitle}
                                         </div>
                                         <div className={s.enrolledAt}>
-                                            Enrolled at: {course.enrolledDate}{" "}
-                                            {enrolledHour}
+                                            Enrolled at:{" "}
+                                            <strong>
+                                                {course.enrolledDate}{" "}
+                                                {enrolledHour}
+                                            </strong>
                                         </div>
                                     </div>
 
@@ -252,9 +271,13 @@ export default function InstructorStudentLesson() {
                                                 % Completion
                                             </span>
                                             <div className={s.lessonsText}>
-                                            Lessons: {course.lessonsCompleted}/
-                                            {course.totalLessons} completed
-                                        </div>
+                                                Lessons:{" "}
+                                                <strong>
+                                                    {course.lessonsCompleted}/
+                                                    {course.totalLessons}
+                                                </strong>{" "}
+                                                completed
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
