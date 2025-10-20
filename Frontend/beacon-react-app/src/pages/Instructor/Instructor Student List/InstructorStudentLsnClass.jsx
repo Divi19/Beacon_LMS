@@ -51,7 +51,7 @@ export default function InstructorStudentLsnClass() {
       </h1>
 
       <div className={s.courseHeader}>
-        <h2>{course.title}</h2>
+        <h2 className={s.courseTitle}>{course.title}</h2>
         <p>
           Code: {course.course_id} {course.credits} Credits &nbsp; Students enrolled:{" "}
           {course.students_enrolled}

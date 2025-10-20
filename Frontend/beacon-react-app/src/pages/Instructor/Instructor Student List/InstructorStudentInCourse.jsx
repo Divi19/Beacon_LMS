@@ -67,7 +67,7 @@ export default function InstructorStudentInCourse() {
         </h1>
 
         <div className={s.courseHeader}>
-          <h2>{course.title}</h2>
+          <h2 className={s.courseTitle}>{course.title}</h2>
           <p>
             Code: {course.course_id} {course.credits} Credits &nbsp; Students
             enrolled: {course.students_enrolled}
@@ -93,14 +93,14 @@ export default function InstructorStudentInCourse() {
         </div>
 
         <div className={s.studentBlock}>
-          <h3>Students</h3>
+          <h3 classname={s.meta}>Students</h3>
           {students.length === 0 ? (
             <p className={s.emptyText}>No student enrolled yet.</p>
           ) : (
             students.map((st) => (
               <div key={st.id} className={s.studentCard}>
                 <p>
-                  <strong>First name:</strong> {st.first_name}
+                  <strong classname={s.studentDet}>First name:</strong> {st.first_name}
                 </p>
                 <p>
                   <strong>Last name:</strong> {st.last_name}
