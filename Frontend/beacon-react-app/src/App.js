@@ -20,7 +20,7 @@ import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/Inst
 import InstructorClassCreation from "./pages/Instructor/Instructor Class Creation/InstructorClassCreation"; 
 import InstructorClassrooms from "./pages/Instructor/Instructor Classrooms/InstructorClassrooms";
 import InstructorStudentProgress from "./pages/Instructor/InstructorStudentProgress/InstructorStudentProgress";
-
+import InstructorStudentProgressDetail from "./pages/Instructor/InstructorStudentProgressDetail/InstructorStudentProgressDetail";
 
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
@@ -104,7 +104,7 @@ export default function App(){
 
       <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
       <Route path="/instructor/student-progress" element={<InstructorStudentProgress />}/>
-
+      <Route path="/instructor/course/:courseId/progress" element={<InstructorStudentProgressDetail />}/>
       
 
     </Routes>

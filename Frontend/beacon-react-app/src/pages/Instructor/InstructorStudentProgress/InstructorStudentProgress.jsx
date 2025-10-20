@@ -69,7 +69,7 @@ export default function InstructorStudentProgress() {
                     <div
                         key={c.course_id}
                         className={s.card}
-                        onClick={() => navigate(`/course/${c.course_id}`)}
+                        onClick={() => navigate(`/instructor/course/${c.course_id}/progress`)}
                     >
                         <div className={s.cardTitle}>{c.course_title}</div>
 
