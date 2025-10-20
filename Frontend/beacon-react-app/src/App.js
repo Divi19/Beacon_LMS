@@ -36,6 +36,7 @@ import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMy
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
 import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
+import InstructorStudentLesson from "./pages/Instructor/InstructorStudentLesson/InstructorStudentLesson";
 // import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
 
 export default function App(){
@@ -107,7 +108,7 @@ export default function App(){
       <Route path="/instructor/student-progress" element={<InstructorStudentProgress />}/>
       <Route path="/instructor/course/:courseId/progress" element={<InstructorStudentProgressDetail />}/>
       <Route path="/instructor/lesson-progress/course/:courseId/lesson/:lessonId" element={<InstructorLessonProgress />}/>
-      
+      <Route path="/instructor/student-progress-detail/:studentId" element={<InstructorStudentLesson />}/>
 
     </Routes>
   </div>

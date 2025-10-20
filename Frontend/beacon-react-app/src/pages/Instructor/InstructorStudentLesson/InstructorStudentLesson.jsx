@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
-import s from "./InstructorLessonProgress.module.css";
+import s from "./InstructorStudentLesson.module.css";
 import Button from "../../../components/Button/Button";
 
-export default function InstructorLessonProgress() {
+export default function InstructorStudentLesson() {
     const { courseId } = useParams();
     const navigate = useNavigate();
     const [course, setCourse] = useState(null);
@@ -18,6 +18,15 @@ export default function InstructorLessonProgress() {
     const location = useLocation();
     const { lessonName = "Unknown Lesson", lessonCredit = 0 } =
         location.state || {};
+    const {
+        studentName,
+        studentGmail,
+        progress,
+        studentId,
+        enrolledDate,
+        creditsEarned,
+        enrolledHour,
+    } = location.state || {};
 
     const handleToggleLessons = () => {
         const willOpen = activeTab !== "lessons";
@@ -61,79 +70,7 @@ export default function InstructorLessonProgress() {
                 };
                 setCourse(mockCourse);
 
-                const mockStudents = [
-                    {
-                        id: "S1",
-                        name: "Alice Tan",
-                        gmail: "alice.tan@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        credits_earned: 12,
-                        progress: 0.8,
-                        enrolled_date: "2025-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                    {
-                        id: "S2",
-                        name: "Bob Lee",
-                        gmail: "bob.lee@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        total_lessons: 5,
-                        credits_earned: 9,
-                        progress: 0.6,
-                        enrolled_date: "2023-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                    {
-                        id: "S3",
-                        name: "Chloe Wong",
-                        gmail: "chloe.wong@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        total_lessons: 5,
-                        credits_earned: 6,
-                        progress: 0.4,
-                        enrolled_date: "2025-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                    {
-                        id: "S4",
-                        name: "Daniel Lim",
-                        gmail: "daniel.lim@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        total_lessons: 5,
-                        credits_earned: 15,
-                        progress: 1.0,
-                        enrolled_date: "2023-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                ];
+                const mockStudents = [];
                 setStudents(mockStudents);
             } catch (err) {
                 console.error("Failed to fetch course details", err);
@@ -165,90 +102,87 @@ export default function InstructorLessonProgress() {
             <InstructorTopBar />
             <header className={s.header}>
                 <div
-                    className={s.left}
+                    className={s.headerTop}
                     style={{
                         display: "flex",
-                        alignItems: "flex-start",
+                        alignItems: "center",
+                        justifyContent: "space-between",
                         gap: "12px",
+                        width: "100%",
                     }}
                 >
-                    <h1 className={s.title}>STUDENT PROGRESS - LESSONS</h1>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                        }}
+                    >
+                        <h1 className={s.title} style={{ margin: 0 }}>
+                            STUDENT PROGRESS - LESSONS
+                        </h1>
 
-                    <div className={s.lessonInfo}>
-                        <h2 className={s.lessonName}>{lessonName}</h2>
-                        <span className={s.lessonCredit}>
-                            ({lessonCredit} credits)
-                        </span>
+                        <Button
+                            className={s.enrollBtn}
+                            onClick={() =>
+                                navigate("/instructor/student-progress")
+                            }
+                        >
+                            Back to Course Progress
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 8 8 12 12 16" />
+                                <line x1="8" y1="12" x2="16" y2="12" />
+                            </svg>
+                        </Button>
                     </div>
+                </div>
+
+                <div
+                    className={s.lessonInfo}
+                    style={{
+                        marginTop: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                    }}
+                >
+                    <h2 className={s.lessonName} style={{ margin: 0 }}>
+                        {lessonName}
+                    </h2>
+                    <span className={s.lessonCredit}>
+                        ({lessonCredit} credits)
+                    </span>
                 </div>
             </header>
 
             <div className={s.container}>
                 <div className={s.card}>
-                    <div className={s.cardTitle}>
-                        <strong>Average Progress</strong>
+                    <div className={s.cardTitle}>{studentName}</div>
+                    <div className={s.cardDesc1}>
+                        <span>
+                            Email: <strong>{studentGmail}</strong>
+                        </span>
+                        <span style={{ marginLeft: "20px" }}>
+                            Student ID: <strong>{studentId}</strong>
+                        </span>
+                        <span style={{ marginLeft: "20px" }}>
+                            Registered at:{" "}
+                            <strong>
+                                {enrolledDate} {enrolledHour}
+                            </strong>
+                        </span>
                     </div>
-
-                    <div className={s.cardDesc2}>
-                        <div
-                            style={{
-                                flex: 1,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    flex: 1,
-                                    height: "12px",
-                                    background: "#eee",
-                                    borderRadius: "8px",
-                                    overflow: "hidden",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: `${avgProgress * 100}%`,
-                                        background: "#1a73e8",
-                                        height: "100%",
-                                    }}
-                                />
-                            </div>
-                            <span>{Math.round(avgProgress * 100)}%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className={s.buttonStack}>
-                    <Button
-                        className={s.enrollBtn}
-                        onClick={() => navigate("/instructor/student-progress")}
-                    >
-                        Back to Course Progress
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 8 8 12 12 16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </Button>
-                    <Button
-                        variant="orange"
-                        className={s.enrollBtn}
-                        onClick={() => setSortHighToLow(!sortHighToLow)}
-                    >
-                        Sort {sortHighToLow ? "Low → High" : "High → Low"}
-                    </Button>
                 </div>
             </div>
 
@@ -265,24 +199,9 @@ export default function InstructorLessonProgress() {
                             margin: "10px auto",
                             cursor: "pointer",
                         }}
-                        onClick={() =>
-                            navigate(
-                                `/instructor/student-progress-detail/${student.id}`,
-                                {
-                                    state: {
-                                        studentName: student.name,
-                                        studentGmail: student.gmail,
-                                        progress: student.progress,
-                                        creditsEarned: student.credits_earned,
-                                        studentId: student.id,
-                                        enrolledDate: student.enrolled_date,
-                                        enrolledHour: student.enrolled_hour,
-                                        lessonName,
-                                        lessonCredit,
-                                    },
-                                },
-                            )
-                        }
+                        onClick={() => {
+                            console.log("Clicked student:", student.name);
+                        }}
                     >
                         <div className={s.studentInfoGroup}>
                             <img
