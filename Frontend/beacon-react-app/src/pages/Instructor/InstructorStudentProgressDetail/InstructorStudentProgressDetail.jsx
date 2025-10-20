@@ -228,29 +228,30 @@ export default function InstructorCourseProgressDetail() {
                                 console.log("Clicked student:", student.name);
                             }}
                         >
-                            <div
-                                style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: "4px",
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        fontWeight: "bold",
-                                        fontSize: "20px",
-                                    }}
-                                >
-                                    {student.id} - {student.name}
-                                </span>
-                                <span
-                                    style={{
-                                        fontSize: "14px",
-                                        color: "#555",
-                                    }}
-                                >
-                                    Student Progress
-                                </span>
+                            <div className={s.studentInfoGroup}>
+                                <img
+                                    src="/profile_picture.png"
+                                    alt="Profile"
+                                    className={s.profileLogoTop}
+                                />
+                                <div className={s.studentInfoText}>
+                                    <span
+                                        style={{
+                                            fontWeight: "bold",
+                                            fontSize: "20px",
+                                        }}
+                                    >
+                                        {student.id} - {student.name}
+                                    </span>
+                                    <span
+                                        style={{
+                                            fontSize: "14px",
+                                            color: "#555",
+                                        }}
+                                    >
+                                        Student Progress
+                                    </span>
+                                </div>
                             </div>
 
                             <div
