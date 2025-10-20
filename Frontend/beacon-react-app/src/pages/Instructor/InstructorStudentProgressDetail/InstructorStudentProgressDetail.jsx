@@ -67,6 +67,7 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 12,
                         progress: 0.8,
+                        enrolled_date: "2025-01-02"
                     },
                     {
                         id: "S2",
@@ -76,6 +77,7 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 9,
                         progress: 0.6,
+                        enrolled_date: "2023-01-02"
                     },
                     {
                         id: "S3",
@@ -85,6 +87,7 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 6,
                         progress: 0.4,
+                        enrolled_date: "2025-01-02"
                     },
                     {
                         id: "S4",
@@ -94,6 +97,7 @@ export default function InstructorCourseProgressDetail() {
                         total_lessons: 5,
                         credits_earned: 15,
                         progress: 1.0,
+                        enrolled_date: "2023-01-02"
                     },
                 ];
                 setStudents(mockStudents);
@@ -317,16 +321,6 @@ export default function InstructorCourseProgressDetail() {
                                     minWidth: "200px",
                                 }}
                             >
-                                <span
-                                    style={{
-                                        fontSize: "14px",
-                                        fontWeight: "600",
-                                        marginBottom: "4px",
-                                        color: "#333",
-                                    }}
-                                >
-                                    Average Progress
-                                </span>
 
                                 <div
                                     style={{
@@ -360,6 +354,17 @@ export default function InstructorCourseProgressDetail() {
                                         %
                                     </span>
                                 </div>
+                                <span
+                                    style={{
+                                        fontSize: "13px",
+                                        color: "#777",
+                                        marginTop: "6px",
+                                        fontStyle: "italic",
+                                    }}
+                                >
+                                    Enrolled:{" "}
+                                    {student.enrolled_date}
+                                </span>
                             </div>
                         </div>
                     ))}
