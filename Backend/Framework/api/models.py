@@ -458,3 +458,27 @@ class User(models.Model):
     def is_authenticated(self):
         return True
 
+class StudentAssignmentProgress(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    assignment = models.ForeignKey(LessonAssignment, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('student', 'assignment')
+
+class StudentReadingProgress(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    reading = models.ForeignKey(LessonReading, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('student', 'reading')
+
+#Track student lesson progress by percentage
+class StudentLessonProgress(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    progress_percent = models.FloatField(default=0.0)
+
+    class Meta:
+        unique_together = ('student', 'lesson')

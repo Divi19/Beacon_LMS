@@ -64,7 +64,7 @@ urlpatterns = [
     #Instructor Lessons 
     path("instructor/courses/<str:course_id>/lessons/bulk-create/", LessonBulkCreateView.as_view()),
     path("instructor/courses/<str:course_id>/lessons/", LessonsView.as_view(), name="get-lessons"), 
-    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>", LessonsView.as_view(), name="get-lessons"), #patching 
+    path("instructor/courses/<str:course_id>/lessons/<str:lesson_id>/", LessonsView.as_view(), name="get-lessons"), #patching 
     path("instructor/lessons/<str:lesson_id>/detail/", LessonDetails.as_view(), name="get-lessons"),
     path("instructor/lessons/<str:lesson_id>/update/", LessonsView.as_view(), name="get-lessons"),
     #Instructor Lessons prerequisites 
@@ -92,10 +92,17 @@ urlpatterns = [
     path("student/courses/<str:course_id>/lessons/unenrolled/", StudentUnenrolledLessons.as_view(), name="unenrolled-lessons"),
     path("student/courses/<str:course_id>/lessons/enroll/<str:lesson_id>/", StudentUnenrolledLessons.as_view(), name="unenrolled-lessons"),
     path("student/courses/lesson/detail/<str:lesson_id>/", StudentLessonDetails.as_view()),
+    path("student/courses/<str:course_id>/lessons/<str:lesson_id>/progress/", StudentLessonProgressView.as_view(), name="lesson-progress"),
     #Students Classrooms
     path("student/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enrolled/<str:classroom_id>/", StudentEnrolledClassrooms.as_view(), name="unenrolled-classrooms"),
+
+    #Student Assignment
+    path("student/lessons/<str:lesson_id>/assignments/", StudentAssignment.as_view(), name="student-lesson-assignment"),
+
+    #Student Reading
+    path("student/lessons/<str:lesson_id>/readings/", StudentReading.as_view(), name="student-lesson-reading"),
 
     #logout 
     path("user/logout/", UserLogout.as_view(), name="logout")

@@ -16,11 +16,16 @@
   margin-top: 16px;
 }
 
+.rectBtn {
+  position: static;
+  justify-self: end;
+}
+
 .rect,
 .rect3,
 .rect4 {
   border-radius: 18px;
-  background: linear-gradient(180deg, #f5c79d 0%, #8ac9cf 100%);
+  background: linear-gradient(180deg, #8ac9cf 0%, #f5c79d 100%);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
 }
 
@@ -28,6 +33,7 @@
   padding: 24px;
   display: grid;
   align-content: start;
+  row-gap: 10px;
 }
 
 .courseHeader {
@@ -242,10 +248,11 @@
 }
 .panelBox,
 .panelBoxSmall {
+  margin: 20px 0 20px 0;
   border-radius: 16px;
-  background: linear-gradient(180deg, #a8d7e0 0%, #f4c69b 100%);
+  background: linear-gradient(180deg, #8ac9cf 0%, #f5c79d 100%);
   min-height: 160px;
-  padding: 18px;
+  padding: 24px;
 }
 .panelTitle {
   font-size: 22px;
