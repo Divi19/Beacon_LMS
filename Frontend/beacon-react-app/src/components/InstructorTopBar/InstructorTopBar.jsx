@@ -16,7 +16,7 @@ export default function InstructorTopBar() {
               Courses
             </a>
           </li>
-          <li className={s.navItem}>Student Progress</li>
+          <li className={s.navItem}> <a href="/instructor/student-progress" className={s.navLink}>Student Progress</a></li>
           <li className={s.navItem}>
             {" "}
             <a href="/instructor/classrooms" className={s.navLink}>

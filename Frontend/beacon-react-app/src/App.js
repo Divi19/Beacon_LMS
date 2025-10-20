@@ -19,6 +19,7 @@ import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/Inst
 
 import InstructorClassCreation from "./pages/Instructor/Instructor Class Creation/InstructorClassCreation"; 
 import InstructorClassrooms from "./pages/Instructor/Instructor Classrooms/InstructorClassrooms";
+import InstructorStudentProgress from "./pages/Instructor/InstructorStudentProgress/InstructorStudentProgress";
 
 
 import axios from 'axios';
@@ -102,6 +103,7 @@ export default function App(){
       <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>/*/}
 
       <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
+      <Route path="/instructor/student-progress" element={<InstructorStudentProgress />}/>
 
       
 
