@@ -5,11 +5,12 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Sum, Q, F
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
+from django.db.models.functions import Coalesce
 import random
 import string
 from datetime import date, datetime, time as dtime, timedelta
@@ -60,8 +61,6 @@ class Course(models.Model):
         ACTIVE = "Active", "ACTIVE"
         INACTIVE = "Inactive", "INACTIVE"
         DRAFT = "Draft", "DRAFT"
-        COMPLETED = "Complete", "COMPLETED"
-        INCOMPLETE = "Incomplete", "INCOMPLETE"
 
     course_id = models.CharField(primary_key=True, max_length=6, unique=True, default=generate_custom_id, editable=True)
     title = models.CharField(max_length=255)
@@ -86,11 +85,15 @@ class Course(models.Model):
 
 
 class Enrollment(models.Model):
+    class EnrollmentStatus(models.TextChoices):
+        COMPLETED = "Completed", "COMPLETED"
+        INCOMPLETE = "Incomplete", "INCOMPLETE"
     enrollment_id = models.AutoField(primary_key=True)
     student = models.ForeignKey('StudentProfile', models.DO_NOTHING)
     course = models.ForeignKey(Course, models.DO_NOTHING)
     enrolled_at = models.DateTimeField(auto_now_add=True)
-
+    status = models.CharField(max_length=50, choices=EnrollmentStatus.choices, default=EnrollmentStatus.INCOMPLETE)
+    
     class Meta:
         managed = True
         db_table = 'enrollment'
@@ -138,10 +141,38 @@ class Lesson(models.Model):
     created_by = models.ForeignKey(InstructorProfile, models.DO_NOTHING, db_column='created_by', related_name='lesson_created_by_set')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    estimated_effort = models.IntegerField(blank=True, null=True, default=0)
 
     class Meta:
         managed = True
         db_table = 'lesson'
+
+    def clean(self):
+        """
+        Ensure total credits of all lessons in this course, including this one,
+        do not exceed course.credits.
+        """
+        # If credits or course cap are missing, skip cap check
+        this_credits = self.credits or 0
+        course_cap = (self.course.credits or 0)
+
+        # Sum other lessons in the same course (exclude self to avoid double-counting on update)
+        total_other = (Lesson.objects
+                       .filter(course=self.course)
+                       .exclude(pk=self.pk)
+                       .aggregate(s=Coalesce(Sum('credits'), 0))['s']) #Get sum and extract it
+
+        if this_credits + total_other > course_cap:
+            raise ValidationError({
+                'credits': (f'Credits would exceed course cap ({course_cap}). '
+                            f'Currently allocated: {total_other}, this lesson: {this_credits}.')
+            })
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            Course.objects.select_for_update().get(pk=self.course_id)
+            self.full_clean()
+            return super().save(*args, **kwargs)
 
 
 class LessonAssignment(models.Model):
@@ -149,13 +180,18 @@ class LessonAssignment(models.Model):
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    #points = models.IntegerField(blank=True, null=True) #not needed
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = True
         db_table = 'lesson_assignment'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lesson", "title"],
+                name="uniq_lesson_title",
+            )
+        ]
 
 
 class LessonClassroom(models.Model):
@@ -259,15 +295,71 @@ class ClassroomEnrollment(models.Model):
 
 
 class LessonEnrollment(models.Model):
+    """
+    TODO: Modify the assignment + reading view on student side
+    """
+    class EnrollmentStatus(models.TextChoices):
+        COMPLETED = "Completed", "COMPLETED"
+        INCOMPLETE = "Incomplete", "INCOMPLETE"
+    status = models.CharField(max_length=50, choices=EnrollmentStatus.choices, default=EnrollmentStatus.INCOMPLETE)
     lesson_enrollment_id = models.AutoField(primary_key=True)
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     student = models.ForeignKey('StudentProfile', models.DO_NOTHING)
-    enrolled_at = models.DateTimeField(auto_now_add=True)
+    enrolled_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+
     class Meta:
         managed = True
         db_table = 'lesson_enrollment'
         unique_together = (('lesson', 'student'),)
 
+    def check_completion(self):
+        """Check if this enrollment should be marked complete."""
+        if not self.student_id or not self.lesson_id:
+            raise ValidationError({
+                "student": "Student is required.",
+                "lesson": "Lesson is required.",
+            })
+
+        # total tasks under this lesson
+        total_assignments = LessonAssignment.objects.filter(lesson=self.lesson).count()
+        total_readings = LessonReading.objects.filter(lesson=self.lesson).count()
+        total_items = total_assignments + total_readings
+
+        # student’s completed items for this lesson
+        done_assignments = StudentAssignment.objects.filter(
+            student=self.student, student__lessonenrollment__lesson=self.lesson, is_completed=True
+        ).count()
+        done_readings = StudentReading.objects.filter(
+            student=self.student, student__lessonenrollment__lesson=self.lesson,  is_completed=True
+        ).count()
+        completed_items = done_assignments + done_readings
+
+        # check if all completed
+        all_done = total_items > 0 and completed_items == total_items
+
+        print("enrolled at:", self.enrolled_at)
+        duration = getattr(self.lesson, "duration_week", 0) or 0
+        enrolled_at = self.enrolled_at or timezone.now()
+        end_date = enrolled_at + timedelta(weeks=duration)
+        duration_reached = timezone.now() >= end_date
+
+        if all_done and duration_reached:
+            self.status = LessonEnrollment.EnrollmentStatus.COMPLETED
+        else:
+            self.status = LessonEnrollment.EnrollmentStatus.INCOMPLETE
+    
+    def clean(self):
+        self.check_completion()
+
+
+    def save(self, *args, **kwargs):
+        # automatically update status before saving
+        # everytime student check on something, make it 
+        # enrollment = LessonEnrollment.objects.get(pk=1)
+        # enrollment.save()
+        with transaction.atomic():
+            self.full_clean()  # raises ValidationError -> DRF can turn into 400
+            return super().save(*args, **kwargs)
 
 class LessonPrerequisite(models.Model):
     prereq_id = models.AutoField(primary_key=True)

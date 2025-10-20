@@ -3,6 +3,8 @@ import re
 from urllib.parse import urlparse
 from .forms import *
 from copy import deepcopy
+import traceback
+from .utils import _LINE_SPLIT, _split_title_second, _yield_lines, _SEPS, _FORBIDDEN
 
 #django 
 from django.shortcuts import render, redirect
@@ -13,14 +15,17 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
 from django.db import IntegrityError, transaction
-from django.db.models import OuterRef, Subquery, Q
-from django.db.models import Count
+from django.db.models import *
+from django.http import HttpResponse
+from django.core.validators import URLValidator
+_url_validator = URLValidator(schemes=["http", "https"])
 # views.py
 from itertools import chain
 from django.db.models import Value, IntegerField, TimeField, CharField
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
 
 #Res
 from rest_framework.decorators import api_view
@@ -146,7 +151,7 @@ class InstructorCoursesView(APIView):
             return Response(serializer.data,  status=status.HTTP_200_OK)
         
 """
-TODO: Use after model done 
+Classrooms
 """
 class LinkingClassroomsView(APIView):
     """
@@ -157,91 +162,73 @@ class LinkingClassroomsView(APIView):
 
     def get(self, request, course_id):
         """
-        POST
-        Grab all unlinked classrooms and linked classrooms of the same course
+        GET
+        Grab all linked classrooms for the course and unlinked physical classrooms.
         """
+        # Classrooms with lesson classroom linked to a specific course 
         linked_rows = (
-            LessonClassroom.active
-            .filter(lesson__course__course_id=course_id)
-            .select_related("classroom")
-            .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
-            .values(
-                "classroom__classroom_id",
-                "classroom__location",
-                "day_of_week",
-                "time_start",
-                "time_end",
-                "duration_minutes",
-                "classroom__capacity",
-                "enrolled_count",                                                  
-            )
-        )
-
-        unlinked_rows = (
             Classroom.objects
-            .filter(lessonclassroom__isnull=True, is_online=False)
-            .annotate(
-                day_of_week=Value(None, output_field=CharField()),
-                time_start=Value(None, output_field=TimeField()),
-                time_end=Value(None, output_field=TimeField()),
-                duration_minutes=Value(None, output_field=IntegerField()),
-                enrolled_count=Value(0, output_field=IntegerField()),              
-            )
+            .filter(lessonclassroom__lesson__course__course_id=course_id)
             .values(
                 "classroom_id",
                 "location",
-                "day_of_week",
-                "time_start",
-                "time_end",
-                "duration_minutes",
                 "capacity",
-                "enrolled_count",                                                  
+            )
+            .distinct()
+        )
+
+        # Unlinked classrooms: alias placeholders with the SAME names used above
+        unlinked_rows = (
+            Classroom.objects
+            .filter(lessonclassroom__isnull=True, is_online=False)
+            .values(
+                "classroom_id",
+                "location",
+                "capacity",
             )
         )
 
-        def norm_linked(r):
-            return {
-                "classroom_id": r["classroom__classroom_id"],
-                "location": r["classroom__location"],
-                "day_of_week": r["day_of_week"],
-                "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
-                "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
-                "duration_minutes": r["duration_minutes"],
-                "capacity": r["classroom__capacity"],
-                "enrolled_count": r["enrolled_count"],                             
-            }
-
-        def norm_unlinked(r):
+        def norm(r):
             return {
                 "classroom_id": r["classroom_id"],
                 "location": r["location"],
-                "day_of_week": r["day_of_week"],
-                "time_start": r["time_start"],
-                "time_end": r["time_end"],
-                "duration_minutes": r["duration_minutes"],
                 "capacity": r["capacity"],
-                "enrolled_count": r["enrolled_count"],                             
             }
 
-        data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
-        return Response(data)
+        DAY_ORDER = {
+            "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
+            "Friday": 5, "Saturday": 6, "Sunday": 7,
+        }
+
+        def day_rank(day):  # None or unknown -> 99
+            return DAY_ORDER.get(day, 99)
+
+        try:
+            data = [*map(norm, linked_rows), *map(norm, unlinked_rows)]
+            # CHANGED: use .get() and fallback so missing keys don’t raise KeyError
+            data.sort(key=lambda x: (
+                x.get("classroom_id"),
+                day_rank(x.get("day_of_week")),
+                x.get("time_start") or ""
+            ))
+            return Response(data)
+        except Exception as e:
+            return Response(
+                {"error": str(e), "trace": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
     
     def post(self, request, lesson_id):
         mutable_data = deepcopy(request.data)
         mutable_data.pop("lesson_id", None)
         if "classroom_id" in mutable_data and "classroom" not in mutable_data:
             mutable_data["classroom"] = mutable_data.pop("classroom_id")
-       
-       
         mutable_data["lesson"] = lesson_id
         serializer = LessonClassroomSerializer(
             data=mutable_data,
             context={"request": request}  #needed for supervisor fallback
         )
-        if not serializer.is_valid():
-            print("ERR:", serializer.errors)
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
         lesson_classroom = serializer.save()
         return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
 
@@ -270,7 +257,8 @@ class OnlineClassroomsView(APIView):
                 "enrolled_count",   
                 "classroom__zoom_link",
                 "classroom__is_online",   
-                "lesson__lesson_id"                                           
+                "lesson__lesson_id",
+                "duration_weeks"                                           
             )
         )
 
@@ -287,12 +275,29 @@ class OnlineClassroomsView(APIView):
                 "enrolled_count": r["enrolled_count"],   
                 "is_online": r["classroom__is_online"],
                 "zoom_link": r["classroom__zoom_link"], 
-                "lesson_id": r["lesson__lesson_id"]                      
+                "lesson_id": r["lesson__lesson_id"],
+                "duration_weeks": r["duration_weeks"]                      
             }
+        
+        DAY_ORDER = {
+            "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
+            "Friday": 5, "Saturday": 6, "Sunday": 7,
+        }
 
-        data = [*map(norm_linked, linked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
-        return Response(data)
+        def day_rank(day):
+            """Return numeric rank for a weekday name (None or unknown -> 99)."""
+            return DAY_ORDER.get(day, 99)
+
+        try:
+            data = [*map(norm_linked, linked_rows)]
+            data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+            return Response(data)
+        except Exception as e:
+            return Response(
+                {"error": str(e), "trace": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+    
 
     @transaction.atomic
     def post(self, request, lesson_id):
@@ -300,7 +305,8 @@ class OnlineClassroomsView(APIView):
         mutable1 = deepcopy(request.data)
         mutable1["lesson"] = lesson_id
         mutable1["is_online"] = True #Just in case
-        online_classroom = ClassroomSerializer(data=request.data, context={"request": request})
+        mutable1["location"] = ""
+        online_classroom = ClassroomSerializer(data=mutable1, context={"request": request})
         if not  online_classroom.is_valid():
             print("ERR:", online_classroom.errors)
             return Response(online_classroom.errors, status=400)
@@ -315,6 +321,7 @@ class OnlineClassroomsView(APIView):
         online_lesson_classroom_obj = online_lesson_classroom.save()
         
         
+        
         return Response(
             {
                 "online_lesson_classroom": LessonClassroomSerializer(online_lesson_classroom_obj).data,
@@ -322,8 +329,6 @@ class OnlineClassroomsView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
-
 
 class ActiveClassroomsView(APIView):
     """
@@ -338,17 +343,19 @@ class ActiveClassroomsView(APIView):
     def get(self, request):
         lesson_id = request.query_params.get("lesson_id", None)
         course_id = request.query_params.get("course_id", None)
+
         if lesson_id is not None:
             q = Q(lesson__lesson_id=lesson_id)
         elif course_id is not None:
             q = Q(lesson__course__course_id=course_id)
         else:
             return Response({"detail": "Provide lesson_id or course_id."}, status=400)
+    
 
         linked_rows = (
             LessonClassroom.active
             .filter(q)
-            .select_related("classroom", "supervisor")
+            .select_related("classroom")
             .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
             .values(
                 "classroom__classroom_id",
@@ -362,7 +369,9 @@ class ActiveClassroomsView(APIView):
                 "enrolled_count",   
                 "classroom__zoom_link",
                 "classroom__is_online",   
-                "lesson__lesson_id"                                           
+                "lesson__lesson_id",  
+                "duration_weeks",
+                "lesson_classroom_id"                                        
             )
         )
 
@@ -379,13 +388,29 @@ class ActiveClassroomsView(APIView):
                 "enrolled_count": r["enrolled_count"],   
                 "is_online": r["classroom__is_online"],
                 "zoom_link": r["classroom__zoom_link"], 
-                "lesson_id": r["lesson__lesson_id"]                      
+                "lesson_id": r["lesson__lesson_id"],     
+                "duration_weeks": r["duration_weeks"],
+                "lesson_classroom_id"   : r["lesson_classroom_id"   ]          
             }
+        
+        DAY_ORDER = {
+            "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
+            "Friday": 5, "Saturday": 6, "Sunday": 7,
+        }
 
-        data = [*map(norm_linked, linked_rows)]
-        data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
-        return Response(data)
-
+        def day_rank(day):
+            """Return numeric rank for a weekday name (None or unknown -> 99)."""
+            return DAY_ORDER.get(day, 99)
+        try:
+            data = [*map(norm_linked, linked_rows)]
+            data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+            return Response(data)
+        
+        except Exception as e:
+            return Response(
+                {"error": str(e), "trace": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
 class OwnClassroomsView(APIView):
     """
@@ -453,6 +478,7 @@ class OwnClassroomsView(APIView):
 
         def norm_linked(r):
             return {
+                "is_supervised": True,
                 "classroom_id": r["classroom__classroom_id"],
                 "location": r["classroom__location"],
                 "day_of_week": r["day_of_week"],
@@ -470,6 +496,7 @@ class OwnClassroomsView(APIView):
 
         def norm_unlinked(r):
             return {
+                "is_supervised": False,
                 "classroom_id": r["classroom_id"],
                 "location": r["location"],
                 "day_of_week": r["day_of_week"],
@@ -487,6 +514,7 @@ class OwnClassroomsView(APIView):
         data = [*map(norm_linked, linked_rows), *map(norm_unlinked, unlinked_rows)]
         data.sort(
             key=lambda x: (
+                 x.get("is_supervised", False) is False,
                 str(x["classroom_id"]) if x["classroom_id"] is not None else 0,
                 str(x["day_of_week"]) if x["day_of_week"] else "ZZZ",
                 str(x["time_start"]) if x["time_start"] else ""
@@ -496,7 +524,6 @@ class OwnClassroomsView(APIView):
 
 class CreateClassroomView(APIView):
     """
-    Specific to instructor 
     Creating online classrooms 
     """
     permission_classes = [IsAuthenticated]
@@ -514,7 +541,6 @@ class CreateClassroomView(APIView):
         classroom = serializer.save()
         return Response(ClassroomSerializer(classroom).data, status=201)
         
-
 
 """
 Lessons 
@@ -551,12 +577,15 @@ class LessonsView(APIView):
         """
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
         ser = LessonSerializer(lesson, data=request.data, partial=True, context={"request": request})
-        ser.is_valid(raise_exception=True)
-        ser.save()
-        return Response(ser.data, status=status.HTTP_200_OK)
-    
+        if not  ser.is_valid():
+            return Response(ser.errors, status=400)
+        try:
+            ser.save()   
+        except ValidationError as e:
+            return Response(e.message_dict, status=status.HTTP_400_BAD_REQUEST)
 
-    
+        return Response(ser.data, status=status.HTTP_200_OK)
+      
 class LessonDetails(APIView): 
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication] 
@@ -569,11 +598,14 @@ class LessonDetails(APIView):
             "lesson_id": lesson.lesson_id,
             "title": lesson.title,
             "credits": lesson.credits,
+            "estimated_effort": lesson.estimated_effort,
             "description": lesson.description,
             "objectives": lesson.objectives, 
             "duration_weeks":lesson.duration_weeks,
             "status": lesson.status,
-            "created_by": lesson.created_by.full_name
+            "created_by": lesson.created_by.full_name,
+            "designer": lesson.designer.full_name,
+            "designer_email":lesson.designer.user.email
         }
         return Response(output, status=status.HTTP_200_OK)
 
@@ -703,9 +735,6 @@ class LessonPrereqBulkCreateView(APIView):
 
     @transaction.atomic
     def post(self, request, lesson_id):
-        """
-        Upsert prerequisites (merge/replace). Accepts list OR newline/comma-separated string.
-        """
         ser = PrereqInputSerializer(
             data=request.data,
             context={"request": request, "lesson_id": lesson_id}
@@ -716,38 +745,160 @@ class LessonPrereqBulkCreateView(APIView):
         prereq_list = ser.validated_data["prereq_list"]  # list[Lesson]
         mode = ser.validated_data["mode"]
 
-        if mode == "replace":
-            LessonPrerequisite.objects.filter(lesson=lesson).delete()
+        # Desired set
+        desired_ids = {p.lesson_id for p in prereq_list}
 
-        # Avoid duplicates
-        existing_ids = set(
+        if mode == "replace":
+            # Delete prerequisites not in the new list (handles empty desired_ids = clear-all)
+            LessonPrerequisite.objects.filter(
+                lesson=lesson
+            ).exclude(
+                prereq_lesson__lesson_id__in=desired_ids
+            ).delete()
+
+
+        # Recompute existing after possible deletes
+        existing_prereq_ids = set(
             LessonPrerequisite.objects
             .filter(lesson=lesson)
             .values_list("prereq_lesson__lesson_id", flat=True)
         )
 
-        to_create = [
-            LessonPrerequisite(lesson=lesson, prereq_lesson=p)
-            for p in prereq_list
-            if p.lesson_id not in existing_ids
-        ]
-        if to_create:
+        # Create only missing edges
+        missing_ids = desired_ids - existing_prereq_ids
+        if missing_ids:
+            id_to_obj = {p.lesson_id: p for p in prereq_list}
+            to_create = [LessonPrerequisite(lesson=lesson, prereq_lesson=id_to_obj[lid]) for lid in missing_ids]
+            # If you have a UniqueConstraint, you can optionally tolerate races:
+            # LessonPrerequisite.objects.bulk_create(to_create, batch_size=100, ignore_conflicts=True)
             LessonPrerequisite.objects.bulk_create(to_create, batch_size=100)
 
-        current = (
+        # Return stable, ordered list
+        current_prereqs = (
             LessonPrerequisite.objects
             .filter(lesson=lesson)
             .select_related("prereq_lesson")
+            .order_by("prereq_lesson__lesson_id")
         )
-        out = LessonPrereqOutSerializer(current, many=True).data
+        out = LessonPrereqOutSerializer(current_prereqs, many=True).data
+
+        # Optional: choose 200 vs 201 based on whether we created anything.
         return Response(
             {"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)},
             status=status.HTTP_201_CREATED
         )
 
 """
-See student list 
+See student list / progress 
 """
+
+class InstructorStudentProgress(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+    def get(self, request):
+        """
+        GET method
+        For students report on instructor side 
+        Shows progress of all students being listed in a specific course 
+        """
+        lesson_id = request.query_params.get("lesson_id", None)
+        course_id = request.query_params.get("course_id", None)
+        """
+        For lessons 
+        """
+        if course_id is None:
+            #Total assignments + lessons 
+            tot_asgns = LessonAssignment.objects.filter(lesson__lesson_id=lesson_id).distinct().count()
+            tot_readings = LessonReading.objects.filter(lesson__lesson_id=lesson_id).distinct().count()
+            total = tot_asgns + tot_readings
+            filter_by_lesson = Q(lessonenrollment__lesson__lesson_id = lesson_id) #Enrolled in the current lesson 
+            #Grab students enrolled in this lesson
+            students = StudentProfile.objects.filter(filter_by_lesson).distinct()
+            filter_related_lesson = Q(lesson__lesson_id=lesson_id)
+            filter_checked = Q(is_completed=True)
+            students_with_progress = students.annotate(
+            #Count completed assignments for the specific lesson
+            done_asngs=Count(
+                'studentassignment',
+                filter=filter_related_lesson & filter_checked
+            ),
+            #Count completed readings for the specific lesson
+            done_readings=Count(
+                'studentreading',
+                filter=filter_related_lesson & filter_checked
+                )
+            ).annotate(
+                #Total completion
+                completion=F('done_asngs') + F('done_readings'),
+                progress=(F('completion') / Value(total, output_field=FloatField()))
+            ).annotate(
+                #progress percentage
+                progress_percentage=F('progress') * Value(100, output_field=FloatField())
+            )
+            stats = students_with_progress.aggregate(
+                average=Avg('progress'),
+                average_percentage=Avg('progress_percentage'),
+            )
+
+            
+            response_data = {
+                "total_assignments": tot_asgns,
+                "total_readings": tot_readings,
+                "total_items": total,
+                "students_lesson": list(students_with_progress.values(
+                    'id', 'title', 'last_name', 'first_name', 'progress', 'progress_percentage'
+                )),
+                "average": stats["average"] or 0,
+                "average_percentage": stats["average_percentage"] or 0,
+            }    
+            return Response(response_data, status=200)
+
+
+        else:
+            COMPLETED = LessonEnrollment.EnrollmentStatus.COMPLETED 
+            course = get_object_or_404(Course, course_id=course_id)
+            total_course_credits = course.credits
+            filter_by_course = Q(enrollment__course__course_id=course_id)
+            completed_in_course = Q(
+                lessonenrollment__status=COMPLETED,
+                lessonenrollment__lesson__course__course_id=course_id,
+            )
+            course_students = (
+                StudentProfile.objects
+                .filter(filter_by_course)                         
+                .annotate(
+                    completed_count=Count("lessonenrollment", filter=completed_in_course),
+                    total_credits=Sum("lessonenrollment__lesson__credits", filter=completed_in_course),
+                ).annotate(
+                    progress=Case(
+                            When(
+                                condition=Value(total_course_credits > 0),
+                                then=F('total_credits') / Value(float(total_course_credits), output_field=FloatField()),
+
+                            ),
+                            default=Value(0.0),
+                            output_field=FloatField(),
+                            ),
+                    ).annotate(
+                        progress_percentage=F('progress') * Value(100.0, output_field=FloatField())
+                    )
+                )
+
+            stats_course= course_students.aggregate(
+                average=Avg('progress'),
+                average_percentage=Avg('progress_percentage'),
+            )
+            
+            response_data = {
+                "students_course": list(course_students.values(
+                    'id', 'last_name', 'first_name', 'title', 'total_credits', 'progress', 'progress_percentage'
+                )),
+                "average": stats_course["average"] or 0.0,
+                "average_percentage": stats_course["average_percentage"] or 0.0
+            }
+
+            return Response(response_data, status=200)
+        
 class StudentsEnrolledView(APIView):
     """
     GET /api/students/enrolled?course_id=...&lesson_id=...&classroom_id=...&q=...&ordering=full_name
@@ -755,7 +906,7 @@ class StudentsEnrolledView(APIView):
     - If multiple are provided, the result is the INTERSECTION (i.e., students satisfying all filters).
     - Optional 'ordering' (e.g., 'full_name', '-full_name', 'student_no').
     - Uses simple page params: page (1-based), page_size (default 25).
-
+C
     use this: 
     const { data } = await api.get('/api/students/enrolled?course_id=AB1234');
         setStudents(data.results);      // list to display
@@ -1085,18 +1236,18 @@ class StudentUnenrolledLessons(APIView):
     def post(self, request, course_id, **kwargs):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
-        # course_id = request.data.get("course_id")
-        lesson_id = request.data.get("lesson_id")
-        course = get_object_or_404(Course, course_id=course_id)
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id, course=course)
-
+        print("student:",student.last_name)
+        lesson_id = request.data.get("lesson")
         ser = LessonEnrollmentSerializer(
-            data={"lesson_id": lesson.pk},
-            context={"request": request, "student": student},
+            data={"lesson": lesson_id,"student": student.student_profile_id},
         )
-        ser.is_valid(raise_exception=True)
-        enrollment = ser.save()
-        return Response(LessonEnrollmentSerializer(enrollment).data, status=201)
+        if not ser.is_valid():
+            return Response(ser.errors, status=400)
+        try:
+            obj = ser.save()
+        except ValidationError as e:
+            return Response(e.message_dict, status=400)
+        return Response(LessonEnrollmentSerializer(obj).data, status=201)
     
     def delete(self, request, lesson_id, classroom_id, course_id, **kwargs):
         """
@@ -1266,103 +1417,86 @@ class LessonReadingBulkCreateView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
-    _LINE_SPLIT = re.compile(r"[\r\n]+")  # newline oriented; commas allowed in titles
-    _SEP_CANDIDATES = (" | ", " - ")
-
     def get(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
         qs = LessonReading.objects.filter(lesson=lesson).order_by("-created_at", "-pk")
         serializer = LessonReadingSerializer(qs, many=True)
         return Response(serializer.data)
 
-    def _looks_like_url(self, s: str) -> bool:
-        """
-        Treat 'example.com' as URL-like by assuming http:// if no scheme.
-        """
-        probe = s.strip()
-        parsed = urlparse(probe if "://" in probe else f"http://{probe}")
-        return bool(parsed.scheme and parsed.netloc and "." in parsed.netloc)
-
-    def _normalize_url(self, s: str) -> str | None:
-        if not s:
-            return None
-        s = s.strip()
-        if not self._looks_like_url(s):
-            return None
-        # Add http:// if missing
-        return s if "://" in s else f"http://{s}"
-
-    def parse_reading_items(self, raw: str):
-        """
-        Split by newline; within each line split on ' | ' or ' - ' if present.
-        Return list of dicts: {"title": str, "url": Optional[str]}.
-        """
-        lines = [ln.strip() for ln in self._LINE_SPLIT.split(raw or "") if ln.strip()]
-        out = []
-        for ln in lines:
-            title, url = None, None
-            # prefer explicit separators
-            for sep in self._SEP_CANDIDATES:
-                if sep in ln:
-                    left, right = [x.strip() for x in ln.split(sep, 1)]
-                    title = (left or right)[:255] if left else None
-                    url = self._normalize_url(right)
-                    break
-            else:
-                # no explicit sep: URL-only or Title-only
-                if self._looks_like_url(ln):
-                    title = ln[:255]
-                    url = self._normalize_url(ln)
-                else:
-                    title = ln[:255]
-                    url = None
-
-            if title:
-                out.append({"title": title, "url": url})
-        return out
+    def _validate_item(self, title: str, url: str):
+        t = (title or "").strip()
+        if not t:
+            raise serializers.ValidationError({"title": "Title cannot be empty."})
+        if any(ch in t for ch in _FORBIDDEN):
+            raise serializers.ValidationError({"title": "Title must not contain '|' or '-'."})
+        u = (url or "").strip()
+        if u:
+            try:
+                _url_validator(u)
+            except ValidationError:
+                raise serializers.ValidationError({"url": "Invalid URL."})
+        return t, u
 
     @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        lesson_id = kwargs.get("lesson_id")
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+    def post(self, request, lesson_id):
+        existing = list(LessonReading.objects.filter(lesson__lesson_id=lesson_id))
+        by_title = {o.title: o for o in existing}
+        by_url   = {(o.url or "").strip(): o for o in existing if (o.url or "").strip()}
 
         ser = LessonItemsBulkSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
+        items = ser.validated_data["items"]
+        mode  = ser.validated_data["mode"]
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
 
-        parsed = self.parse_reading_items(ser.validated_data["items"])
+        parsed = []
+        try:
+            for line in _yield_lines(items):
+                title, url = _split_title_second(line)
+                t, u = self._validate_item(title, url)
+                parsed.append((t, u))
+        except serializers.ValidationError as e:
+            return Response(e.detail, status=400)
 
-        # in-memory de-dup on (title, url)
-        seen = set()
-        readings_to_create = []
-        for item in parsed:
-            key = (item["title"], item["url"])
-            if key in seen:
-                continue
-            seen.add(key)
-            readings_to_create.append(
-                LessonReading(lesson=lesson, title=item["title"], url=item["url"])
-            )
+        incoming_titles = {t for (t, _) in parsed}
+        saved = []
 
-        # compute counts pre/post for accurate created_count
-        before = LessonReading.objects.filter(lesson=lesson).count()
-        LessonReading.objects.bulk_create(readings_to_create, ignore_conflicts=True)
-        after = LessonReading.objects.filter(lesson=lesson).count()
+        for t, u in parsed:
+            u = (u or "").strip()
 
-        current = (LessonReading.objects
-                   .filter(lesson=lesson)
-                   .order_by("-created_at", "-pk")
-                   .values("reading_id", "title", "url", "created_at"))
+            if t in by_title:
+                # same title → normal update (only if URL provided)
+                obj = by_title[t]
+                if u != "":
+                    obj.url = u
+                    obj.save()
+            elif u != "" and u in by_url:
+                # SAME URL, NEW TITLE → DISCARD old and CREATE new
+                old = by_url[u]
+                if old.title != t:
+                    old.delete()
+                obj = LessonReading.objects.create(lesson=lesson, title=t, url=u)
+            else:
+                # brand new (seed empty url when not provided)
+                obj = LessonReading.objects.create(llesson=lesson, title=t, url=u or "")
+
+            saved.append(obj)
+
+        deleted_count = 0
+        if mode == "replace":
+            qs_del = LessonReading.objects.exclude(title__in=incoming_titles)
+            deleted_count = qs_del.count()
+            qs_del.delete()
 
         return Response(
             {
-                "lesson_id": lesson.lesson_id,
-                "attempted": len(readings_to_create),
-                "created_count": max(after - before, 0),
-                "items": list(current),
+                "saved": LessonReadingSerializer(saved, many=True).data,
+                "mode": mode,
+                "deleted_count": deleted_count,
             },
             status=status.HTTP_201_CREATED,
         )
-
+    
 class LessonAssignmentBulkCreateView(APIView):
     """
     GET  /instructor/lessons/<lesson_id>/assignments/
@@ -1370,14 +1504,10 @@ class LessonAssignmentBulkCreateView(APIView):
 
     items (comma- or newline-separated lines, we split by newline):
       - "Title | Description"
-      - "Title - Description"
       - "Only a Title"
     """
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
-
-    _LINE_SPLIT = re.compile(r"[\r\n]+")   # newline-oriented split; commas are allowed inside
-    _SEP_CANDIDATES = (" | ", " - ")
 
     def get(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
@@ -1386,80 +1516,155 @@ class LessonAssignmentBulkCreateView(APIView):
               .order_by("-created_at", "-pk")
               .values("assignment_id", "title", "description", "created_at", "updated_at"))
         return Response(list(qs), status=status.HTTP_200_OK)
-
-    def parse_assignment_items(self, raw: str):
-        """
-        Split by newline; for each line:
-          - if contains " | " or " - ", treat right side as description
-          - else it's title-only
-        Returns list[{"title": str, "description": Optional[str]}]
-        """
-        lines = [ln.strip() for ln in self._LINE_SPLIT.split(raw or "") if ln.strip()]
-        out = []
-        for ln in lines:
-            title, desc = None, None
-            for sep in self._SEP_CANDIDATES:
-                if sep in ln:
-                    left, right = [x.strip() for x in ln.split(sep, 1)]
-                    title = (left or right)[:255] if left else None
-                    desc = right or None
-                    break
-            else:
-                title = ln[:255]
-                desc = None
-
-            if title:
-                out.append({"title": title, "description": desc})
-        return out
+    
+    def _validate_item(self, title: str, desc: str):
+        t = (title or "").strip()
+        if not t:
+            raise serializers.ValidationError({"title": "Title cannot be empty."})
+        if any(ch in t for ch in _FORBIDDEN):
+            raise serializers.ValidationError({"title": "Title must not contain '|' or '-'."})
+        d = (desc or "").strip()
+        if d and any(ch in d for ch in _FORBIDDEN):
+            raise serializers.ValidationError({"description": "Description must not contain '|' or '-'."})
+        return t, d
 
     @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        lesson_id = kwargs.get("lesson_id")
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+    def post(self, request, lesson_id):
+        existing = list(LessonAssignment.objects.filter(lesson__lesson_id=lesson_id))
+        by_title = {o.title: o for o in existing}
+        by_desc   = {(o.description or "").strip(): o for o in existing if (o.description or "").strip()}
 
-        # Reuse the same input serializer you already have:
         ser = LessonItemsBulkSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
+        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
 
-        parsed = self.parse_assignment_items(ser.validated_data["items"])
+        items = ser.validated_data["items"]
+        mode  = ser.validated_data["mode"]  # "merge" or "replace"
 
-        # In-memory de-dup (title, description) to avoid obvious duplicates in the same payload
-        seen = set()
-        objs = []
-        for item in parsed:
-            key = (item["title"], item["description"])
-            if key in seen:
-                continue
-            seen.add(key)
-            objs.append(
-                LessonAssignment(
-                    lesson=lesson,
-                    title=item["title"],
-                    description=item["description"]
-                )
-            )
+        parsed = []
+        try:
+            for line in _yield_lines(items):
+                title, desc = _split_title_second(line)
+                t, d = self._validate_item(title, desc)
+                parsed.append((t, d))
+        except serializers.ValidationError as e:
+            print("Encountered error")
+            return Response(e.detail, status=400)
 
-        before = LessonAssignment.objects.filter(lesson=lesson).count()
-        # If you add a DB unique constraint (see note below), ignore_conflicts=True will do the right thing.
-        LessonAssignment.objects.bulk_create(objs, ignore_conflicts=True)
-        after = LessonAssignment.objects.filter(lesson=lesson).count()
+        incoming_titles = {t for (t, _) in parsed}
+        saved = []
 
-        current = (LessonAssignment.objects
-                   .filter(lesson=lesson)
-                   .order_by("-created_at", "-pk")
-                   .values("assignment_id", "title", "description", "created_at", "updated_at"))
+        for t, d in parsed:
+            d = (d or "").strip()
+
+            if t in by_title:
+                # same title → normal update (only if URL provided)
+                obj = by_title[t]
+                if d != "":
+                    obj.url = d
+                    obj.save()
+            elif d != "" and d in by_desc:
+                # SAME URL, NEW TITLE → DISCARD old and CREATE new
+                old = by_desc[d]
+                if old.title != t:
+                    old.delete()
+                obj = LessonAssignment.objects.create(lesson=lesson, title=t, description=d)
+            else:
+                # brand new (seed empty url when not provided)
+                obj = LessonAssignment.objects.create(lesson=lesson, title=t, description=d or "")
+
+            saved.append(obj)
+
+
+        deleted_count = 0
+        if mode == "replace":
+            qs_del = LessonAssignment.objects.exclude(title__in=incoming_titles)
+            deleted_count = qs_del.count()
+            qs_del.delete()
 
         return Response(
             {
-                "lesson_id": lesson.lesson_id,
-                "attempted": len(objs),
-                "created_count": max(after - before, 0),
-                "items": list(current),
+                "saved": LessonAssignmentSerializer(saved, many=True).data,
+                "mode": mode,
+                "deleted_count": deleted_count,
             },
             status=status.HTTP_201_CREATED,
         )
 
-    
+class AssignmentTextView(APIView):
+    """
+    Return all assignments in a plain text format:
+    "title | description" per line.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+
+    def get(self, request, lesson_id):
+        # 1. Query all assignments
+        assignments = LessonAssignment.objects.filter(lesson__lesson_id = lesson_id).values("title", "description")
+
+        # 2. Build each line as "title | description"
+        lines = []
+        for a in assignments:
+            title = a.get("title", "").strip()
+            desc = a.get("description", "").strip()
+            lines.append(f"{title} | {desc}")
+
+        # 3. Join by newline
+        output_text = "\n".join(lines)
+
+        # 4. Return as plain text (or JSON if you prefer)
+        return Response({"assignments_text": output_text})
+
+class ReadingTextView(APIView):
+    """
+    Return all assignments in a plain text format:
+    "title | description" per line.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+
+    def get(self, request, lesson_id):
+        # 1. Query all assignments
+        readings = LessonReading.objects.filter(lesson__lesson_id = lesson_id).values("title", "url")
+
+        # 2. Build each line as "title | description"
+        lines = []
+        for a in readings:
+            title = a.get("title", "").strip()
+            desc = a.get("url", "").strip()
+            lines.append(f"{title} | {desc}")
+
+        # 3. Join by newline
+        output_text = "\n".join(lines)
+
+        # 4. Return as plain text (or JSON if you prefer)
+        return Response({"readings_text": output_text})
+
+class PrereqsTextView(APIView):
+    """
+    Return all prerequisites of a lesson as plain text.
+    Example output: "LES001, LES002, LES003"
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+
+    def get(self, request, lesson_id):
+        # 1. Query prerequisites for this lesson
+        prereqs = (
+            LessonPrerequisite.objects
+            .filter(lesson__lesson_id=lesson_id)
+            .values_list("prereq_lesson__lesson_id", flat=True)  # fetch related lesson_id directly
+        )
+
+        # 2. Convert to comma-separated string
+        output_text = ", ".join(prereqs)
+
+        # 3. Return as JSON so frontend can use it easily
+        return Response({"prereqs_text": output_text})
+     
 class AdminLogin(APIView): 
     """
     Posting login request. 
@@ -1567,75 +1772,4 @@ class AdminInstructorDetailView(APIView):
         user.save()
         
         return Response({"detail": "Instructor deactivated successfully."}, status=status.HTTP_200_OK)
-
-class StudentAssignment(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication]
-
-    def get(self, request, lesson_id):
-        student = get_object_or_404(StudentProfile, user=request.user)
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
-        assignments=LessonAssignment.objects.filter(lesson=lesson)
-
-        progress_map = {
-            p.assignment.assignment_id: p.completed
-            for p in StudentAssignmentProgress.objects.filter(student=student, assignment__lesson=lesson)
-        }
-        data = [
-            {
-                "assignment_id": a.assignment_id,
-                "title": a.title,
-                "description": a.description,
-                "completed": progress_map.get(a.assignment_id, False),
-            }
-            for a in assignments
-        ]
-        return Response(data)
-
-    def post(self, request, lesson_id):
-        student = get_object_or_404(StudentProfile, user=request.user)
-        assignment_id = request.data.get("assignment_id")
-        completed = request.data.get("completed", False)
-
-        assignment = get_object_or_404(LessonAssignment, assignment_id=assignment_id, lesson__lesson_id=lesson_id)
-        progress, _ = StudentAssignmentProgress.objects.get_or_create(student=student, assignment=assignment)
-        progress.completed = completed
-        progress.save()
-
-        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
-
-class StudentReading(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication]
-
-    def get(self, request, lesson_id):
-        student = get_object_or_404(StudentProfile, user=request.user)
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
-        readings=LessonReading.objects.filter(lesson=lesson)
-
-        progress_map = {
-            p.reading.reading_id: p.completed
-            for p in StudentReadingProgress.objects.filter(student=student, reading__lesson=lesson)
-        }
-        data = [
-            {
-                "reading_id": r.reading_id,
-                "title": r.title,
-                "url": r.url,
-                "completed": progress_map.get(r.reading_id, False),
-            }
-            for r in readings
-        ]
-        return Response(data)
-
-    def post(self, request, lesson_id):
-        student = get_object_or_404(StudentProfile, user=request.user)
-        reading_id = request.data.get("reading_id")
-        completed = request.data.get("completed", False)
-
-        reading = get_object_or_404(LessonReading, reading_id=reading_id, lesson__lesson_id=lesson_id)
-        progress, _ = StudentReadingProgress.objects.get_or_create(student=student, reading=reading)
-        progress.completed = completed
-        progress.save()
-
-        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+      

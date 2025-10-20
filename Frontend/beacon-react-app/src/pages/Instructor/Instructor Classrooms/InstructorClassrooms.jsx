@@ -13,7 +13,7 @@ export default function InstructorClassrooms() {
     let ignore = false;
     (async () => {
       try {
-        const { data } = await api.get("/instructor/classrooms/");
+        const { data } = await api.get("/instructor/classrooms/own/");
         if (!ignore) {
           setItems(data);
         }
