@@ -11,6 +11,7 @@ export default function CourseDetailEnrolled() {
   const navigate = useNavigate();
 
   const [course, setCourse] = useState(null);
+  const [lessons, setLessons] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // choose a lesson id: take the first from backend if present; otherwise a temp one
@@ -33,6 +34,9 @@ export default function CourseDetailEnrolled() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+    api.get(`student/courses/${courseId}/lessons/enrolled/`).then(
+      res => setLessons(res.data)
+    )
 
     return () => {
       cancelled = true;
@@ -82,8 +86,8 @@ export default function CourseDetailEnrolled() {
 
           <h3 className={s.subhead}>Core lessons:</h3>
           <div className={s.chips}>
-            {course.lessons && course.lessons.length > 0 ? (
-              course.lessons.map((lesson) => (
+            {lessons && lessons.length > 0 ? (
+              lessons.map((lesson) => (
                 <span key={lesson.lesson_id} className={s.chip}>
                   {lesson.title || lesson.lesson_id}
                 </span>

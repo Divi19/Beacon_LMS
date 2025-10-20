@@ -14,33 +14,30 @@ export default function InstructorStudentLsnClass() {
   const [selected, setSelected] = useState(null); // for lesson/classroom details
   const [students, setStudents] = useState([]);
 
-  // Dummy values used for now for frontend(to replace with backend later)
   useEffect(() => {
-    setCourse({
-      course_id: courseId,
-      title: "Bachelor of Mathematics",
-      credits: 20,
-      students_enrolled: 25,
-    });
-    setLessons([
-      { lesson_id: "C2231", title: "Advanced Statistics", credits: 10, students_enrolled: 10 },
-      { lesson_id: "A2231", title: "Algebra II", credits: 10, students_enrolled: 19 },
-      { lesson_id: "F2231", title: "Film Studies", credits: 10, students_enrolled: 4 },
-    ]);
-    setClassrooms([
-      { classroom_id: "CS1213", name: "Mindengine", day: "Monday", time: "12:00 - 14:00", students_enrolled: 3 },
-      { classroom_id: "CR4782", name: "Active Classroom 124", day: "Tuesday", time: "15:00 - 16:00", students_enrolled: 10 },
-      { classroom_id: "MS123", name: "Collaborative Class", day: "Friday", time: "10:00 - 12:00", students_enrolled: 6 },
-    ]);
+        try {
+          api.get(`/courses/${courseId}/detail/`).then(
+            res => setCourse(res.data)
+          )
+          api.get(`instructor/courses/${courseId}/lessons/`).then(
+            res => setLessons(res.data)
+          )
+          api.get("instructor/course/classrooms/", {params:{course_id: courseId}}).then(
+            res => setClassrooms(res.data)
+          )
+          
+        } catch (err) {
+          console.error("Error showing courses:", err);
+          alert("Error showing courses. Please try again.");
+        }
+
   }, [courseId]);
 
   const handleViewStudents = (item) => {
     setSelected(item);
-    // Dummy for now
-    setStudents([
-      { first_name: "James", last_name: "Jonas Andreas", student_id: "34794178", email: "jamjon@beacon.edu", title: "Mr" },
-      { first_name: "Samatha", last_name: "Jonas Andreas", student_id: "34794178", email: "jamjon@beacon.edu", title: "Ms" },
-    ]);
+    api.get(`instructor/show/enrolled/`, {params:{lesson_id: item.lesson_id}}).then(
+      res => setStudents(res.data.students)
+    )
   };
 
   return (
@@ -51,9 +48,9 @@ export default function InstructorStudentLsnClass() {
       </h1>
 
       <div className={s.courseHeader}>
-        <h2 className={s.courseTitle}>{course.title}</h2>
+        <h2 className={s.courseTitle}>{course.course_title}</h2>
         <p>
-          Code: {course.course_id} {course.credits} Credits &nbsp; Students enrolled:{" "}
+          Code: <strong>{course.course_id}</strong>&nbsp;&nbsp; {course.course_credits} Credits &nbsp; Students enrolled:&nbsp;{course.enrolled_count}
           {course.students_enrolled}
         </p>
         <button className={s.orangeBtn} onClick={() => navigate(`/instructor/students/course/${courseId}`)}>
@@ -90,11 +87,19 @@ export default function InstructorStudentLsnClass() {
           {(activeTab === "lessons" ? lessons : classrooms).map((item) => (
             <div className={s.cardSmall} key={item.lesson_id || item.classroom_id}>
               <div>
-                <h4>{item.title || item.name}</h4>
                 <p>
-                  {activeTab === "lessons"
-                    ? `Code: ${item.lesson_id} ${item.credits} Credits Students enrolled: ${item.students_enrolled}`
-                    : `${item.day} ${item.time} Students enrolled: ${item.students_enrolled}`}
+                {activeTab === 'classrooms' && (
+                    <div>
+                      <strong>{item.location}</strong>
+                      <p>{item.day_of_week} {item.time_start}-{item.time_end} &nbsp;&nbsp; Students enrolled: {item.enrolled_count}</p> 
+                    </div>
+                  )}
+                  {activeTab === 'lessons' && (
+                    <div>
+                      <strong>{item.title}</strong>
+                      <p>Code: {item.lesson_id}&nbsp; {item.credits} Credits &nbsp;&nbsp; Students enrolled: {item.enrolled_count}</p> 
+                    </div>
+                  )}
                 </p>
               </div>
               <button className={s.smallBtn} onClick={() => handleViewStudents(item)}>
@@ -107,11 +112,19 @@ export default function InstructorStudentLsnClass() {
         <div className={s.studentBlock}>
           <div className={s.sectionHeader}>
             <div className={s.sectionHighlight}>
-              <h4>{selected.title || selected.name}</h4>
               <p>
-                {activeTab === "lessons"
-                  ? `Code: ${selected.lesson_id} ${selected.credits} Credits Students enrolled: ${selected.students_enrolled}`
-                  : `${selected.day} ${selected.time} Students enrolled: ${selected.students_enrolled}`}
+              {activeTab === 'classrooms' && (
+                    <div>
+                      <strong>{selected.location}</strong>
+                      <p>{selected.day_of_week} {selected.time_start}-{selected.time_end} &nbsp;&nbsp; Students enrolled: {selected.enrolled_count}</p> 
+                    </div>
+                  )}
+                  {activeTab === 'lessons' && (
+                    <div>
+                      <strong>{selected.title}</strong>
+                      <p>Code: {selected.lesson_id}&nbsp; {selected.credits} Credits &nbsp;&nbsp; Students enrolled: {selected.enrolled_count}</p> 
+                    </div>
+                  )}
               </p>
             </div>
             <button
@@ -133,8 +146,8 @@ export default function InstructorStudentLsnClass() {
               <div key={i} className={s.studentCard}>
                 <p><strong>First name:</strong> {st.first_name}</p>
                 <p><strong>Last name:</strong> {st.last_name}</p>
-                <p><strong>Student ID:</strong> {st.student_id}</p>
-                <p><strong>Student Email:</strong> {st.email}</p>
+                <p><strong>Student ID:</strong> {st.student_no}</p>
+                <p><strong>Student Email:</strong> {st.email_output}</p>
                 <p><strong>Student Title:</strong> {st.title}</p>
               </div>
             ))

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentLessonDetail.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
@@ -32,6 +32,7 @@ export default function StudentLessonDetail() {
     // modal
     const [showModal, setShowModal] = useState(false);
     const [modalText, setModalText] = useState("");
+    const [result, setResult] = useState("");
 
     async function apiGetLesson() {
         //GET
@@ -195,7 +196,7 @@ export default function StudentLessonDetail() {
             await apiEnrollClassroom(c.classroom_id);
             setChosenClassroom(c);
             setClassrooms([]);
-
+            setResult("Success")
             setModalText(
                 `Enrolled to classroom:\n${c.day_of_week} ${c.time_start} - ${c.time_end}`,
             );
@@ -203,6 +204,7 @@ export default function StudentLessonDetail() {
             reload();
         } catch (err) {
             console.error("Enroll classroom failed", err?.response || err);
+            setResult("Failed")
             setModalText(
                 err?.response?.data?.detail ||
                     "Could not enroll to this classroom.",
@@ -330,94 +332,6 @@ export default function StudentLessonDetail() {
             </div>
           </div>
       </header>
-
-      {/* --- Classrooms section --- */}
-      {/* <div className={i.rect4}>
-        <div className={i.label}>
-          <strong>My Classrooms</strong>
-        </div>
-
-        {!isLessonEnrolled && (
-          <>
-            <div className={i.label2}>Enroll to lessons first to choose classroom</div>
-            <div className={i.centerRow}>
-              <Button variant="blue" className={i.enrollBtn} onClick={handleEnrollLesson}>
-                <span>Enroll to lesson</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 8 16 12 12 16" />
-                  <line x1="8" y1="12" x2="16" y2="12" />
-                </svg>
-              </Button>
-            </div>
-          </>
-        )}
-
-        {showPickClassList && (
-          <>
-            <div className={i.noChosenText}>No Chosen Classroom yet</div>
-            <div className={i.clsList}>
-              {classrooms.map((c) => {
-                const occupied = Math.max(c.enrolled_count ?? 0, 0);
-                const capacity = Number.isFinite(c.capacity) ? c.capacity : 0;
-                const isActive = c.is_active !== false;
-                const full = occupied >= capacity || !isActive;
-
-                return (
-                  <div className={i.clsCard} key={c.classroom_id}>
-                    <div className={i.clsColDay}>
-                      <div className={i.clsDay}>{c.day_of_week}</div>
-                      <div className={i.clsDur}>{fmtHours(c.duration_minutes)}</div>
-                    </div>
-
-                    <Button
-                        variant="blue"
-                        className={i.rectBtn}
-                        onClick={() => navigate("/student/lesson-enrollment")}
-                    >
-                        <span>Go to my course lessons</span>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 8 16 12 12 16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </Button>
-                </div>
-
-                <div className={i.rect3}>
-                    <div className={i.label}>
-                        <strong>Objective</strong>
-                    </div>
-                    <div className={i.label1}>
-                        <ul style={{ margin: 0, paddingLeft: 20 }}>
-                            {objectiveItems.map((o, idx) => (
-                                <li key={idx}>{o}</li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            </header> */}
-
             {/* --- Classrooms section --- */}
             <div className={i.rect4}>
                 <div className={i.label}>
@@ -492,13 +406,16 @@ export default function StudentLessonDetail() {
                                                 {c.time_start} - {c.time_end}
                                             </div>
                                             <div className={i.clsMetaRow}>
-                                                <span>10 students</span>
+                                                <span> {c.capacity} students</span>
                                                 <span>
                                                     Availability: {occupied}/
                                                     {c.capacity}
                                                 </span>
                                                 <span>
                                                     ID: {c.classroom_id}
+                                                </span>
+                                                <span>
+                                                    Supervisor: {c.supervisor}
                                                 </span>
                                             </div>
                                         </div>
@@ -589,7 +506,17 @@ export default function StudentLessonDetail() {
                                 </Button>
                             </div>
                         </div>
-                        <section className={i.panelBox}>
+                    </div>
+                )}
+
+                {/* Temporarily outside the showChosenClass, since no classroom is selected yet and that is a conditional
+  to check if there is a classroom, with it assignment list would not render, move it back once that is figured out */}
+            </div>
+
+            <section className={i.panelBox}>
+
+
+                
                 <h3 className={i.panelTitle}>Assignment List</h3>
                 {assignments.length === 0 ? (
                   <p>No assignments yet.</p>
@@ -656,26 +583,10 @@ export default function StudentLessonDetail() {
                                   )}
                               </section>
 
-                        {/* <div className={i.readingAndProgress}>
-                            <section className={i.panelBox}>
-                                <h3 className={i.panelTitle}>Reading List</h3>
-                            </section>
-                            <section className={i.panelBoxSmall}>
-                                <h3 className={i.panelTitle}>
-                                    Course Progress
-                                </h3>
-                            </section>
-                        </div> */}
-                    </div>
-                )}
-                {/* Temporarily outside the showChosenClass, since no classroom is selected yet and that is a conditional
-  to check if there is a classroom, with it assignment list would not render, move it back once that is figured out */}
-            </div>
-
             {showModal && (
                 <div className={i.modalOverlay} role="dialog" aria-modal="true">
                     <div className={i.modalCard}>
-                        <h3 className={i.modalTitle}>Successfully</h3>
+                        <h3 className={i.modalTitle}>{result}</h3>
                         <p className={i.modalBody}>{modalText}</p>
                         <Button
                             variant="blue"

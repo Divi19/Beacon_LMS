@@ -11,51 +11,18 @@ export default function InstructorStudentInCourse() {
   const [students, setStudents] = useState([]);
 
   useEffect(() => {
-    setCourse({
-      course_id: courseId,
-      title: "Bachelor of Mathematics",
-      credits: 20,
-      students_enrolled: 25,
-    });
 
-    setStudents([
-      {
-        id: 1,
-        first_name: "James",
-        last_name: "Jonas Andreas",
-        student_id: "34794178",
-        email: "jamjon@beacon.edu",
-        title: "Mr",
-      },
-      {
-        id: 2,
-        first_name: "Vincent H",
-        last_name: "Hong lim wen",
-        student_id: "34794178",
-        email: "jamjon@beacon.edu",
-        title: "Mr",
-      },
-      {
-        id: 3,
-        first_name: "Samatha",
-        last_name: "Jonas Andreas",
-        student_id: "34794178",
-        email: "jamjon@beacon.edu",
-        title: "Ms",
-      },
-      {
-        id: 4,
-        first_name: "Bowser",
-        last_name: "Jack Black",
-        student_id: "34794178",
-        email: "jamjon@beacon.edu",
-        title: "Mr",
-      },
-    ]);
-
-    // API integration example:
-    // const { data } = await api.get(`/instructor/courses/${courseId}/students/`);
-    // setStudents(data.students);
+    try {
+      api.get(`/courses/${courseId}/detail/`).then(
+        res => setCourse(res.data)
+      )
+      api.get(`instructor/show/enrolled/`, {params:{course_id: courseId}}).then(
+        res => setStudents(res.data.students)
+      )
+    } catch (err) {
+      console.error("Error showing courses:", err);
+      alert("Error showing courses. Please try again.");
+    }
   }, [courseId]);
 
   return (
@@ -67,10 +34,10 @@ export default function InstructorStudentInCourse() {
         </h1>
 
         <div className={s.courseHeader}>
-          <h2 className={s.courseTitle}>{course.title}</h2>
+          <h2 className={s.courseTitle}>{course.course_title}</h2>
           <p>
-            Code: {course.course_id} {course.credits} Credits &nbsp; Students
-            enrolled: {course.students_enrolled}
+            Code: <strong>{course.course_id}</strong> &nbsp;&nbsp; {course.course_credits} Credits &nbsp; Students
+            enrolled: {course.enrolled_count}
           </p>
           <div className={s.btnGroup}>
             <button
@@ -106,10 +73,10 @@ export default function InstructorStudentInCourse() {
                   <strong>Last name:</strong> {st.last_name}
                 </p>
                 <p>
-                  <strong>Student ID:</strong> {st.student_id}
+                  <strong>Student ID:</strong> {st.student_no}
                 </p>
                 <p>
-                  <strong>Student Email:</strong> {st.email}
+                  <strong>Student Email:</strong> {st.email_output}
                 </p>
                 <p>
                   <strong>Student Title:</strong> {st.title}

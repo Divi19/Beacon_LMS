@@ -16,7 +16,7 @@ export default function AdminCard({
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick?.()}
     >
       <div className={s.body}>
-        <h3 className={s.title}>{instructor.title}.{instructor.name}</h3>
+        <h3 className={s.title}>{instructor.title}{instructor.title && !instructor.title.includes('.') ? '.' : ''}&nbsp; {instructor.name}</h3>
         <div className={s.metaRow}>
           <span>
             Email: <strong>{instructor.email}</strong>
