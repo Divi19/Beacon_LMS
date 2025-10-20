@@ -186,129 +186,27 @@ export default function InstructorStudentLesson() {
                 </div>
             </div>
 
-            <div className={s.studentList}>
-                {sortedStudents.map(student => (
-                    <div
-                        key={student.id}
-                        className={s.card}
-                        style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            width: "1200px",
-                            margin: "10px auto",
-                            cursor: "pointer",
-                        }}
-                        onClick={() => {
-                            console.log("Clicked student:", student.name);
-                        }}
-                    >
-                        <div className={s.studentInfoGroup}>
-                            <img
-                                src="/profile_picture.png"
-                                alt="Profile"
-                                className={s.profileLogoTop}
-                            />
-                            <div className={s.studentInfoText}>
-                                <span
-                                    style={{
-                                        fontWeight: "bold",
-                                        fontSize: "20px",
-                                    }}
-                                >
-                                    {student.id} - {student.name}
-                                </span>
-                                <span
-                                    style={{
-                                        fontSize: "14px",
-                                        color: "#555",
-                                    }}
-                                >
-                                    {student.gmail}
-                                </span>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        gap: "20px",
-                                        fontSize: "14px",
-                                        color: "#555",
-                                    }}
-                                >
-                                    <span>
-                                        Readings Completed:{" "}
-                                        {student.readings_completed}/
-                                        {student.total_readings}
-                                    </span>
-                                    <span>
-                                        Assignments Completed:{" "}
-                                        {student.assignments_completed}/
-                                        {student.total_assignments}
-                                    </span>
-                                </div>
-                                <span
-                                    style={{
-                                        fontSize: "14px",
-                                        color: "#555",
-                                    }}
-                                >
-                                    Session: {student.session_day}{" "}
-                                    {student.session_start} -{" "}
-                                    {student.session_end}, Building:{" "}
-                                    {student.building}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "flex-end",
-                                minWidth: "200px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "8px",
-                                    width: "100%",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        flex: 1,
-                                        height: "12px",
-                                        background: "#eee",
-                                        borderRadius: "8px",
-                                        overflow: "hidden",
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            width: `${(student.progress || 0) * 100}%`,
-                                            height: "100%",
-                                            background: "#1a73e8",
-                                        }}
-                                    />
-                                </div>
-                                <span>
-                                    {Math.round((student.progress || 0) * 100)}%
-                                </span>
-                            </div>
-                            <span
-                                style={{
-                                    fontSize: "13px",
-                                    color: "#777",
-                                    marginTop: "6px",
-                                    fontStyle: "italic",
-                                }}
-                            >
-                                Enrolled: {student.enrolled_date}
+            <div className={s.container}>
+                <div className={s.card}>
+                    <div className={s.cardTitle}>Courses Enrolled</div>
+                    <div className={s.allCourses}>
+                        <div className={s.cardTitle}>{studentName}</div>
+                        <div className={s.cardDesc1}>
+                            <span>
+                                Email: <strong>{studentGmail}</strong>
+                            </span>
+                            <span style={{ marginLeft: "20px" }}>
+                                Student ID: <strong>{studentId}</strong>
+                            </span>
+                            <span style={{ marginLeft: "20px" }}>
+                                Registered at:{" "}
+                                <strong>
+                                    {enrolledDate} {enrolledHour}
+                                </strong>
                             </span>
                         </div>
                     </div>
-                ))}
+                </div>
             </div>
         </div>
     );

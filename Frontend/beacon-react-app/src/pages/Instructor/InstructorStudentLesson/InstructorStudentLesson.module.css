@@ -112,6 +112,38 @@
   margin-bottom: 10px;
 }
 
+.allCourses {
+  display: flex;
+  flex-direction: column; 
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  padding-bottom: 50px; 
+  border-radius: 20px;
+  background: #fee0c0;
+  color: brown;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  margin-top:7px;
+  width: 1300%;
+  max-width: 1200px;
+  margin: 10px auto;
+}
+
+.allCourses:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
+}
+
+
+.allCoursesTitle {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
 .cardDesc1 {
   display: flex;
   justify-content: left;
