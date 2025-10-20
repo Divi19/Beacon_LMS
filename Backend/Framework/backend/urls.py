@@ -83,10 +83,11 @@ urlpatterns = [
     path('api/admin/instructors/', AdminView.AdminInstructorListView.as_view(), name="admin-instructors"),
     path('api/admin/instructors/<int:instructor_id>/', AdminView.AdminInstructorDetailView.as_view(), name="admin-instructor-detail"),
 
-    #Students login TODO
+    #Students login 
     path("student/login/", StudentLogin.as_view(), name="student-login"),
     #Student registration
     path("student/signup/", StudentRegister.as_view(), name="student-register"),
+    path("student/profile/", StudentProfileView.as_view()),
     #Student Courses(No need student id in path since the JWT Token already identifies the student, safer approach as well)
     path("student/my_courses/", StudentEnrolledViews.StudentEnrolledCourses.as_view(), name="my-courses"),
     path("student/courses/unenrolled/", StudentUnenrolledViews.StudentUnenrolledCourses.as_view(), name="enrollment"),

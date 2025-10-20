@@ -50,12 +50,12 @@ Helper functions
 def update_lesson_progress(student, lesson):
     total_assignments = LessonAssignment.objects.filter(lesson=lesson).count()
     completed_assignments = StudentAssignmentProgress.objects.filter(
-    student=student, assignment__lesson=lesson, completed=True
+    student=student, assignment__lesson=lesson, is_completed=True
     ).count()
 
     total_readings = LessonReading.objects.filter(lesson=lesson).count()
     completed_readings = StudentReadingProgress.objects.filter(
-    student=student, reading__lesson=lesson, completed=True
+    student=student, reading__lesson=lesson, is_completed=True
     ).count()
 
     total_items = total_assignments + total_readings
@@ -164,8 +164,7 @@ class InstructorCoursesView(APIView):
                             sum_completed=Count(
                                 'lesson__lessonenrollment',
                                 filter=(
-                                    Q(lesson__lessonenrollment__status='Complete') |
-                                    Q(lesson__lessonenrollment__is_completed=True)
+                                    Q(lesson__lessonenrollment__status='Complete')
                                 ),
                                 distinct=False,  # counting completions, not distinct students
                             ),
@@ -1149,7 +1148,7 @@ class EnrolledStudentList(APIView):
     GET /api/students/enrolled?course_id=...&lesson_id=...&classroom_id=...&q=...&ordering=full_name
     - Provide any combination of course_id, lesson_id, classroom_id.
     - If multiple are provided, the result is the INTERSECTION (i.e., students satisfying all filters).
-    - Optional 'ordering' (e.g., 'full_name', '-full_name', 'student_no').
+    - Optional 'ordering' (e.g., 'last_name', '-last_name', 'student_no').
     - Uses simple page params: page (1-based), page_size (default 25).
 
     Show all students in a course/lesson/classroom
@@ -1187,7 +1186,9 @@ class EnrolledStudentList(APIView):
             classroom = get_object_or_404(Classroom, classroom_id=classroom_id)
 
         # Base queryset
-        qs = StudentProfile.objects.all()
+        qs = StudentProfile.objects.all().annotate(
+            email = F("user__email")
+            )
         # Apply filters (intersection semantics)
         if course:
             qs = qs.filter(enrollment__course=course)
@@ -1195,7 +1196,7 @@ class EnrolledStudentList(APIView):
             qs = qs.filter(lessonenrollment__lesson=lesson)
         if classroom:
             qs = qs.filter(classroomenrollment__classroom=classroom)
-        qs = qs.order_by('full_name').distinct()
+        qs = qs.order_by('last_name').distinct()
 
         # Pagination
         total = qs.count() #the number of students
@@ -1265,6 +1266,14 @@ class StudentLogin(APIView):
         }
         return Response(payload, status=status.HTTP_200_OK)
 
+class StudentProfileView(APIView): 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication] 
+    
+    def get(self, request): 
+        user = self.request.user 
+        me = get_object_or_404(StudentProfile, user=user)
+        return Response(StudentSerializer(me).data, status=200)
 
 class StudentEnrolledViews: 
     class StudentEnrolledCourses(APIView):
@@ -1652,8 +1661,7 @@ class CourseDetailView(APIView):
                             sum_completed=Count(
                                 'lesson__lessonenrollment',
                                 filter=(
-                                    Q(lesson__lessonenrollment__status='Complete') |
-                                    Q(lesson__lessonenrollment__is_completed=True)
+                                    Q(lesson__lessonenrollment__status='Complete')
                                 ),
                                 distinct=False,  # counting completions, not distinct students
                             ),
@@ -1803,7 +1811,7 @@ class StudentAssignmentChecklistView(APIView):
         assignments=LessonAssignment.objects.filter(lesson=lesson)
 
         progress_map = {
-            p.assignment.assignment_id: p.completed
+            p.assignment.assignment_id: p.is_completed
             for p in StudentAssignmentProgress.objects.filter(student=student, assignment__lesson=lesson)
         }
         data = [
@@ -1824,7 +1832,7 @@ class StudentAssignmentChecklistView(APIView):
 
         assignment = get_object_or_404(LessonAssignment, assignment_id=assignment_id, lesson__lesson_id=lesson_id)
         progress, _ = StudentAssignmentProgress.objects.get_or_create(student=student, assignment=assignment)
-        progress.completed = completed
+        progress.is_completed = completed
         progress.save()
         
         update_lesson_progress(student, assignment.lesson)
@@ -1841,7 +1849,7 @@ class StudentReadingChecklistView(APIView):
         readings=LessonReading.objects.filter(lesson=lesson)
 
         progress_map = {
-            p.reading.reading_id: p.completed
+            p.reading.reading_id: p.is_completed
             for p in StudentReadingProgress.objects.filter(student=student, reading__lesson=lesson)
         }
         data = [
@@ -1862,7 +1870,7 @@ class StudentReadingChecklistView(APIView):
 
         reading = get_object_or_404(LessonReading, reading_id=reading_id, lesson__lesson_id=lesson_id)
         progress, _ = StudentReadingProgress.objects.get_or_create(student=student, reading=reading)
-        progress.completed = completed
+        progress.is_completed = completed
         progress.save()
 
         update_lesson_progress(student, reading.lesson)
