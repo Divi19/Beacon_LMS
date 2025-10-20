@@ -335,7 +335,19 @@ export default function InstructorCourseProgressDetail() {
                                 cursor: "pointer",
                             }}
                             onClick={() => {
-                                console.log("Clicked student:", student.name);
+                                navigate(
+                                    `/instructor/student-progress-detail/${student.id}`,
+                                    {
+                                        state: {
+                                            studentName: student.name,
+                                            studentGmail: student.gmail,
+                                            studentId: student.id,
+                                            enrolledDate: student.enrolled_date,
+                                            enrolledCourses:
+                                                student.enrolledCourses,
+                                        },
+                                    },
+                                );
                             }}
                         >
                             <div className={s.studentInfoGroup}>

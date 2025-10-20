@@ -16,14 +16,14 @@ export default function InstructorTopBar() {
               Courses
             </a>
           </li>
-          <li className={s.navItem}> <a href="/instructor/student-progress" className={s.navLink}>Student Progress</a></li>
           <li className={s.navItem}>
             {" "}
             <a href="/instructor/classrooms" className={s.navLink}>
               Classrooms
             </a>
           </li>
-          <li className={s.navItem}>Reports</li>
+          <li className={s.navItem}> <a href="/instructor/student-progress" className={s.navLink}>Student</a></li>
+          <li className={s.navItem}>Report</li>
           <li className={s.navItem}>
             <img
               src="/profile_picture.png"
