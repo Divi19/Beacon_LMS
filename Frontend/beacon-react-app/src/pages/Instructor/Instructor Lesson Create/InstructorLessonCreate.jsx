@@ -319,7 +319,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         );
       }
 
-      alert("Lesson saved successfully!");
       setShowOptionalModal(true);
     } catch (error) {
       console.error("Error saving lesson:", error);
