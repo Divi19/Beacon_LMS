@@ -344,7 +344,6 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         );
       }
 
-      alert("Lesson saved successfully!");
       setShowOptionalModal(true);
     } catch (error) {
       if (error.response && error.response.status === 400) {
