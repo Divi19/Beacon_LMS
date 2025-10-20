@@ -107,7 +107,7 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: #fee0c0;
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
   color: brown;
   box-sizing: border-box;
   cursor: pointer;
@@ -126,7 +126,7 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  background: #fee0c0;
   color: brown;
   box-sizing: border-box;
   cursor: pointer;
@@ -309,4 +309,36 @@
   margin-bottom: 8px;
   gap: 0;
   width: 100%;
+}
+
+.progressWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progressBar {
+  flex: 1;
+  width: 300px;
+  height: 16px;
+  background-color: #3700ff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #ff0000;
+  border-radius: 8px 0 0 8px;
+}
+
+.progressText {
+  font-weight: bold;
+  min-width: 40px;
+}
+
+.lessonsText {
+  margin-left: 20px;
+  font-size: 16px;
+  color: brown;
 }

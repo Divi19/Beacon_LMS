@@ -251,11 +251,10 @@ export default function InstructorStudentLesson() {
                                                 )}
                                                 % Completion
                                             </span>
-                                        </div>
-
-                                        <div className={s.lessonsText}>
+                                            <div className={s.lessonsText}>
                                             Lessons: {course.lessonsCompleted}/
                                             {course.totalLessons} completed
+                                        </div>
                                         </div>
                                     </div>
                                 </div>
