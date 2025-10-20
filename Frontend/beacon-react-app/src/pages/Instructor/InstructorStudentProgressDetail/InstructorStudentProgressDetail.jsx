@@ -235,7 +235,7 @@ export default function InstructorCourseProgressDetail() {
                         }
                         style={{ cursor: "pointer" }}
                     >
-                        <h2 className={s.label}>Enrolled Students</h2>
+                        <h2 className={s.label}>Students</h2>
                     </div>
 
                     <div
@@ -387,7 +387,7 @@ export default function InstructorCourseProgressDetail() {
                                 }}
                                 onClick={() =>
                                     navigate(
-                                        `/instructor/course/${course.course_id}/lesson/${lesson.lesson_id}`,
+                                        `/instructor/lesson-progress/course/${course.course_id}/lesson/${lesson.lesson_id}`,
                                     )
                                 }
                             >
