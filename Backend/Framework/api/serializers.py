@@ -118,8 +118,6 @@ class InstructorCreateSerializer(serializers.ModelSerializer):
             return f"I{digits}"
         
         staff_no = generate_staff_no()
-        while InstructorProfile.objects.filter(staff_no=staff_no).exists():
-            staff_no = generate_staff_no()
         
         user = User.objects.create(
             email=email,
