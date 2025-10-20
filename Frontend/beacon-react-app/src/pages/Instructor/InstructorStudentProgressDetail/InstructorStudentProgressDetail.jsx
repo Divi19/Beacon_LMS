@@ -59,8 +59,42 @@ export default function InstructorCourseProgressDetail() {
                 setCourse(mockCourse);
 
                 const mockStudents = [
-                    { id: "S1", name: "Alice", progress: 0.7 },
-                    { id: "S2", name: "Bob", progress: 0.4 },
+                    {
+                        id: "S1",
+                        name: "Alice Tan",
+                        gmail: "alice.tan@gmail.com",
+                        lessons_completed: 4,
+                        total_lessons: 5,
+                        credits_earned: 12,
+                        progress: 0.8,
+                    },
+                    {
+                        id: "S2",
+                        name: "Bob Lee",
+                        gmail: "bob.lee@gmail.com",
+                        lessons_completed: 3,
+                        total_lessons: 5,
+                        credits_earned: 9,
+                        progress: 0.6,
+                    },
+                    {
+                        id: "S3",
+                        name: "Chloe Wong",
+                        gmail: "chloe.wong@gmail.com",
+                        lessons_completed: 2,
+                        total_lessons: 5,
+                        credits_earned: 6,
+                        progress: 0.4,
+                    },
+                    {
+                        id: "S4",
+                        name: "Daniel Lim",
+                        gmail: "daniel.lim@gmail.com",
+                        lessons_completed: 5,
+                        total_lessons: 5,
+                        credits_earned: 15,
+                        progress: 1.0,
+                    },
                 ];
                 setStudents(mockStudents);
             } catch (err) {
@@ -249,7 +283,28 @@ export default function InstructorCourseProgressDetail() {
                                             color: "#555",
                                         }}
                                     >
-                                        Student Progress
+                                        {student.email ||
+                                            `${student.name.toLowerCase()}@example.com`}
+                                    </span>
+                                    <span
+                                        style={{
+                                            fontSize: "14px",
+                                            color: "#555",
+                                        }}
+                                    >
+                                        Lessons Completed:{" "}
+                                        {student.lessonsCompleted || 3}/
+                                        {student.totalLessons || 5}
+                                    </span>
+                                    <span
+                                        style={{
+                                            fontSize: "14px",
+                                            color: "#555",
+                                        }}
+                                    >
+                                        Credits Earned:{" "}
+                                        {student.creditsEarned || 5}/
+                                        {course.course_credits * 10}
                                     </span>
                                 </div>
                             </div>

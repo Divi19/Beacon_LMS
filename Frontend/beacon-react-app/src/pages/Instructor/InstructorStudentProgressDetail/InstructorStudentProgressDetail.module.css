@@ -190,11 +190,11 @@
 .studentInfoGroup {
   display: flex;
   align-items: center;
-  gap: 8px; /* controls spacing between image and text */
+  gap: 10px;
 }
 
 .studentInfoText {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
