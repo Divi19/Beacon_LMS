@@ -21,6 +21,7 @@ import InstructorClassCreation from "./pages/Instructor/Instructor Class Creatio
 import InstructorClassrooms from "./pages/Instructor/Instructor Classrooms/InstructorClassrooms";
 
 import InstructorStudentPerCourse from "./pages/Instructor/Instructor Student List/InstructorStudentPerCourse";
+import InstructorStudentInCourse from "./pages/Instructor/Instructor Student List/InstructorStudentInCourse";
 
 
 import axios from 'axios';
@@ -97,6 +98,7 @@ export default function App(){
       <Route path="/instructor/course/:courseId/lesson-list" element={<InstructorLessonList />} />
       <Route path="/instructor/course/:courseId/lesson-creation/:lessonId" element={<InstructorLessonCreate />} /> 
       <Route path="/instructor/studentlist" element={<InstructorStudentPerCourse />} />
+      <Route path="/instructor/students/course/:courseId" element={<InstructorStudentInCourse />}/>
 
 
       {/* <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} /> */}
