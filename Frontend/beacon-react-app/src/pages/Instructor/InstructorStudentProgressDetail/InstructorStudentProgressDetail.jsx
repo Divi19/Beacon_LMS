@@ -196,6 +196,12 @@ export default function InstructorCourseProgressDetail() {
         return sortHighToLow ? b[key] - a[key] : a[key] - b[key];
     });
 
+    const totalProgress =
+    students.length > 0
+        ? students.reduce((sum, student) => sum + (student.progress || 0), 0) /
+          students.length
+        : 0;
+
     return (
         <div className={s.wrap}>
             <InstructorTopBar />
@@ -227,41 +233,36 @@ export default function InstructorCourseProgressDetail() {
                     </div>
 
                     <div className={s.cardDesc2}>
-                        <span>Average Progress:</span>
-                        <div
-                            style={{
-                                flex: 1,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    flex: 1,
-                                    height: "12px",
-                                    background: "#eee",
-                                    borderRadius: "8px",
-                                    overflow: "hidden",
-                                    marginLeft: "8px",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: `${(course.average_progress || 0) * 100}%`,
-                                        background: "#7ad1d8",
-                                        height: "100%",
-                                    }}
-                                />
-                            </div>
-                            <span>
-                                {Math.round(
-                                    (course.average_progress || 0) * 100,
-                                )}
-                                %
-                            </span>
-                        </div>
-                    </div>
+    <span>Average Progress:</span>
+    <div
+        style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+        }}
+    >
+        <div
+            style={{
+                flex: 1,
+                height: "12px",
+                background: "#eee",
+                borderRadius: "8px",
+                overflow: "hidden",
+                marginLeft: "8px",
+            }}
+        >
+            <div
+                style={{
+                    width: `${totalProgress * 100}%`,
+                    background: "#7ad1d8",
+                    height: "100%",
+                }}
+            />
+        </div>
+        <span>{Math.round(totalProgress * 100)}%</span>
+    </div>
+</div>
                 </div>
 
                 <div className={s.buttonStack}>
@@ -368,7 +369,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "#555",
+                                            color: "brown",
                                         }}
                                     >
                                         {student.email ||
@@ -377,7 +378,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "#555",
+                                            color: "brown",
                                         }}
                                     >
                                         Lessons Completed:{" "}
@@ -387,7 +388,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "#555",
+                                            color: "brown",
                                         }}
                                     >
                                         Credits Earned:{" "}
@@ -440,7 +441,7 @@ export default function InstructorCourseProgressDetail() {
                                 <span
                                     style={{
                                         fontSize: "13px",
-                                        color: "#777",
+                                        color: "brown",
                                         marginTop: "6px",
                                         fontStyle: "italic",
                                     }}
@@ -491,7 +492,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "#555",
+                                            color: "brown",
                                         }}
                                     >
                                         Students Enrolled:{" "}
@@ -512,7 +513,7 @@ export default function InstructorCourseProgressDetail() {
                                             fontSize: "14px",
                                             fontWeight: "600",
                                             marginBottom: "4px",
-                                            color: "#333",
+                                            color: "brown",
                                         }}
                                     >
                                         Average Progress
