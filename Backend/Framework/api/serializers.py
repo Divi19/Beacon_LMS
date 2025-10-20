@@ -6,10 +6,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.validators import UniqueTogetherValidator
 
 #djando
-from django.contrib.auth.hashers import make_password, check_password
-from django.contrib.auth import authenticate
-from django.db.models.functions import Lower, Coalesce
-from django.db.models import Sum, Q, F
+from django.db.models import Sum, Q, F, OuterRef, Exists
 from django.core.exceptions import ObjectDoesNotExist
 
 #local 
@@ -237,38 +234,63 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
 
 class LessonEnrollmentSerializer(serializers.ModelSerializer):
-    # accept classroom id in the request body
-    lesson_id = serializers.PrimaryKeyRelatedField(
-        source="lesson", queryset=Lesson.objects.all(), write_only=True
-    )
-    
+    lesson = serializers.SlugRelatedField(
+        slug_field="lesson_id",
+        queryset=Lesson.objects.all()
+    ) 
+    student = serializers.SlugRelatedField(
+        slug_field="student_profile_id",
+        queryset=StudentProfile.objects.all()
+    )  
     class Meta:
         model = LessonEnrollment
         fields = ["lesson_enrollment_id", "lesson_id", "lesson", "student", "enrolled_at"]
         read_only_fields = ["lesson", "student", "enrolled_at"]
 
+    def validate(self, attrs):
+        lesson  = attrs.get("lesson")  or getattr(self.instance, "lesson",  None)
+        student = attrs.get("student") or getattr(self.instance, "student", None)
+        if not (lesson and student):
+            return attrs  
+        REQUIRE_COMPLETED = True  # Must complete prereqs first 
+        completed_filter = {}
+        if REQUIRE_COMPLETED:
+            completed_filter = {
+                "status": LessonEnrollment.EnrollmentStatus.COMPLETED
+            }
+        # All prerequisites for this lesson
+        prereqs = LessonPrerequisite.objects.filter(lesson=lesson)
+
+        # For each prerequisite row, annotate whether the student has an enrollment meeting the rule
+        has_enrollment = LessonEnrollment.objects.filter(
+            student=student,
+            lesson=OuterRef("prereq_lesson"),
+            **completed_filter
+        )
+        reqs = prereqs.annotate(has=Exists(has_enrollment))
+
+        # Any missing?
+        missing = reqs.filter(has=False).values_list(
+            "prereq_lesson__lesson_id", "prereq_lesson__title"
+        )
+
+        missing_list = list(missing)
+        if missing_list:
+            # Build a friendly error
+            pretty = [f"{lid} — {title}" for (lid, title) in missing_list]
+            raise serializers.ValidationError({
+                "lesson": (
+                    "Prerequisites not satisfied: "
+                    + "; ".join(pretty)
+                    + (" must be COMPLETED.)" if REQUIRE_COMPLETED else ". (Prereqs must be ENROLLED.)")
+                )
+            })
+
+        return attrs
+
     def create(self, validated_data):
-        student = self.context.get("student")
-        if not student:
-            raise serializers.ValidationError("Serializer context must include 'student'.")
-        # DRF already converted classroom_id -> Classroom instance
-        lesson = validated_data.pop("lesson")
-
-        # business rules
-        # if not lesson.is_active:
-        #     raise serializers.ValidationError("This lesson is currently inactive.")
-        if LessonEnrollment.objects.filter(student=student, lesson=lesson).exists():
-            raise serializers.ValidationError("This student is already enrolled in this lesson.")
-        if not Enrollment.objects.filter(course=lesson.course, student=student).exists():
-            raise serializers.ValidationError("Student must be enrolled in a course first")
-        # if not LessonEnrollment.objects.filter(lesson=lesson, student=student).exists():
-        #     raise serializers.ValidationError("This student is not enrolled in the related lesson.")
-        # if ClassroomEnrollment.objects.filter(classroom=classroom).count() >= classroom.capacity:
-        #     raise serializers.ValidationError("This classroom is currently full.")
-        # if ClassroomEnrollment.objects.filter(classroom__lesson=lesson).exists():
-        #     raise serializers.ValidationError("This student is already in a related classroom.")
-        return LessonEnrollment.objects.create(student=student, lesson=lesson, **validated_data)
-
+        return super().create(validated_data)
+    
 class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
     """
     TODO: Needs changing 
@@ -328,6 +350,8 @@ class LessonSerializer(serializers.ModelSerializer):
     objectives = serializers.CharField(required=False, allow_blank=True)
     status = serializers.CharField(required=True)
 
+    estimated_effort = serializers.IntegerField(required=False)
+
     class Meta:
         model = Lesson
         fields = [
@@ -343,8 +367,8 @@ class LessonSerializer(serializers.ModelSerializer):
             "designer_email",
             "designer_input",
             "created_by",
-            "designer_card"
-            
+            "designer_card",
+            "estimated_effort"
         ]
         read_only_fields = ["lesson_id"]
 
