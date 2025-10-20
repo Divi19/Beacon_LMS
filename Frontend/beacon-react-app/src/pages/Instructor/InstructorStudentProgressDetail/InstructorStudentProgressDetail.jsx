@@ -249,7 +249,7 @@ export default function InstructorCourseProgressDetail() {
                                 <div
                                     style={{
                                         width: `${(course.average_progress || 0) * 100}%`,
-                                        background: "#1a73e8",
+                                        background: "#7ad1d8",
                                         height: "100%",
                                     }}
                                 />
@@ -414,7 +414,7 @@ export default function InstructorCourseProgressDetail() {
                                             style={{
                                                 width: `${(student.progress || 0) * 100}%`,
                                                 height: "100%",
-                                                background: "#1a73e8",
+                                                background: "#7ad1d8",
                                             }}
                                         />
                                     </div>
