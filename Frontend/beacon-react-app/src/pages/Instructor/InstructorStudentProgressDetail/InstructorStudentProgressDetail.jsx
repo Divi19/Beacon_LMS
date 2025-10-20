@@ -9,9 +9,37 @@ export default function InstructorCourseProgressDetail() {
     const navigate = useNavigate();
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [students, setStudents] = useState([]);
+    const [sortHighToLow, setSortHighToLow] = useState(true);
+    const [lessons, setLessons] = useState([]);
+    const [activeTab, setActiveTab] = useState(null);
+
+    const handleToggleLessons = () => {
+        const willOpen = activeTab !== "lessons";
+        setActiveTab(willOpen ? "lessons" : null);
+
+        if (willOpen) {
+            const mockLessons = [
+                {
+                    lesson_id: "L1",
+                    title: "Intro",
+                    designer: "Alice",
+                    duration_weeks: 2,
+                    enrolled_count: 10,
+                },
+                {
+                    lesson_id: "L2",
+                    title: "Advanced",
+                    designer: "Bob",
+                    duration_weeks: 3,
+                    enrolled_count: 12,
+                },
+            ];
+            setLessons(mockLessons);
+        }
+    };
 
     useEffect(() => {
-        // Mock frontend data
         const fetchCourse = async () => {
             setLoading(true);
             try {
@@ -26,6 +54,12 @@ export default function InstructorCourseProgressDetail() {
                     average_progress: courseId === "CS101" ? 0.45 : 0.78,
                 };
                 setCourse(mockCourse);
+
+                const mockStudents = [
+                    { id: "S1", name: "Alice", progress: 0.7 },
+                    { id: "S2", name: "Bob", progress: 0.4 },
+                ];
+                setStudents(mockStudents);
             } catch (err) {
                 console.error("Failed to fetch course details", err);
                 alert("Failed to load course details.");
@@ -39,6 +73,10 @@ export default function InstructorCourseProgressDetail() {
 
     if (loading) return <div>Loading course details…</div>;
     if (!course) return <div>No course found.</div>;
+
+    const sortedStudents = [...students].sort((a, b) =>
+        sortHighToLow ? b.progress - a.progress : a.progress - b.progress,
+    );
 
     return (
         <div className={s.wrap}>
@@ -129,8 +167,100 @@ export default function InstructorCourseProgressDetail() {
                             <line x1="8" y1="12" x2="16" y2="12" />
                         </svg>
                     </Button>
+                    <Button
+                        variant="orange"
+                        className={s.enrollBtn}
+                        onClick={() => setSortHighToLow(!sortHighToLow)}
+                    >
+                        Sort {sortHighToLow ? "Low → High" : "High → Low"}
+                    </Button>
                 </div>
             </div>
+            <div className={s.wraprow}>
+                <div className={s.row1}>
+                    <div
+                        className={`${s.panel1} ${activeTab === "students" ? s.tabActive : ""}`}
+                        onClick={() =>
+                            setActiveTab(
+                                activeTab === "students" ? null : "students",
+                            )
+                        }
+                        style={{ cursor: "pointer" }}
+                    >
+                        <h2 className={s.label}>Enrolled Students</h2>
+                    </div>
+
+                    <div
+                        className={`${s.panel1} ${activeTab === "lessons" ? s.tabActive : ""}`}
+                        onClick={handleToggleLessons}
+                        style={{ cursor: "pointer" }}
+                    >
+                        <h2 className={s.label}>Lessons</h2>
+                    </div>
+                </div>
+            </div>
+
+            {activeTab === "students" && (
+                <div className={s.lessonsCard}>
+                    <h2 className={s.lessonsLabel}>Enrolled Students</h2>
+                    <p className={s.empty}>No students enrolled yet</p>
+                </div>
+            )}
+            {activeTab === "lessons" && (
+                <div className={s.lessonsCard}>
+                    <div className={s.container}>
+                        {lessons.length > 0 ? (
+                            lessons.map((lesson, idx) => (
+                                <div
+                                    key={idx}
+                                    className={s.card}
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() =>
+                                        navigate(
+                                            `/instructor/course/${course.course_id}/lesson/${lesson.lesson_id}`,
+                                        )
+                                    }
+                                >
+                                    <h2 className={s.cardTitle}>
+                                        {lesson.title}
+                                    </h2>
+                                    <div className={s.cardDesc1}>
+                                        <div className={s.leftGroup}>
+                                            <span>Code:</span>
+                                            <span className={s.spacing}>
+                                                <strong>
+                                                    {lesson.lesson_id}
+                                                </strong>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className={s.cardDesc2}>
+                                        <span>Course Director:</span>
+                                        <span> {course.course_director}</span>
+                                    </div>
+                                    <div className={s.cardDesc2}>
+                                        <span>Lesson Designer:</span>
+                                        <span> {lesson.designer}</span>
+                                    </div>
+                                    <div className={s.cardDesc3}>
+                                        <span>Duration:</span>
+                                        <span>
+                                            {" "}
+                                            {lesson.duration_weeks} weeks
+                                        </span>
+                                    </div>
+                                    <div className={s.cardDesc3}>
+                                        <span>Enrolled Students:</span>
+                                        <span> {lesson.enrolled_count}</span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <span className={s.noLessons}>No Lessons</span>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
