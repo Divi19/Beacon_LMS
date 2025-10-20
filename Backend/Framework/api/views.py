@@ -15,8 +15,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
 from django.db import IntegrityError, transaction
-from django.db.models import OuterRef, Subquery, Q
-from django.db.models import Count
+from django.db.models import *
 from django.http import HttpResponse
 from django.core.validators import URLValidator
 _url_validator = URLValidator(schemes=["http", "https"])
@@ -152,7 +151,7 @@ class InstructorCoursesView(APIView):
             return Response(serializer.data,  status=status.HTTP_200_OK)
         
 """
-TODO: Use after model done 
+Classrooms
 """
 class LinkingClassroomsView(APIView):
     """
@@ -231,7 +230,6 @@ class LinkingClassroomsView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         lesson_classroom = serializer.save()
-        print()
         return Response(LessonClassroomSerializer(lesson_classroom).data, status=201)
 
 class OnlineClassroomsView(APIView):
@@ -332,8 +330,6 @@ class OnlineClassroomsView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-
-
 class ActiveClassroomsView(APIView):
     """
     Showing classrooms or multiple linked classrooms with self as supervisor 
@@ -415,8 +411,6 @@ class ActiveClassroomsView(APIView):
                 {"error": str(e), "trace": traceback.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
-    
-
 
 class OwnClassroomsView(APIView):
     """
@@ -548,8 +542,6 @@ class CreateClassroomView(APIView):
         return Response(ClassroomSerializer(classroom).data, status=201)
         
 
-
-
 """
 Lessons 
 """
@@ -586,12 +578,14 @@ class LessonsView(APIView):
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
         ser = LessonSerializer(lesson, data=request.data, partial=True, context={"request": request})
         if not  ser.is_valid():
-            print("ERR:", ser.errors)
             return Response(ser.errors, status=400)
-        return Response(ser.data, status=status.HTTP_200_OK)
-    
+        try:
+            ser.save()   
+        except ValidationError as e:
+            return Response(e.message_dict, status=status.HTTP_400_BAD_REQUEST)
 
-    
+        return Response(ser.data, status=status.HTTP_200_OK)
+      
 class LessonDetails(APIView): 
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication] 
@@ -604,6 +598,7 @@ class LessonDetails(APIView):
             "lesson_id": lesson.lesson_id,
             "title": lesson.title,
             "credits": lesson.credits,
+            "estimated_effort": lesson.estimated_effort,
             "description": lesson.description,
             "objectives": lesson.objectives, 
             "duration_weeks":lesson.duration_weeks,
@@ -792,9 +787,118 @@ class LessonPrereqBulkCreateView(APIView):
             {"lesson_id": lesson.lesson_id, "prerequisites": out, "count": len(out)},
             status=status.HTTP_201_CREATED
         )
+
 """
-See student list 
+See student list / progress 
 """
+
+class InstructorStudentProgress(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CustomJWTAuthentication]
+    def get(self, request):
+        """
+        GET method
+        For students report on instructor side 
+        Shows progress of all students being listed in a specific course 
+        """
+        lesson_id = request.query_params.get("lesson_id", None)
+        course_id = request.query_params.get("course_id", None)
+        """
+        For lessons 
+        """
+        if course_id is None:
+            #Total assignments + lessons 
+            tot_asgns = LessonAssignment.objects.filter(lesson__lesson_id=lesson_id).distinct().count()
+            tot_readings = LessonReading.objects.filter(lesson__lesson_id=lesson_id).distinct().count()
+            total = tot_asgns + tot_readings
+            filter_by_lesson = Q(lessonenrollment__lesson__lesson_id = lesson_id) #Enrolled in the current lesson 
+            #Grab students enrolled in this lesson
+            students = StudentProfile.objects.filter(filter_by_lesson).distinct()
+            filter_related_lesson = Q(lesson__lesson_id=lesson_id)
+            filter_checked = Q(is_completed=True)
+            students_with_progress = students.annotate(
+            #Count completed assignments for the specific lesson
+            done_asngs=Count(
+                'studentassignment',
+                filter=filter_related_lesson & filter_checked
+            ),
+            #Count completed readings for the specific lesson
+            done_readings=Count(
+                'studentreading',
+                filter=filter_related_lesson & filter_checked
+                )
+            ).annotate(
+                #Total completion
+                completion=F('done_asngs') + F('done_readings'),
+                progress=(F('completion') / Value(total, output_field=FloatField()))
+            ).annotate(
+                #progress percentage
+                progress_percentage=F('progress') * Value(100, output_field=FloatField())
+            )
+            stats = students_with_progress.aggregate(
+                average=Avg('progress'),
+                average_percentage=Avg('progress_percentage'),
+            )
+
+            
+            response_data = {
+                "total_assignments": tot_asgns,
+                "total_readings": tot_readings,
+                "total_items": total,
+                "students_lesson": list(students_with_progress.values(
+                    'id', 'title', 'last_name', 'first_name', 'progress', 'progress_percentage'
+                )),
+                "average": stats["average"] or 0,
+                "average_percentage": stats["average_percentage"] or 0,
+            }    
+            return Response(response_data, status=200)
+
+
+        else:
+            COMPLETED = LessonEnrollment.EnrollmentStatus.COMPLETED 
+            course = get_object_or_404(Course, course_id=course_id)
+            total_course_credits = course.credits
+            filter_by_course = Q(enrollment__course__course_id=course_id)
+            completed_in_course = Q(
+                lessonenrollment__status=COMPLETED,
+                lessonenrollment__lesson__course__course_id=course_id,
+            )
+            course_students = (
+                StudentProfile.objects
+                .filter(filter_by_course)                         
+                .annotate(
+                    completed_count=Count("lessonenrollment", filter=completed_in_course),
+                    total_credits=Sum("lessonenrollment__lesson__credits", filter=completed_in_course),
+                ).annotate(
+                    progress=Case(
+                            When(
+                                condition=Value(total_course_credits > 0),
+                                then=F('total_credits') / Value(float(total_course_credits), output_field=FloatField()),
+
+                            ),
+                            default=Value(0.0),
+                            output_field=FloatField(),
+                            ),
+                    ).annotate(
+                        progress_percentage=F('progress') * Value(100.0, output_field=FloatField())
+                    )
+                )
+
+            stats_course= course_students.aggregate(
+                average=Avg('progress'),
+                average_percentage=Avg('progress_percentage'),
+            )
+            
+            response_data = {
+                "students_course": list(course_students.values(
+                    'id', 'last_name', 'first_name', 'title', 'total_credits', 'progress', 'progress_percentage'
+                )),
+                "average": stats_course["average"] or 0.0,
+                "average_percentage": stats_course["average_percentage"] or 0.0
+            }
+
+            return Response(response_data, status=200)
+        
 class StudentsEnrolledView(APIView):
     """
     GET /api/students/enrolled?course_id=...&lesson_id=...&classroom_id=...&q=...&ordering=full_name
@@ -802,7 +906,7 @@ class StudentsEnrolledView(APIView):
     - If multiple are provided, the result is the INTERSECTION (i.e., students satisfying all filters).
     - Optional 'ordering' (e.g., 'full_name', '-full_name', 'student_no').
     - Uses simple page params: page (1-based), page_size (default 25).
-
+C
     use this: 
     const { data } = await api.get('/api/students/enrolled?course_id=AB1234');
         setStudents(data.results);      // list to display
@@ -1132,18 +1236,18 @@ class StudentUnenrolledLessons(APIView):
     def post(self, request, course_id, **kwargs):
         user = self.request.user
         student = get_object_or_404(StudentProfile, user=user)
-        # course_id = request.data.get("course_id")
-        lesson_id = request.data.get("lesson_id")
-        course = get_object_or_404(Course, course_id=course_id)
-        lesson = get_object_or_404(Lesson, lesson_id=lesson_id, course=course)
-
+        print("student:",student.last_name)
+        lesson_id = request.data.get("lesson")
         ser = LessonEnrollmentSerializer(
-            data={"lesson_id": lesson.pk},
-            context={"request": request, "student": student},
+            data={"lesson": lesson_id,"student": student.student_profile_id},
         )
-        ser.is_valid(raise_exception=True)
-        enrollment = ser.save()
-        return Response(LessonEnrollmentSerializer(enrollment).data, status=201)
+        if not ser.is_valid():
+            return Response(ser.errors, status=400)
+        try:
+            obj = ser.save()
+        except ValidationError as e:
+            return Response(e.message_dict, status=400)
+        return Response(LessonEnrollmentSerializer(obj).data, status=201)
     
     def delete(self, request, lesson_id, classroom_id, course_id, **kwargs):
         """
@@ -1560,9 +1664,7 @@ class PrereqsTextView(APIView):
 
         # 3. Return as JSON so frontend can use it easily
         return Response({"prereqs_text": output_text})
-    
-
-    
+     
 class AdminLogin(APIView): 
     """
     Posting login request. 
@@ -1670,3 +1772,4 @@ class AdminInstructorDetailView(APIView):
         user.save()
         
         return Response({"detail": "Instructor deactivated successfully."}, status=status.HTTP_200_OK)
+      
