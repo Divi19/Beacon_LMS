@@ -18,11 +18,11 @@
 }
 
 .enrollBtn {
-  max-width: 340px;
-  display: grid;
-  grid-auto-flow: column;
+  width: auto;
+  padding: 6px 12px;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 10px;
   font-size: clamp(16px, 2.2vw, 20px);
   margin: 10px 30px 0 30px;
@@ -341,4 +341,10 @@
   margin-left: 20px;
   font-size: 16px;
   color: brown;
+}
+
+.studentInfoGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }

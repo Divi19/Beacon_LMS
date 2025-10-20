@@ -192,20 +192,29 @@ export default function InstructorStudentLesson() {
 
             <div className={s.container}>
                 <div className={s.card}>
-                    <div className={s.cardTitle}>{studentName}</div>
-                    <div className={s.cardDesc1}>
-                        <span>
-                            Email: <strong>{studentGmail}</strong>
-                        </span>
-                        <span style={{ marginLeft: "20px" }}>
-                            Student ID: <strong>{studentId}</strong>
-                        </span>
-                        <span style={{ marginLeft: "20px" }}>
-                            Registered at:{" "}
-                            <strong>
-                                {enrolledDate} {enrolledHour}
-                            </strong>
-                        </span>
+                    <div className={s.studentInfoGroup}>
+                        <img
+                            src="/profile_picture.png"
+                            alt="Profile"
+                            className={s.profileLogoTop}
+                        />
+                        <div className={s.studentInfoText}>
+                            <div className={s.cardTitle}>{studentName}</div>
+                            <div className={s.cardDesc1}>
+                                <span>
+                                    Email: <strong>{studentGmail}</strong>
+                                </span>
+                                <span style={{ marginLeft: "20px" }}>
+                                    Student ID: <strong>{studentId}</strong>
+                                </span>
+                                <span style={{ marginLeft: "20px" }}>
+                                    Registered at:{" "}
+                                    <strong>
+                                        {enrolledDate} {enrolledHour}
+                                    </strong>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -232,9 +241,12 @@ export default function InstructorStudentLesson() {
                                                     studentId,
                                                     enrolledDate,
                                                     enrolledHour,
-                                                    courseName: course.courseTitle,
-                                                    courseCode: course.courseCode,
-                                                    lessonCredit: course.lessonCredit,
+                                                    courseName:
+                                                        course.courseTitle,
+                                                    courseCode:
+                                                        course.courseCode,
+                                                    lessonCredit:
+                                                        course.lessonCredit,
                                                 },
                                             },
                                         )
