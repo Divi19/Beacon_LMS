@@ -211,76 +211,73 @@ export default function InstructorCourseProgressDetail() {
             </div>
 
             {activeTab === "students" && (
-                <div className={s.lessonsCard}>
-                    <h2 className={s.lessonsLabel}>Enrolled Students</h2>
-                    {sortedStudents.length > 0 ? (
-                        sortedStudents.map(student => (
-                            <div key={student.id} className={s.studentCard}>
-                                <span>{student.name}</span>
-                                <span>
-                                    {Math.round(student.progress * 100)}%
-                                </span>
-                            </div>
-                        ))
-                    ) : (
-                        <p className={s.empty}>No students enrolled yet</p>
-                    )}
-                </div>
-            )}
-
-            {activeTab === "lessons" && (
-                <div className={s.lessonsCard}>
-                    {sortedLessons.length > 0 ? (
-                        sortedLessons.map((lesson, idx) => (
+                <>
+                    {sortedStudents.map((student, idx) => (
+                        <div
+                            key={student.id}
+                            className={s.card}
+                            style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                width: "1200px",
+                                margin: "10px auto",
+                                cursor: "pointer",
+                            }}
+                            onClick={() => {
+                                console.log("Clicked student:", student.name);
+                            }}
+                        >
                             <div
-                                key={idx}
-                                className={s.card}
                                 style={{
                                     display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    padding: "12px",
-                                    cursor: "pointer",
+                                    flexDirection: "column",
+                                    gap: "4px",
                                 }}
-                                onClick={() =>
-                                    navigate(
-                                        `/instructor/course/${course.course_id}/lesson/${lesson.lesson_id}`,
-                                    )
-                                }
                             >
-                                
-                                <div
+                                <span
                                     style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "4px",
+                                        fontWeight: "bold",
+                                        fontSize: "20px",
                                     }}
                                 >
-                                    <span
-                                        style={{
-                                            fontWeight: "bold",
-                                            fontSize: "16px",
-                                        }}
-                                    >
-                                        {lesson.lesson_id} - {lesson.title}
-                                    </span>
-                                    <span
-                                        style={{
-                                            color: "#555",
-                                            fontSize: "14px",
-                                        }}
-                                    >
-                                        Students Enrolled:{" "}
-                                        {lesson.enrolled_count}
-                                    </span>
-                                </div>
+                                    {student.id} - {student.name}
+                                </span>
+                                <span
+                                    style={{
+                                        fontSize: "14px",
+                                        color: "#555",
+                                    }}
+                                >
+                                    Student Progress
+                                </span>
+                            </div>
+
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "flex-end",
+                                    minWidth: "200px",
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        fontSize: "14px",
+                                        fontWeight: "600",
+                                        marginBottom: "4px",
+                                        color: "#333",
+                                    }}
+                                >
+                                    Average Progress
+                                </span>
 
                                 <div
                                     style={{
                                         display: "flex",
                                         alignItems: "center",
                                         gap: "8px",
-                                        minWidth: "200px",
+                                        width: "100%",
                                     }}
                                 >
                                     <div
@@ -294,7 +291,7 @@ export default function InstructorCourseProgressDetail() {
                                     >
                                         <div
                                             style={{
-                                                width: `${(lesson.average_progress || 0) * 100}%`,
+                                                width: `${(student.progress || 0) * 100}%`,
                                                 height: "100%",
                                                 background: "#1a73e8",
                                             }}
@@ -302,11 +299,115 @@ export default function InstructorCourseProgressDetail() {
                                     </div>
                                     <span>
                                         {Math.round(
-                                            (lesson.average_progress || 0) *
-                                                100,
+                                            (student.progress || 0) * 100,
                                         )}
                                         %
                                     </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </>
+            )}
+
+            {activeTab === "lessons" && (
+                <div className={s.lessonFile}>
+                    {sortedLessons.length > 0 ? (
+                        sortedLessons.map((lesson, idx) => (
+                            <div
+                                key={idx}
+                                className={s.card}
+                                style={{
+                                    flexDirection: "row",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    width: "1200px",
+                                    margin: "10px auto",
+                                }}
+                                onClick={() =>
+                                    navigate(
+                                        `/instructor/course/${course.course_id}/lesson/${lesson.lesson_id}`,
+                                    )
+                                }
+                            >
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "4px",
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontWeight: "bold",
+                                            fontSize: "20px",
+                                        }}
+                                    >
+                                        {lesson.lesson_id} - {lesson.title}
+                                    </span>
+                                    <span
+                                        style={{
+                                            fontSize: "14px",
+                                            color: "#555",
+                                        }}
+                                    >
+                                        Students Enrolled:{" "}
+                                        {lesson.enrolled_count}
+                                    </span>
+                                </div>
+
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "flex-end",
+                                        minWidth: "200px",
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontSize: "14px",
+                                            fontWeight: "600",
+                                            marginBottom: "4px",
+                                            color: "#333",
+                                        }}
+                                    >
+                                        Average Progress
+                                    </span>
+
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "8px",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                flex: 1,
+                                                height: "12px",
+                                                background: "#eee",
+                                                borderRadius: "8px",
+                                                overflow: "hidden",
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    width: `${(lesson.average_progress || 0) * 100}%`,
+                                                    height: "100%",
+                                                    background: "#1a73e8",
+                                                }}
+                                            />
+                                        </div>
+                                        <span>
+                                            {Math.round(
+                                                (lesson.average_progress || 0) *
+                                                    100,
+                                            )}
+                                            %
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         ))
