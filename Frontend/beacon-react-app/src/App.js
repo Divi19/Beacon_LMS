@@ -20,6 +20,10 @@ import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/Inst
 import InstructorClassCreation from "./pages/Instructor/Instructor Class Creation/InstructorClassCreation"; 
 import InstructorClassrooms from "./pages/Instructor/Instructor Classrooms/InstructorClassrooms";
 
+import InstructorStudentPerCourse from "./pages/Instructor/Instructor Student List/InstructorStudentPerCourse";
+import InstructorStudentInCourse from "./pages/Instructor/Instructor Student List/InstructorStudentInCourse";
+import InstructorStudentLsnClass from "./pages/Instructor/Instructor Student List/InstructorStudentLsnClass";
+
 
 import axios from 'axios';
 import React, {useState, useEffect} from "react";
@@ -37,6 +41,7 @@ import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMy
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
 import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
+
 // import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
 
 export default function App(){
@@ -93,7 +98,12 @@ export default function App(){
       <Route path="/student/course/:courseId/lesson/:lessonId" element={<StudentLessonDetail />}/>
       {/*<Route path="/instructor/course/:courseId/lessons/:lessonId" element={<InstructorLessonCreation />} />*/}
       <Route path="/instructor/course/:courseId/lesson-list" element={<InstructorLessonList />} />
+      {/* Instructor student list */}
       <Route path="/instructor/course/:courseId/lesson-creation/:lessonId" element={<InstructorLessonCreate />} /> 
+      <Route path="/instructor/studentlist" element={<InstructorStudentPerCourse />} />
+      <Route path="/instructor/students/course/:courseId" element={<InstructorStudentInCourse />}/>
+      <Route path="/instructor/students/course/:courseId/lessons-classrooms"element={<InstructorStudentLsnClass />}/>
+
 
       {/* <Route path="/instructor/course/:courseId/lesson-create" element={<InstructorLessonCreate />} /> */}
       {/* Changed from Isabella version */}
