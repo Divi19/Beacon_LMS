@@ -45,7 +45,7 @@ export default function InstructorStudentPerCourse() {
   return (
     <div className={s.page}>
       <InstructorTopBar />
-      6<div className={s.container}>
+      <div className={s.container}>
         <h1 className={s.pageTitle}>
           STUDENTS <span className={s.subtitle}>Per course</span>
         </h1>
