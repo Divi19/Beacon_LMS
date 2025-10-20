@@ -230,7 +230,7 @@ export default function InstructorCourseProgressDetail() {
 
             {activeTab === "lessons" && (
                 <div className={s.lessonsCard}>
-                    <div className={s.container}>
+                    <div className={s.lessonFile}>
                         {sortedLessons.length > 0 ? (
                             sortedLessons.map((lesson, idx) => (
                                 <div
