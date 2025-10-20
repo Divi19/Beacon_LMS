@@ -210,7 +210,7 @@ export default function InstructorLessonProgress() {
                                 <div
                                     style={{
                                         width: `${avgProgress * 100}%`,
-                                        background: "#1a73e8",
+                                        background: "#7ad1d8",
                                         height: "100%",
                                     }}
                                 />
@@ -223,9 +223,9 @@ export default function InstructorLessonProgress() {
                 <div className={s.buttonStack}>
                     <Button
                         className={s.enrollBtn}
-                        onClick={() => navigate("/instructor/student-progress")}
+                        onClick={() => navigate(-1)}
                     >
-                        Back to Course Progress
+                        Back
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="22"
@@ -302,7 +302,7 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "#555",
+                                        color: "brown",
                                     }}
                                 >
                                     {student.gmail}
@@ -312,7 +312,7 @@ export default function InstructorLessonProgress() {
                                         display: "flex",
                                         gap: "20px",
                                         fontSize: "14px",
-                                        color: "#555",
+                                        color: "brown",
                                     }}
                                 >
                                     <span>
@@ -329,7 +329,7 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "#555",
+                                        color: "brown",
                                     }}
                                 >
                                     Session: {student.session_day}{" "}
@@ -380,7 +380,7 @@ export default function InstructorLessonProgress() {
                             <span
                                 style={{
                                     fontSize: "13px",
-                                    color: "#777",
+                                    color: "#000000ff",
                                     marginTop: "6px",
                                     fontStyle: "italic",
                                 }}
