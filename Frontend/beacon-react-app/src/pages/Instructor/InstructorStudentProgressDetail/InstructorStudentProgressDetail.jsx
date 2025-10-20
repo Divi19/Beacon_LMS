@@ -12,6 +12,8 @@ export default function InstructorCourseProgressDetail() {
     const [students, setStudents] = useState([]);
     const [sortHighToLow, setSortHighToLow] = useState(true);
     const [lessons, setLessons] = useState([]);
+    const [lessonSortBy, setLessonSortBy] = useState("duration");
+    const [lessonSortHighToLow, setLessonSortHighToLow] = useState(true);
     const [activeTab, setActiveTab] = useState(null);
 
     const handleToggleLessons = () => {
@@ -52,6 +54,7 @@ export default function InstructorCourseProgressDetail() {
                     course_credits: courseId === "CS101" ? 3 : 4,
                     students_enrolled: courseId === "CS101" ? 25 : 30,
                     average_progress: courseId === "CS101" ? 0.45 : 0.78,
+                    course_director: "Dr. Smith", // added mock director
                 };
                 setCourse(mockCourse);
 
@@ -77,6 +80,11 @@ export default function InstructorCourseProgressDetail() {
     const sortedStudents = [...students].sort((a, b) =>
         sortHighToLow ? b.progress - a.progress : a.progress - b.progress,
     );
+
+    const sortedLessons = [...lessons].sort((a, b) => {
+        const key = "duration_weeks";
+        return sortHighToLow ? b[key] - a[key] : a[key] - b[key];
+    });
 
     return (
         <div className={s.wrap}>
@@ -145,6 +153,7 @@ export default function InstructorCourseProgressDetail() {
                         </div>
                     </div>
                 </div>
+
                 <div className={s.buttonStack}>
                     <Button
                         className={s.enrollBtn}
@@ -176,6 +185,7 @@ export default function InstructorCourseProgressDetail() {
                     </Button>
                 </div>
             </div>
+
             <div className={s.wraprow}>
                 <div className={s.row1}>
                     <div
@@ -203,14 +213,26 @@ export default function InstructorCourseProgressDetail() {
             {activeTab === "students" && (
                 <div className={s.lessonsCard}>
                     <h2 className={s.lessonsLabel}>Enrolled Students</h2>
-                    <p className={s.empty}>No students enrolled yet</p>
+                    {sortedStudents.length > 0 ? (
+                        sortedStudents.map(student => (
+                            <div key={student.id} className={s.studentCard}>
+                                <span>{student.name}</span>
+                                <span>
+                                    {Math.round(student.progress * 100)}%
+                                </span>
+                            </div>
+                        ))
+                    ) : (
+                        <p className={s.empty}>No students enrolled yet</p>
+                    )}
                 </div>
             )}
+
             {activeTab === "lessons" && (
                 <div className={s.lessonsCard}>
                     <div className={s.container}>
-                        {lessons.length > 0 ? (
-                            lessons.map((lesson, idx) => (
+                        {sortedLessons.length > 0 ? (
+                            sortedLessons.map((lesson, idx) => (
                                 <div
                                     key={idx}
                                     className={s.card}
