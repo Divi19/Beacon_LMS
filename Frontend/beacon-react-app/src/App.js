@@ -79,7 +79,7 @@ export default function App(){
       <Route path="/student/profile" element={<StudentProfile />} />
       <Route path="/student/reports" element={<StudentProgress />} />
       <Route path="/student/reports/course/:courseId" element={<StudentCourseProgress />}/>
-      <Route path="/student/classrooms" element={<StudentClassroom />} />
+      <Route path="/student/classroom" element={<StudentClassroom />} />
 
 
 
