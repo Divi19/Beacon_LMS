@@ -159,24 +159,29 @@ class InstructorCoursesView(APIView):
         if not instr:
             return Response({"detail": "Not an instructor."}, status=403)
         courses =( Course.objects.filter(Q(owner_instructor=instr) | Q(lesson__designer=instr)).select_related("owner_instructor")
-                          .annotate(enrolled_count=Count('enrollment__student', distinct=True))
+                      .annotate(enrolled_count=Count('enrollment__student', distinct=True))
                           .annotate(
                             tot_lessons=Count('lesson', distinct=True),
                             # distinct student count via lesson enrollments
+                            enrolled_count=Count('lesson__lessonenrollment__student', distinct=True),
+
+                            # total completed lesson enrollments across the course
                             sum_completed=Count(
                                 'lesson__lessonenrollment',
                                 filter=(
-                                    Q(lesson__lessonenrollment__status='Completed')
+                                    Q(lesson__lessonenrollment__status='Complete')
                                 ),
                                 distinct=False,  # counting completions, not distinct students
                             ),
-                             avg_completed = _ratio(F('sum_completed'), F('enrolled_count')),
-                             avg_progress  = _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')),
-                             avg_percentages = ExpressionWrapper(
+                            ) .annotate(
+                                avg_completed = _ratio(F('sum_completed'), F('enrolled_count')),
+                                avg_progress  = _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')),
+                                avg_percentages = ExpressionWrapper(
                                     _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')) * 100.0,
                                     output_field=FloatField()
                                 ),
                             )
+                      
                       )
         
         output = [{
@@ -981,6 +986,7 @@ class LessonViews:
                     t, d = self._validate_item(title, desc)
                     parsed.append((t, d))
             except serializers.ValidationError as e:
+                print("Encountered error")
                 return Response(e.detail, status=400)
 
             incoming_titles = {t for (t, _) in parsed}
@@ -1125,47 +1131,23 @@ class ProgressView:
     class InstructorLessonProgress(APIView):
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
-        
         def get(self, request, lesson_id):
             try:
-                data = compute_lesson_progress(request.user, lesson_id, include_students=True)
-                return Response(data, status=200)
-            except Http404 as e:
-                return Response({"detail": str(e)}, status=404)
-            except PermissionDenied as e:
-                return Response({"detail": str(e)}, status=403)
+                data = compute_lesson_progress(self.request.user, lesson_id, include_students=True)
+                return Response(data, status=status.HTTP_200_OK)
             except Exception as e:
-                log.error("Lesson progress error: %s\n%s", e, traceback.format_exc())
-                return Response({"detail": "Server error while computing progress."}, status=500)
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     class InstructorStudentProgress(APIView):
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
-        def get(self, request, student_profile_id):
-            course_id = request.query_params.get("course_id")  # may be None
+        def get(self, request, student_id):
+            course_id = request.query_params.get("course_id")  # optional
             try:
-                data = compute_student_singular(
-                    student_profile_id,
-                    course_id=course_id,
-                    session_source="per_student"
-                )
-                return Response(data, status=200)
-
-            except Http404 as e:
-                return Response({"detail": str(e)}, status=404)
-
-            except PermissionDenied as e:
-                return Response({"detail": str(e)}, status=403)
-
-            except ValidationError as e:
-                # DRF ValidationError should be a 400 with a clear payload
-                return Response({"detail": str(e.detail)}, status=400)
-
+                data = compute_student_singular(student_id, course_id=course_id, session_source="per_student")
+                return Response(data, status=status.HTTP_200_OK)
             except Exception as e:
-                # Don’t hide real bugs as 400s
-                log.error("Student progress error: %s\n%s", e, traceback.format_exc())
-                return Response({"detail": "Server error while computing student progress."}, status=500)
-
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class EnrolledStudentList(APIView):
     """
@@ -1495,6 +1477,7 @@ class StudentUnenrolledViews:
         def post(self, request, course_id, **kwargs):
             user = self.request.user
             student = get_object_or_404(StudentProfile, user=user)
+            print("student:",student.last_name)
             lesson_id = request.data.get("lesson")
             ser = LessonEnrollmentSerializer(
                 data={"lesson": lesson_id,"student": student.student_profile_id},
@@ -1740,19 +1723,19 @@ class CourseDetailView(APIView):
     authentication_classes = [CustomJWTAuthentication]
 
     def get(self, request, course_id):
-        completed = LessonEnrollment.EnrollmentStatus.COMPLETED
         course = get_object_or_404(
             Course.objects.select_related('owner_instructor')
                           .annotate(enrolled_count=Count('enrollment__student', distinct=True))
                           .annotate(
                             tot_lessons=Count('lesson', distinct=True),
                             # distinct student count via lesson enrollments
+                            enrolled_count=Count('lesson__lessonenrollment__student', distinct=True),
 
                             # total completed lesson enrollments across the course
                             sum_completed=Count(
                                 'lesson__lessonenrollment',
                                 filter=(
-                                    Q(lesson__lessonenrollment__status=completed)
+                                    Q(lesson__lessonenrollment__status='Complete')
                                 ),
                                 distinct=False,  # counting completions, not distinct students
                             ),
