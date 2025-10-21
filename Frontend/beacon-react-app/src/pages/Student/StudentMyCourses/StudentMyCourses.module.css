@@ -20,7 +20,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 35px);
-  color: #0f9db0;
+  color: var(--brand-stud-title);
 }
 
 .card {
@@ -31,7 +31,7 @@
   border-radius: 18px;
   border: 2px solid transparent;
   background-image: linear-gradient(#f7f8fb, #f7f8fb),
-    linear-gradient(180deg, var(--bg-right-top), var(--bg-right-bot));
+    var(--brand-stud-pale-gradient);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   padding: clamp(20px, 4vw, 40px);
@@ -42,7 +42,7 @@
 .emptyText {
   margin: 0 0 18px;
   text-align: center;
-  color: #175e69;
+  color: var(--brand-stud-label);
   font-size: clamp(14px, 2.2vw, 18px);
 }
 
@@ -55,16 +55,17 @@
   max-width: 340px;
   display: grid;
   grid-auto-flow: column;
-  background-color: #71bfcd;
+  background-color: var(--brand-stud-primary-blue);
   align-items: center;
   justify-content: center;
   gap: 10px;
   font-size: clamp(16px, 2.2vw, 20px);
+  
 }
 
 .enrollBtn:hover {
   transform: scale(1.05);
-  background-color: #07464f;
+  background-color: var(--brand-stud-btn-hover);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }

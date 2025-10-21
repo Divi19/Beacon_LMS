@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import s from "./StudentTopBar.module.css";
+import ThemeToggle from "../../state/ThemeToggle";
 
 export default function StudentTopBar() {
   return (
@@ -57,6 +58,11 @@ export default function StudentTopBar() {
               <span>Report</span>
               <span className={s.underline} />
             </NavLink>
+          </li>
+
+          
+          <li className={s.navItem}>
+            <ThemeToggle />
           </li>
 
           <li className={s.navItem}>

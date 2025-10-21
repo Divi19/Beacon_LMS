@@ -142,13 +142,13 @@ export default function StudentClassroom() {
                   <div className={s.line}>
                     <span className={s.label}>Course:</span>{" "}
                     <span className={s.linkish}>
-                      {c.course?.course_id} – {c.course?.title}
+                      {c.course?.course_id}  {c.course?.title}
                     </span>
                   </div>
                   <div className={s.line}>
                     <span className={s.label}>Lesson:</span>{" "}
                     <span className={s.linkish}>
-                      {c.lesson?.lesson_id} – {c.lesson?.title}
+                      {c.lesson?.lesson_id}  {c.lesson?.title}
                     </span>
                   </div>
                 </div>

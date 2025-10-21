@@ -1,5 +1,6 @@
 import s from "./InstructorTopBar.module.css";
 import { NavLink } from "react-router-dom";
+import ThemeToggle from "../../state/ThemeToggle";
 
 export default function InstructorTopBar() {
   return (
@@ -28,6 +29,9 @@ export default function InstructorTopBar() {
             </a>
           </li>
           <li className={s.navItem}>Reports</li>
+          <li className={s.navItem}>
+            <ThemeToggle />
+          </li>
           <li className={s.navItem}>
             <img
               src="/profile_picture.png"

@@ -15,7 +15,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 46px);
-  color: #7ad1d8;
+  color: var(--brand-stud-title);
 }
 
 .label {
