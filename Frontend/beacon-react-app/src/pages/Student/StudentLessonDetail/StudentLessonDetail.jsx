@@ -19,15 +19,15 @@ export default function StudentLessonDetail() {
     const [classrooms, setClassrooms] = useState([]);
     const [chosenClassroom, setChosenClassroom] = useState(null);
     const [assignments, setAssignments] = useState([]);
-    const [checkedAssignments, setCheckedAssignments] = useState(() => {
-        const saved = localStorage.getItem("checkedAssignments");
-        return saved ? JSON.parse(saved) : {};
-    });
     const [readings, setReadings] = useState([]);
-    const [checkedReadings, setCheckedReadings] = useState(() => {
-        const saved = localStorage.getItem("checkedReadings");
-        return saved ? JSON.parse(saved) : {};
-    });
+    // const [checkedAssignments, setCheckedAssignments] = useState(() => {
+    //     const saved = localStorage.getItem("checkedAssignments");
+    //     return saved ? JSON.parse(saved) : {};
+    // });
+    // const [checkedReadings, setCheckedReadings] = useState(() => {
+    //     const saved = localStorage.getItem("checkedReadings");
+    //     return saved ? JSON.parse(saved) : {};
+    // });
 
     // modal
     const [showModal, setShowModal] = useState(false);
@@ -109,53 +109,61 @@ export default function StudentLessonDetail() {
         })();
     }, [courseId, lessonId, refreshKey]);
 
-    useEffect(() => {
-        localStorage.setItem(
-            "checkedAssignments",
-            JSON.stringify(checkedAssignments),
-        );
-    }, [checkedAssignments]);
-
     async function toggleAssignment(assignmentId) {
-        const newCompleted = !checkedAssignments[assignmentId];
-        setCheckedAssignments(prev => ({
-            ...prev,
-            [assignmentId]: newCompleted,
-        }));
+      const assignment = assignments.find(a => a.assignment_id === assignmentId);
+      const newCompleted = !assignment?.completed;
 
-        try {
-            await api.post(`/student/lessons/${lessonId}/assignments/`, {
-                assignment_id: assignmentId,
-                completed: newCompleted,
-            });
-        } catch (err) {
-            console.error("Failed to update assignment progress:", err);
+      setAssignments(prev =>
+        prev.map(a =>
+          a.assignment_id === assignmentId
+          ? { ...a, completed: newCompleted }
+          :a
+        )
+      );
+      try {
+                await api.post(`/student/lessons/${lessonId}/assignments/`, {
+                    assignment_id: assignmentId,
+                    completed: newCompleted,
+                });
+            } catch (err) {
+                console.error("Failed to update assignment progress:", err);
+                setAssignments(prev =>
+                  prev.map(a =>
+                    a.assignment_id === assignmentId
+                    ? { ...a, completed: !newCompleted }
+                    :a
+                  )
+                );
+            }
         }
-    }
-
-    useEffect(() => {
-        localStorage.setItem(
-            "checkedReadings",
-            JSON.stringify(checkedReadings),
-        );
-    }, [checkedReadings]);
 
     async function toggleReading(readingId) {
-        const newCompleted = !checkedReadings[readingId];
-        setCheckedReadings(prev => ({
-            ...prev,
-            [readingId]: newCompleted,
-        }));
+      const reading = readings.find(r => r.reading_id === readingId);
+      const newCompleted = !reading?.completed;
 
-        try {
-            await api.post(`/student/lessons/${lessonId}/readings/`, {
-                reading_id: readingId,
-                completed: newCompleted,
-            });
-        } catch (err) {
-            console.error("Failed to update reading progress:", err);
+      setReadings(prev =>
+        prev.map(r =>
+          r.reading_id === readingId
+          ? { ...r, completed: newCompleted }
+          :r
+        )
+      );
+      try {
+                await api.post(`/student/lessons/${lessonId}/readings/`, {
+                    reading_id: readingId,
+                    completed: newCompleted,
+                });
+            } catch (err) {
+                console.error("Failed to update assignment progress:", err);
+                setReadings(prev =>
+                  prev.map(r =>
+                    r.reading_id === readingId
+                    ? { ...r, completed: !newCompleted }
+                    :r
+                  )
+                );
+            }
         }
-    }
 
     const objectiveItems = useMemo(() => {
         if (!lesson) return [];
@@ -274,7 +282,7 @@ export default function StudentLessonDetail() {
           <Button
             variant="blue"
             className={i.rectBtn}
-            onClick={() => navigate("/student/lesson-enrollment")}
+            onClick={() => navigate(`/student/course/${courseId}/my-lessons`)}
           >
             <span>Go to my course lessons</span>
             <svg
@@ -297,7 +305,7 @@ export default function StudentLessonDetail() {
           <Button
             variant="blue"
             className={i.rectBtn}
-            onClick={() => navigate(`/student/courses/${courseId}/lessons/${lessonId}/progress`)}
+            onClick={() => navigate(`/student/reports/course/${courseId}`)}
           >
             <span>View Progress</span>
             <svg
@@ -529,7 +537,7 @@ export default function StudentLessonDetail() {
                       >
                         <input
                           type="checkbox"
-                          checked={!!checkedAssignments[a.assignment_id]}
+                          checked={!!a.completed}
                           onChange={() => toggleAssignment(a.assignment_id)}
                           style={{ marginRight: 10 }}
                         />
@@ -557,7 +565,7 @@ export default function StudentLessonDetail() {
                       >
                         <input
                           type="checkbox"
-                          checked={!!checkedReadings[b.reading_id]}
+                          checked={!!b.completed}
                           onChange={() => toggleReading(b.reading_id)}
                           style={{ marginRight: 10 }}
                         />
