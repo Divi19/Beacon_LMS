@@ -55,7 +55,7 @@
   max-width: 340px;
   display: grid;
   grid-auto-flow: column;
-  background-color: var(--brand-stud-primary-blue);
+  background-color: var(--brand-stud-btn);
   align-items: center;
   justify-content: center;
   gap: 10px;

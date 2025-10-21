@@ -35,8 +35,6 @@ export default function StudentLogin({ logoSrc }) {
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
       localStorage.setItem("studentId", data.user.student_profile_id);
-      localStorage.setItem("role", "student");
-      document.documentElement.setAttribute("data-role", "student");
       setSuccessMessage("Login successful");
       navigate("/student/my-courses", { replace: true });
     } catch (err) {

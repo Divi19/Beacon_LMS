@@ -1,13 +1,12 @@
 .page {
   padding: 28px 36px 60px;
-  background: #f2f3f4;
   min-height: 100vh;
   padding-top: 22vh;
 }
 
 .pageTitle {
   letter-spacing: 0.2em;
-  color: #0b5a62;
+  color: var(--brand-stud-title);
   font-weight: 800;
   font-size: 32px;
   margin: 8px 0 24px;
@@ -16,7 +15,7 @@
 .card {
   border-radius: 18px;
   padding: 26px 24px 26px;
-  background: var(--brand-student-pale-gradient);
+  background: var(--brand-stud-pale-gradient);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -25,20 +24,20 @@
 }
 
 .small {
-  color: #134e57;
+  color: var(--brand-stud-pale-gradient);
   opacity: 0.85;
   font-size: 14px;
   margin-bottom: 6px;
 }
 
 .courseTitle {
-  color: #113c45;
+  color: var(--brand-stud-subtitle);
   font-weight: 800;
   font-size: 24px;
 }
 
 .blockLabel {
-  color: #0e4950;
+  color: var(--brand-stud-label);
   font-weight: 800;
   letter-spacing: 0.35em;
   margin: 18px 0 10px;
@@ -55,7 +54,7 @@
   height: 40px;
   width: min(520px, 60vw);
   border-radius: 999px;
-  background: #4bd9f9;
+  background: var(--brand-stud-primary-blue);
   overflow: hidden;
 }
 
@@ -64,12 +63,12 @@
   inset: 0 auto 0 0;
   width: 0%;
   border-radius: 999px;
-  background: #0b4560;
+  background: var(--brand-stud-label);
   transition: width 320ms ease;
 }
 
 .bigPct {
-  color: #0b3650;
+  color: var(--brand-stud-label);
   font-weight: 800;
   line-height: 1.1;
 }
@@ -82,7 +81,7 @@
 }
 
 .ghost {
-  background: #0aa7c0;
+  background: var(--brand-stud-primary-blue);
   color: #fff;
   border: none;
   padding: 12px 18px;
@@ -91,9 +90,8 @@
   font-weight: 600;
 }
 .ghost:hover{
-      transform: scale(1.05);
-  background-color: var(--brand-student-subtitle);  transform: scale(1.05);
-  background-color: var(--brand-student-subtitle);
+  transform: scale(1.05);
+  background: var(--brand-stud-btn-hover); 
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   transform: translateY(-1px);
@@ -131,7 +129,7 @@
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  background: var(--brand-student-light-azure);
+  background: var(--brand-stud-list-card);
   border-radius: 14px;
   padding: 14px 16px;
 }
@@ -143,13 +141,13 @@
 
 .lessonTitle {
   font-weight: 800;
-  color: #0d3f47;
+  color: var(--brand-stud-subtitle);
 }
 
 .metaLine {
   display: flex;
   gap: 18px;
-  color: #154e56;
+  color: var(--brand-stud-label);
   font-size: 14px;
   flex-wrap: wrap;
 }
@@ -166,7 +164,7 @@
   height: 16px;
   width: 100%;
   border-radius: 999px;
-  background: #28b1cf;
+  background: var(--brand-stud-progressbar);
   overflow: hidden;
 }
 
@@ -175,7 +173,7 @@
   inset: 0 auto 0 0;
   width: 0%;
   border-radius: 999px;
-  background: #0b4560;
+  background: var(--brand-stud-label);
   transition: width 320ms ease;
 }
 

@@ -10,7 +10,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 35px);
-  color: #0f9db0;
+  color: var(--brand-stud-title);
 }
 .grid {
   display: grid;
@@ -26,7 +26,7 @@
 .empty {
   grid-column: 1/-1;
   text-align: center;
-  color: #0e5f6b;
+  color: var(--brand-stud-label);
   font-weight: 600;
   padding: 24px 0;
 }

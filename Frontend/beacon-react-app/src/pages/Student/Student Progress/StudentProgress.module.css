@@ -1,13 +1,12 @@
 .page {
   padding: 28px 36px 60px;
-  background: #f2f3f4;
   min-height: 100vh;
   padding-top: 22vh;
 }
 
 .pageTitle {
   letter-spacing: 0.2em;
-  color: var(--brand-student-title);
+  color: var(--brand-stud-title);
   font-weight: 800;
   font-size: 32px;
   margin: 8px 0 24px;
@@ -17,7 +16,7 @@
   border-radius: 18px;
   padding: 22px 22px 20px;
   margin: 16px 0 28px;
-  background: var(--brand-student-pale-gradient);
+  background: var(--brand-stud-pale-gradient);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -26,14 +25,14 @@
 }
 
 .small {
-  color: var(--brand-student-subtitle);
+  color: var(--brand-stud-subtitle);
   opacity: 0.85;
   font-size: 14px;
   margin-bottom: 6px;
 }
 
 .courseTitle {
-  color: #113c45;
+  color: var(--brand-stud-subtitle);
   font-weight: 800;
   font-size: 24px;
   line-height: 1.25;
@@ -46,7 +45,7 @@
 }
 
 .progressLabel {
-  color: var(--brand-student-subtitle);
+  color: var(--brand-stud-subtitle);
   font-weight: 800;
   letter-spacing: 0.35em;
   margin: 12px 0 12px;
@@ -63,7 +62,7 @@
   height: 40px;
   width: min(520px, 60vw);
   border-radius: 999px;
-  background: #28b1cf;
+  background: var(--brand-stud-primary-blue);
   overflow: hidden;
 }
 
@@ -73,13 +72,13 @@
   top: 0;
   bottom: 0;
   border-radius: 999px;
-  background: #0b4560;
+  background: var(--brand-stud-label);
   width: 0%;
   transition: width 320ms ease;
 }
 
 .progressText {
-  color: var(--brand-student-subtitle);
+  color: var(--brand-stud-subtitle);
   font-weight: 800;
   line-height: 1.1;
 }
@@ -91,7 +90,7 @@
   height: 48px;
   padding: 0 26px;
   border-radius: 999px;
-  background: #0d6a72;
+  background: var(--brand-stud-label);
   color: #fff;
   font-weight: 800;
   letter-spacing: 0.2em;
@@ -107,7 +106,7 @@
 }
 
 .primaryGhost {
-  background: #0aa7c0;
+  background: var(--brand-stud-primary-blue);
   color: white;
   border: none;
   padding: 12px 18px;
@@ -118,7 +117,7 @@
 
 .primaryGhost:hover {
   transform: scale(1.05);
-  background-color: var(--brand-student-subtitle);
+  background-color: var(--brand-stud-btn-hover);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
