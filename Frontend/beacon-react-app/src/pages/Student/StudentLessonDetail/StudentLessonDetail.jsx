@@ -318,6 +318,7 @@ export default function StudentLessonDetail() {
           </Button>
         </div>
 
+        </div>
         <div className={i.rect3}>
           <div className={i.label}>
             <strong>Objective</strong>
@@ -330,7 +331,6 @@ export default function StudentLessonDetail() {
             </ul>
             </div>
           </div>
-        </div>
       </header>
             {/* --- Classrooms section --- */}
             <div className={i.rect4}>
