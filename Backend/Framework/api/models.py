@@ -295,6 +295,9 @@ class ClassroomEnrollment(models.Model):
 
 
 class LessonEnrollment(models.Model):
+    """
+    TODO: Modify the assignment + reading view on student side
+    """
     class EnrollmentStatus(models.TextChoices):
         COMPLETED = "Completed", "COMPLETED"
         INCOMPLETE = "Incomplete", "INCOMPLETE"
@@ -323,10 +326,10 @@ class LessonEnrollment(models.Model):
         total_items = total_assignments + total_readings
 
         # student’s completed items for this lesson
-        done_assignments = StudentAssignmentProgress.objects.filter(
+        done_assignments = StudentAssignment.objects.filter(
             student=self.student, student__lessonenrollment__lesson=self.lesson, is_completed=True
         ).count()
-        done_readings = StudentReadingProgress.objects.filter(
+        done_readings = StudentReading.objects.filter(
             student=self.student, student__lessonenrollment__lesson=self.lesson,  is_completed=True
         ).count()
         completed_items = done_assignments + done_readings
@@ -456,7 +459,6 @@ class User(models.Model):
         return True
 
 class StudentAssignmentProgress(models.Model):
-    student_assignment_id = models.BigAutoField(primary_key=True)
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     assignment = models.ForeignKey(LessonAssignment, on_delete=models.CASCADE)
     is_completed = models.BooleanField(default=False)
@@ -465,7 +467,6 @@ class StudentAssignmentProgress(models.Model):
         unique_together = ('student', 'assignment')
 
 class StudentReadingProgress(models.Model):
-    student_reading_id = models.BigAutoField(primary_key=True)
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     reading = models.ForeignKey(LessonReading, on_delete=models.CASCADE)
     is_completed = models.BooleanField(default=False)

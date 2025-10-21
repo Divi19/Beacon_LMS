@@ -16,12 +16,10 @@ import InstructorLessonDetail from "./pages/Instructor/Instructor Lesson Detail/
 //Deleted Instructor
 import InstructorLessonCreate from "./pages/Instructor/Instructor Lesson Create/InstructorLessonCreate";
 import InstructorLessonList from "./pages/Instructor/Instructor Lesson List/InstructorLessonList";
-import InstructorLessonProgress from "./pages/Instructor/InstructorLessonProgress/InstructorLessonProgress";
 
 import InstructorClassCreation from "./pages/Instructor/Instructor Class Creation/InstructorClassCreation"; 
 import InstructorClassrooms from "./pages/Instructor/Instructor Classrooms/InstructorClassrooms";
-import InstructorStudentProgress from "./pages/Instructor/InstructorStudentProgress/InstructorStudentProgress";
-import InstructorStudentProgressDetail from "./pages/Instructor/InstructorStudentProgressDetail/InstructorStudentProgressDetail";
+
 import InstructorStudentPerCourse from "./pages/Instructor/Instructor Student List/InstructorStudentPerCourse";
 import InstructorStudentInCourse from "./pages/Instructor/Instructor Student List/InstructorStudentInCourse";
 import InstructorStudentLsnClass from "./pages/Instructor/Instructor Student List/InstructorStudentLsnClass";
@@ -43,16 +41,14 @@ import StudentMyLessonsPage from "./pages/Student/StudentMyLessonsPage/StudentMy
 import AdminLogIn from "./pages/Admin/AdminLogIn/AdminLogIn";
 import AdminMainPage from "./pages/Admin/AdminMainPage/AdminMainPage";
 import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCreateInstructor";
-import {api} from "./api"
-import InstructorStudentAllCourses from "./pages/Instructor/InstructorStudentAllCourses/InstructorStudentAllCourses";
-import InstructorStudentCourse from "./pages/Instructor/InstructorStudentCourse/InstructorStudentCourse";
+
 // import AdminInstructorList from "./pages/Admin/AdminInstructorList/AdminInstructorList";
 
 export default function App(){
   const [details, setDetails] = useState([]);
 
   useEffect( () => {
-    api.get('/instructor/courses/')
+    axios.get('http://localhost:8000/courses/frontend')
     .then(res => {
       setDetails(res.data);
     })
@@ -124,11 +120,8 @@ export default function App(){
       <Route path="/student/my-lesson" element={<StudentMyLessonsPage />}/>/*/}
 
       <Route path="/student/course/:courseId/lesson-creation/:lessonId" element={<StudentLessonEnroll />}/>
-      <Route path="/instructor/student-progress" element={<InstructorStudentProgress />}/>
-      <Route path="/instructor/course/:courseId/progress" element={<InstructorStudentProgressDetail />}/>
-      <Route path="/instructor/lesson-progress/course/:courseId/lesson/:lessonId" element={<InstructorLessonProgress />}/>
-      <Route path="/instructor/student-progress-detail/:studentId" element={<InstructorStudentAllCourses/>}/>
-      <Route path="/instructor/student-course/:courseId/lessons/:studentId" element={<InstructorStudentCourse />}/>
+
+      
 
     </Routes>
   </div>
