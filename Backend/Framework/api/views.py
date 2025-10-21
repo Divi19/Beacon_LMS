@@ -1490,7 +1490,7 @@ class StudentUnenrolledViews:
             course = get_object_or_404(Course, course_id=course_id)
             unenrolled_lessons = Lesson.objects.filter(
                 Q(course=course)
-                ).exclude(lessonenrollment__student=student).distinct()
+                ).exclude(lessonenrollment__student=student, status="Inactive").distinct()
             serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
             return Response(serializer.data,  status=status.HTTP_200_OK)
         
