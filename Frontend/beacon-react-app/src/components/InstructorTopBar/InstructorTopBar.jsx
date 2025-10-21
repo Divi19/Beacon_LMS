@@ -27,7 +27,7 @@ export default function InstructorTopBar() {
               Classrooms
             </a>
           </li>
-          <li className={s.navItem}>Reports</li>
+          <li className={s.navItem}><a href="/instructor/student-progress" className={s.navLink}>Report</a></li>
           <li className={s.navItem}>
             <img
               src="/profile_picture.png"

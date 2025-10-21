@@ -5,13 +5,14 @@ from django.shortcuts import get_object_or_404
 from django.apps import apps
 from django.db.models import (
     Count, Sum, F, Q, Value, FloatField, IntegerField, DateTimeField,
-    OuterRef, Subquery, Case, When, ExpressionWrapper
+    TimeField,
+    OuterRef, Subquery, Case, When, ExpressionWrapper, Min, CharField
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Trunc, Cast, NullIf
 
 from rest_framework import serializers
 from .models import * 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 _LINE_SPLIT = re.compile(r"[\r\n]+")
@@ -51,11 +52,11 @@ def mark_enrollment_complete_if_ready(enrollment_id: int) -> None:
         tot_reads = LessonReading.objects.filter(lesson=lesson).count()
 
         # done by this student for that lesson
-        done_asgns = StudentAssignment.objects.filter(
+        done_asgns = StudentAssignmentProgress.objects.filter(
             student=student, lesson=lesson, is_completed=True
         ).count()
 
-        done_reads = StudentReading.objects.filter(
+        done_reads = StudentReadingProgress.objects.filter(
             student=student, lesson=lesson, is_completed=True
         ).count()
 
@@ -132,14 +133,14 @@ def compute_lesson_progress(
         LessonAssignment.objects
         .filter(lesson__lesson_id=OuterRef('lesson_id'))
         .values('lesson__lesson_id')
-        .annotate(c=Count('id'))
+        .annotate(c=Count('assignment_id'))
         .values('c')[:1]
     )
     read_count_sq = (
         LessonReading.objects
         .filter(lesson__lesson_id=OuterRef('lesson_id'))
         .values('lesson__lesson_id')
-        .annotate(c=Count('id'))
+        .annotate(c=Count('reading_id'))
         .values('c')[:1]
     )
     done_asgn_sq = (
@@ -147,15 +148,15 @@ def compute_lesson_progress(
         .filter(assignment__lesson__lesson_id=OuterRef('lesson_id'),
                 is_completed=True)
         .values('assignment__lesson__lesson_id')
-        .annotate(c=Count('id'))
+        .annotate(c=Count('student_assignment_id'))
         .values('c')[:1]
     )
     done_read_sq = (
         StudentReadingProgress.objects
         .filter(reading__lesson__lesson_id=OuterRef('lesson_id'))
-        .filter(Q(is_completed=True) | Q(completed=True))
+        .filter(Q(is_completed=True))
         .values('reading__lesson__lesson_id')
-        .annotate(c=Count('id'))
+        .annotate(c=Count('student_reading_id'))
         .values('c')[:1]
     )
     tot_lesson_stud_sq = (
@@ -239,16 +240,16 @@ def compute_lesson_progress(
                 assignment__lesson__lesson_id=lesson_id,
                 is_completed=True)
         .values('student')
-        .annotate(c=Count('id'))
+        .annotate(c=Count('student_assignment_id'))
         .values('c')[:1]
     )
     reading_completed_sq = (
         StudentReadingProgress.objects
         .filter(student=OuterRef('pk'),
                 reading__lesson__lesson_id=lesson_id)
-        .filter(Q(is_completed=True) | Q(completed=True))
+        .filter(Q(is_completed=True))
         .values('student')
-        .annotate(c=Count('id'))
+        .annotate(c=Count('student_reading_id'))
         .values('c')[:1]
     )
 
@@ -260,11 +261,31 @@ def compute_lesson_progress(
         .distinct()
         .annotate(
             email = F('user__email'),
-            enrolled_at = Coalesce(Subquery(enrolled_at_sq, output_field=DateTimeField()), Value(None, output_field=DateTimeField())),
+            min_enrolled_at = Min(
+                                Subquery(enrolled_at_sq, output_field=DateTimeField())# <--- Filter belongs to Min()
+                                ),
+            enrolled_at = Cast(
+                            # Truncate to the minute level to remove seconds/microseconds
+                            Trunc('min_enrolled_at', 'minute', output_field=DateTimeField()),
+                            output_field=CharField()
+                            ), 
             session_location = Subquery(session_location_sq),
             session_day_of_week = Subquery(session_day_sq),
-            session_time_start = Subquery(session_start_sq),
-            session_time_end = Subquery(session_end_sq),
+
+            temp_time_start =  Subquery(session_start_sq),
+            temp_time_end = Subquery(session_end_sq),
+            session_time_start = Cast(
+                            # Truncate to the minute level to remove seconds/microseconds
+                            Trunc('temp_time_start', 'minute', output_field=TimeField()),
+                            output_field=CharField()
+                            ),
+            session_time_end = Cast(
+                            # Truncate to the minute level to remove seconds/microseconds
+                            Trunc('temp_time_end', 'minute', output_field=TimeField()),
+                            output_field=CharField()
+                            ),
+
+
             asgn_completed = Coalesce(Subquery(asgn_completed_sq, output_field=IntegerField()), 0),
             reading_completed = Coalesce(Subquery(reading_completed_sq, output_field=IntegerField()), 0),
         )
@@ -394,7 +415,7 @@ def get_course_progress(user, course_id):
     is_director = course_obj.director == inst
     if not is_director:
         # assumes Lesson has a 'designer' FK to user --> get only related lesson
-        lessons_base = lessons_base.filter(designer=user)
+        lessons_base = lessons_base.filter(designer=inst)
 
     lessons_qs = (
         lessons_base
@@ -416,8 +437,7 @@ def get_course_progress(user, course_id):
             ),
             done_read=Count(
                 'lessonreading__studentreadingprogress',
-                filter=Q(lessonreading__studentreadingprogress__is_completed=True) |
-                        Q(lessonreading__studentreadingprogress__completed=True),
+                filter=Q(lessonassignment__studentassignmentprogress__is_completed=True),
                 distinct=True,
             ),
         )
@@ -434,42 +454,52 @@ def get_course_progress(user, course_id):
             'tot_lesson_stud', 'asgn_count', 'read_count', 'tot_asgns_readings',
             'done_asgn', 'done_read', 'tot_done',
             'avg_done', 'lesson_progress', 'lesson_progress_percentage',
-            'enrolled_count'
+            'enrolled_count', 'duration_weeks'
         )
     )
     lessons = list(lessons_qs)
 
     # ---- 3) Students list ------------------------------------------------
-    #Get all students however
+    #Get all students 
     students_qs = (
         StudentProfile.objects
         .filter(lessonenrollment__lesson__course__course_id=course_id)
         .distinct()
         .annotate(
-            enrolled_at = F(
-                'enrollment__enrolled_at',
-                filter=Q(enrollment__course__course_id=course_id)
+            email = F('user__email'),
+            min_enrolled_at = Min(
+                    'enrollment__enrolled_at',
+                    filter=Q(enrollment__course__course_id=course_id)  # <--- Filter belongs to Min()
                 ),
-            lessons_completed=Count(
+            enrolled_at = Cast(
+                        # Truncate to the minute level to remove seconds/microseconds
+                        Trunc('min_enrolled_at', 'minute', output_field=DateTimeField()),
+                        output_field=CharField()
+                    ), 
+
+            lessons_completed= Coalesce(Count(
                 'lessonenrollment',
                 filter=Q(lessonenrollment__lesson__course__course_id=course_id) & (
-                    Q(lessonenrollment__status='Complete') |
-                    Q(lessonenrollment__is_completed=True)
+                    Q(lessonenrollment__status='Completed') 
                 ),
                 distinct=True,
-            ),
+                output_field=IntegerField()
+            ), 0),
             credits_earned=Coalesce(
                 Sum(
                     'lessonenrollment__lesson__credits',
                     filter=Q(lessonenrollment__lesson__course__course_id=course_id) & (
-                        Q(lessonenrollment__status='Complete') |
-                        Q(lessonenrollment__is_completed=True)
+                        Q(lessonenrollment__status='Completed') 
                     ),
+                    output_field=IntegerField()
                 ),
                 0
             ),
+            
         )
-        .values('student_profile_id', 'student_no','last_name', "first_name", "title", 'email', 'lessons_completed', 'credits_earned', "enrolled_at")
+        .values('student_profile_id', 'student_no'
+                ,'last_name', "first_name", "title", 'email'
+                , 'lessons_completed', 'credits_earned', "enrolled_at")
     )
     students = list(students_qs)
 
@@ -491,26 +521,19 @@ def get_course_progress(user, course_id):
 """
 For student progress
 """
-# api/utils/student_progress.py
-from typing import Dict, Any, List, Optional
-from django.apps import apps
-from django.db.models import (
-    Count, Sum, F, Q, Value, FloatField, IntegerField, DateTimeField,
-    OuterRef, Subquery, Case, When
-)
-from django.db.models.functions import Coalesce
 
 
 def _safe_div(num_expr, den_expr, as_float=True):
-    """num/den guarded against zero; returns 0 if denominator <= 0."""
+    """
+    Returns num / den as a DB expression, safe for zero or NULL denominators.
+    Works for any ORM expression (F, Coalesce, Subquery, etc.)
+    """
     out = FloatField() if as_float else IntegerField()
-    # works with F() den_expr
-    return Case(
-        When(**{f"{den_expr.name}__gt": 0}, then=num_expr / den_expr),
-        default=Value(0.0 if as_float else 0),
-        output_field=out,
+    return Coalesce(
+        Cast(num_expr, out) / NullIf(Cast(den_expr, out), 0.0),
+        Value(0.0 if as_float else 0),
+        output_field=out
     )
-
 def compute_student_singular(
     student_profile_id: int | str,
     *,
@@ -565,7 +588,15 @@ def compute_student_singular(
         StudentProfile.objects
         .filter(pk=student_profile_id)
         .annotate(email=F('user__email'))
-        .values('student_profile_id', 'student_no', 'title', 'first_name', 'last_name', 'email', 'locked_at')
+        #Back
+        .annotate(
+            registered_at = Cast(
+                            # Truncate to the minute level to remove seconds/microseconds
+                            Trunc('locked_at', 'minute', output_field=DateTimeField()),
+                            output_field=CharField()
+                            ),
+        )
+        .values('student_profile_id', 'student_no', 'title', 'first_name', 'last_name', 'email', 'registered_at')
         .first()
     )
     if not stu:
@@ -578,7 +609,7 @@ def compute_student_singular(
         "first_name": stu["first_name"],
         "last_name": stu["last_name"],
         "email": stu["email"],
-        "locked_at": stu["locked_at"],
+        "registered_at": stu["registered_at"],
     }}
 
     # =========================================================================================
@@ -590,16 +621,16 @@ def compute_student_singular(
             Lesson.objects
             .filter(course__course_id=OuterRef('course__course_id'))
             .values('course__course_id')
-            .annotate(c=Count('id'))
+            .annotate(c=Count('lesson_id'))
             .values('c')[:1]
         )
 
         # enrolled_count per course (distinct students)
         enrolled_count_sq = (
-            Enrollment.objects
-            .filter(course__course_id=OuterRef('course__course_id'))
-            .values('course__course_id')
-            .annotate(c=Count('student', distinct=True))
+            Course.objects
+            .filter(course_id=OuterRef('course__course_id'))
+            .values('course_id')
+            .annotate(c=Count('enrollment', distinct=True))
             .values('c')[:1]
         )
 
@@ -610,9 +641,9 @@ def compute_student_singular(
                 lesson__course__course_id=OuterRef('course__course_id'),
                 student__student_profile_id=student_profile_id
             )
-            .filter(Q(status='Complete'))
+            .filter(Q(status='Completed'))
             .values('lesson__course__course_id')
-            .annotate(c=Count('id'))
+            .annotate(c=Count('lesson_enrollment_id'))
             .values('c')[:1]
         )
 
@@ -627,13 +658,18 @@ def compute_student_singular(
                 enrolled_count=Coalesce(Subquery(enrolled_count_sq, output_field=IntegerField()), 0),
                 tot_lessons=Coalesce(Subquery(tot_lessons_sq, output_field=IntegerField()), 0),
                 lessons_done=Coalesce(Subquery(lessons_done_sq, output_field=IntegerField()), 0),
+                new_enrolled_at = Cast(
+                            # Truncate to the minute level to remove seconds/microseconds
+                            Trunc('enrolled_at', 'minute', output_field=DateTimeField()),
+                            output_field=CharField()
+                            ),
             )
             .annotate(
                 progress=_safe_div(F('lessons_done'), F('tot_lessons')),
                 progress_percentages=F('progress') * 100.0,
             )
             .values(
-                'course_id_val', 'title', 'credits', 'enrolled_at',
+                'course_id_val', 'title', 'credits', 'new_enrolled_at',
                 'enrolled_count', 'lessons_done', 'tot_lessons', 'progress', 'progress_percentages',
             )
         )
@@ -644,7 +680,7 @@ def compute_student_singular(
                 "course_id": row["course_id_val"],
                 "title": row["title"],
                 "credits": row["credits"],
-                "enrolled_at": row["enrolled_at"],
+                "enrolled_at": row["new_enrolled_at"],
                 "enrolled_count": row["enrolled_count"],
                 "lessons_done": row["lessons_done"],
                 "tot_lessons": row["tot_lessons"],
@@ -658,174 +694,180 @@ def compute_student_singular(
     # =========================================================================================
     # B) course_id provided → course header + per-lesson list (for this student)
     # =========================================================================================
-
-    # course header
-    course_row = (
-        Course.objects
-        .filter(course_id=course_id)
-        .values('course_id', 'title')
-        .first()
-    )
-    if not course_row:
-        raise Course.DoesNotExist(f"Course {course_id} not found")
-
-    # enrolled_count for that course
-    enrolled_count_course = (
-        Enrollment.objects
-        .filter(course__course_id=course_id)
-        .values('course__course_id')
-        .annotate(c=Count('student', distinct=True))
-        .values_list('c', flat=True)[:1]
-    )
-    enrolled_count_val = list(enrolled_count_course)[0] if enrolled_count_course else 0
-
-    result["course"] = {
-        "course_id": course_row["course_id"],
-        "title": course_row["title"],
-        "enrolled_count": enrolled_count_val,
-    }
-
-    # ---------- lesson-level counts for this course ----------
-    tot_asgns_sq = (
-        LessonAssignment.objects
-        .filter(lesson__lesson_id=OuterRef('lesson_id'))
-        .values('lesson__lesson_id')
-        .annotate(c=Count('id'))
-        .values('c')[:1]
-    )
-    tot_readings_sq = (
-        LessonReading.objects
-        .filter(lesson__lesson_id=OuterRef('lesson_id'))
-        .values('lesson__lesson_id')
-        .annotate(c=Count('id'))
-        .values('c')[:1]
-    )
-
-    # per-student completion in each lesson
-    asgn_completed_sq = (
-        StudentAssignmentProgress.objects
-        .filter(student__student_profile_id=student_profile_id,
-                assignment__lesson__lesson_id=OuterRef('lesson_id'),
-                is_completed=True)
-        .values('assignment__lesson__lesson_id')
-        .annotate(c=Count('id'))
-        .values('c')[:1]
-    )
-    reading_completed_sq = (
-        StudentReadingProgress.objects
-        .filter(student__student_profile_id=student_profile_id,
-                reading__lesson__lesson_id=OuterRef('lesson_id'))
-        .filter(Q(is_completed=True) | Q(completed=True))
-        .values('reading__lesson__lesson_id')
-        .annotate(c=Count('id'))
-        .values('c')[:1]
-    )
-
-    # enrolled_at for this student per-lesson
-    enrolled_at_sq = (
-        LessonEnrollment.objects
-        .filter(lesson__lesson_id=OuterRef('lesson_id'), student__student_profile_id=student_profile_id)
-        .values('enrolled_at')[:1]
-    )
-
-    # session fields
-    if session_source == "per_student" and ClassroomEnrollment is not None:
-        # session via ClassroomEnrollment(student->lessonclassroom)
-        sess_lc_sq = (
-            ClassroomEnrollment.objects
-            .filter(student__student_profile_id=student_profile_id, lessonclassroom__lesson__lesson_id=OuterRef('lesson_id'))
-            .values('lessonclassroom_id')[:1]
+    else: 
+        # course header
+        course_row = (
+            Course.objects
+            .filter(course_id=course_id)
+            .values('course_id', 'title')
+            .first()
         )
-        session_location_sq = (
-            LessonClassroom.objects
-            .filter(pk=Subquery(sess_lc_sq))
-            .values('classroom__location')[:1]
+        if not course_row:
+            raise Course.DoesNotExist(f"Course {course_id} not found")
+
+        # enrolled_count for that course
+        enrolled_count_course = (
+            Enrollment.objects
+            .filter(course__course_id=course_id)
+            .values('course__course_id')
+            .annotate(c=Count('student', distinct=True))
+            .values_list('c', flat=True)[:1]
         )
-        session_day_sq = (
-            LessonClassroom.objects
-            .filter(pk=Subquery(sess_lc_sq))
-            .values('day_of_week')[:1]
-        )
-        session_start_sq = (
-            LessonClassroom.objects
-            .filter(pk=Subquery(sess_lc_sq))
-            .values('time_start')[:1]
-        )
-        session_end_sq = (
-            LessonClassroom.objects
-            .filter(pk=Subquery(sess_lc_sq))
-            .values('time_end')[:1]
-        )
-    else:
-        # fallback: first LessonClassroom for the lesson
-        session_location_sq = (
-            LessonClassroom.objects
+        enrolled_count_val = list(enrolled_count_course)[0] if enrolled_count_course else 0
+
+        result["course"] = {
+            "course_id": course_row["course_id"],
+            "title": course_row["title"],
+            "enrolled_count": enrolled_count_val,
+        }
+
+        # ---------- lesson-level counts for this course ----------
+        tot_asgns_sq = (
+            LessonAssignment.objects
             .filter(lesson__lesson_id=OuterRef('lesson_id'))
-            .values('classroom__location')[:1]
+            .values('lesson__lesson_id')
+            .annotate(c=Count('assignment_id'))
+            .values('c')[:1]
         )
-        session_day_sq = (
-            LessonClassroom.objects
+        tot_readings_sq = (
+            LessonReading.objects
             .filter(lesson__lesson_id=OuterRef('lesson_id'))
-            .values('day_of_week')[:1]
-        )
-        session_start_sq = (
-            LessonClassroom.objects
-            .filter(lesson__lesson_id=OuterRef('lesson_id'))
-            .values('time_start')[:1]
-        )
-        session_end_sq = (
-            LessonClassroom.objects
-            .filter(lesson__lesson_id=OuterRef('lesson_id'))
-            .values('time_end')[:1]
+            .values('lesson__lesson_id')
+            .annotate(c=Count('reading_id'))
+            .values('c')[:1]
         )
 
-    lessons_qs = (
-        Lesson.objects
-        .filter(course__course_id=course_id)
-        .annotate(
-            enrolled_at=Coalesce(Subquery(enrolled_at_sq, output_field=DateTimeField()),
-                                 Value(None, output_field=DateTimeField())),
-            tot_asgns=Coalesce(Subquery(tot_asgns_sq, output_field=IntegerField()), 0),
-            tot_readings=Coalesce(Subquery(tot_readings_sq, output_field=IntegerField()), 0),
-            asgn_completed=Coalesce(Subquery(asgn_completed_sq, output_field=IntegerField()), 0),
-            reading_completed=Coalesce(Subquery(reading_completed_sq, output_field=IntegerField()), 0),
-
-            session_day_of_week=Subquery(session_day_sq),
-            session_time_start=Subquery(session_start_sq),
-            session_time_end=Subquery(session_end_sq),
-            session_location=Subquery(session_location_sq),
+        # per-student completion in each lesson
+        asgn_completed_sq = (
+            StudentAssignmentProgress.objects
+            .filter(student__student_profile_id=student_profile_id,
+                    assignment__lesson__lesson_id=OuterRef('lesson_id'),
+                    is_completed=True)
+            .values('assignment__lesson__lesson_id')
+            .annotate(c=Count('student_assignment_id'))
+            .values('c')[:1]
         )
-        .annotate(
-            completed_sum=F('asgn_completed') + F('reading_completed'),
-            denom_sum=F('tot_asgns') + F('tot_readings'),
-            progress=_safe_div(F('completed_sum'), F('denom_sum')),
-            progress_percentages=F('progress') * 100.0,
+        reading_completed_sq = (
+            StudentReadingProgress.objects
+            .filter(student__student_profile_id=student_profile_id,
+                    reading__lesson__lesson_id=OuterRef('lesson_id'))
+            .filter(Q(is_completed=True))
+            .values('reading__lesson__lesson_id')
+            .annotate(c=Count('student_reading_id'))
+            .values('c')[:1]
         )
-        .values(
-            'lesson_id', 'enrolled_at',
-            'tot_asgns', 'tot_readings',
-            'asgn_completed', 'reading_completed',
-            'session_day_of_week', 'session_time_start', 'session_time_end', 'session_location',
-            'progress', 'progress_percentages',
+
+        # enrolled_at for this student per-lesson
+        enrolled_at_sq = (
+            LessonEnrollment.objects
+            .filter(lesson__lesson_id=OuterRef('lesson_id'), student__student_profile_id=student_profile_id)
+            .values('enrolled_at')[:1]
         )
-    )
 
-    lessons: List[Dict[str, Any]] = []
-    for row in lessons_qs:
-        lessons.append({
-            "lesson_id": row["lesson_id"],
-            "enrolled_at": row["enrolled_at"],
-            "tot_readings": row["tot_readings"],
-            "tot_asgns": row["tot_asgns"],
-            "asgn_completed": row["asgn_completed"],
-            "reading_completed": row["reading_completed"],
-            "day_of_week": row["session_day_of_week"],
-            "time_start": row["session_time_start"],
-            "time_end": row["session_time_end"],
-            "location": row["session_location"],
-            "progress": row["progress"],
-            "progress_percentages": row["progress_percentages"],
-        })
+        # session fields
+        if session_source == "per_student" and ClassroomEnrollment is not None:
+            # session via ClassroomEnrollment(student->lessonclassroom)
+            sess_lc_sq = (
+                ClassroomEnrollment.objects
+                .filter(student__student_profile_id=student_profile_id, lesson_classroom__lesson__lesson_id=OuterRef('lesson_id'))
+                .values('lesson_classroom_id')[:1]
+            )
+            session_location_sq = (
+                LessonClassroom.objects
+                .filter(pk=Subquery(sess_lc_sq))
+                .values('classroom__location')[:1]
+            )
+            session_day_sq = (
+                LessonClassroom.objects
+                .filter(pk=Subquery(sess_lc_sq))
+                .values('day_of_week')[:1]
+            )
+            session_start_sq = (
+                LessonClassroom.objects
+                .filter(pk=Subquery(sess_lc_sq))
+                .values('time_start')[:1]
+            )
+            session_end_sq = (
+                LessonClassroom.objects
+                .filter(pk=Subquery(sess_lc_sq))
+                .values('time_end')[:1]
+            )
+        else:
+            # fallback: first LessonClassroom for the lesson
+            session_location_sq = (
+                LessonClassroom.objects
+                .filter(lesson__lesson_id=OuterRef('lesson_id'))
+                .values('classroom__location')[:1]
+            )
+            session_day_sq = (
+                LessonClassroom.objects
+                .filter(lesson__lesson_id=OuterRef('lesson_id'))
+                .values('day_of_week')[:1]
+            )
+            session_start_sq = (
+                LessonClassroom.objects
+                .filter(lesson__lesson_id=OuterRef('lesson_id'))
+                .values('time_start')[:1]
+            )
+            session_end_sq = (
+                LessonClassroom.objects
+                .filter(lesson__lesson_id=OuterRef('lesson_id'))
+                .values('time_end')[:1]
+            )
 
-    result["lessons"] = lessons
-    return result
+        lessons_qs = (
+            Lesson.objects
+            .filter(course__course_id=course_id, lessonenrollment__student__student_profile_id = student_profile_id)
+            .annotate(
+                enrolled_at=Coalesce(Subquery(enrolled_at_sq, output_field=DateTimeField()),
+                                    Value(None, output_field=DateTimeField())),
+                tot_asgns=Coalesce(Subquery(tot_asgns_sq, output_field=IntegerField()), 0),
+                tot_readings=Coalesce(Subquery(tot_readings_sq, output_field=IntegerField()), 0),
+                asgn_completed=Coalesce(Subquery(asgn_completed_sq, output_field=IntegerField()), 0),
+                reading_completed=Coalesce(Subquery(reading_completed_sq, output_field=IntegerField()), 0),
+                joined_at = Cast(
+                                # Truncate to the minute level to remove seconds/microseconds
+                                Trunc('enrolled_at', 'minute', output_field=DateTimeField()),
+                                output_field=CharField()
+                            ), 
+                session_day_of_week=Subquery(session_day_sq),
+                session_time_start=Subquery(session_start_sq),
+                session_time_end=Subquery(session_end_sq),
+                session_location=Subquery(session_location_sq),
+            )
+            .annotate(
+                completed_sum=F('asgn_completed') + F('reading_completed'),
+                denom_sum=F('tot_asgns') + F('tot_readings'),
+                progress=_safe_div(F('completed_sum'), F('denom_sum')),
+                progress_percentages=F('progress') * 100.0,
+            )
+            .values(
+                'lesson_id', 'enrolled_at',
+                'title', 'joined_at',
+                'tot_asgns', 'tot_readings',
+                'asgn_completed', 'reading_completed',
+                'session_day_of_week', 'session_time_start', 'session_time_end', 'session_location',
+                'progress', 'progress_percentages',
+            )
+        )
+
+        lessons: List[Dict[str, Any]] = []
+        for row in lessons_qs:
+            lessons.append({
+                "lesson_id": row["lesson_id"],
+                "enrolled_at": row["enrolled_at"],
+                "tot_readings": row["tot_readings"],
+                "tot_asgns": row["tot_asgns"],
+                "asgn_completed": row["asgn_completed"],
+                "reading_completed": row["reading_completed"],
+                "day_of_week": row["session_day_of_week"],
+                "time_start": row["session_time_start"],
+                "time_end": row["session_time_end"],
+                "location": row["session_location"],
+                "progress": row["progress"],
+                "progress_percentages": row["progress_percentages"],
+                "joined_at": row["joined_at"]
+            })
+
+        result["lessons"] = lessons
+        return result
