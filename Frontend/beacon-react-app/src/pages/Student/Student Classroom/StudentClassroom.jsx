@@ -26,61 +26,15 @@ export default function StudentClassroom() {
     // When backend is ready, replace:
     // const { data } = await api.get("/student/classrooms/"); // aggregated
     // setClassrooms(data.results ?? data);
-
-    setClassrooms([
-      {
-        classroom_id: "347821",
-        day_of_week: "Monday",
-        time_start: "08:00",
-        time_end: "10:00",
-        duration_minutes: 120,
-        duration_weeks: 2,
-        is_online: false,
-        capacity: 10,
-        enrolled_count: 8,
-        course: { course_id: "C2101", title: "Bachelor of Computer science" },
-        lesson: { lesson_id: "CT-2123", title: "Advanced Statistics" },
-      },
-      {
-        classroom_id: "349021",
-        day_of_week: "Wednesday",
-        time_start: "10:00",
-        time_end: "12:00",
-        duration_minutes: 120,
-        duration_weeks: 3,
-        is_online: false,
-        capacity: 10,
-        enrolled_count: 3,
-        course: { course_id: "C2101", title: "Bachelor of Computer science" },
-        lesson: { lesson_id: "CT-2133", title: "introduction to programming" },
-      },
-      {
-        classroom_id: "347821X",
-        day_of_week: "Thursday",
-        time_start: "12:00",
-        time_end: "14:00",
-        duration_minutes: 120,
-        duration_weeks: 2,
-        is_online: true,
-        capacity: 100,
-        enrolled_count: 77,
-        course: { course_id: "CT-6123", title: "Algorithms" },
-        lesson: { lesson_id: "CT-6123", title: "Algorithms" },
-      },
-      {
-        classroom_id: "357821",
-        day_of_week: "Friday",
-        time_start: "16:00",
-        time_end: "18:00",
-        duration_minutes: 120,
-        duration_weeks: 4,
-        is_online: false,
-        capacity: 10,
-        enrolled_count: 8,
-        course: { course_id: "C2123", title: "Diploma in Data Science" },
-        lesson: { lesson_id: "CT-1223", title: "Linear regression" },
-      },
-    ]);
+    try {
+        const {data} = api.get("student/classrooms/viewing/")
+        setClassrooms(data)
+    } catch (err) {
+        const detail = err?.response?.data?.detail;
+        console.error("Error:", detail);
+        alert(detail || "An error occured. Please try again.");
+    }
+    ;
   }, []);
 
   // sort by day, then start time

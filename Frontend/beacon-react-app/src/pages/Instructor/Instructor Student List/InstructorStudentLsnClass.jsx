@@ -54,7 +54,7 @@ export default function InstructorStudentLsnClass() {
           {course.students_enrolled}
         </p>
         <button className={s.orangeBtn} onClick={() => navigate(`/instructor/students/course/${courseId}`)}>
-          Back to courses in students →
+          Back to students in course →
         </button>
       </div>
 

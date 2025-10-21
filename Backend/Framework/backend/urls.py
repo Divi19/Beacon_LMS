@@ -103,7 +103,7 @@ urlpatterns = [
     path("student/lessons/<str:lesson_id>/classrooms/unenrolled/", StudentUnenrolledViews.StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enroll/<str:classroom_id>/", StudentUnenrolledViews.StudentUnenrolledClassrooms.as_view(), name="unenrolled-classrooms"),
     path("student/lessons/<str:lesson_id>/classrooms/enrolled/<str:classroom_id>/", StudentEnrolledViews.StudentEnrolledClassrooms.as_view(), name="unenrolled-classrooms"),
-
+    path("student/classrooms/viewing/", StudentClassrooms.as_view()),
     #Student Assignment
     path("student/lessons/<str:lesson_id>/assignments/", StudentAssignmentChecklistView.as_view(), name="student-lesson-assignment"),
     #Student Reading

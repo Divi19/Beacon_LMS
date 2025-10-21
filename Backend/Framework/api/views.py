@@ -8,9 +8,14 @@ from .utils import (_LINE_SPLIT, _split_title_second, _yield_lines,
                     _SEPS, _FORBIDDEN, _ratio, get_course_progress, 
                     compute_lesson_progress, compute_student_singular
                     )
+
+
+
+import logging, traceback
+log = logging.getLogger(__name__)
 #django 
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login, logout 
@@ -20,6 +25,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import *
 from django.http import HttpResponse
 from django.core.validators import URLValidator
+
 _url_validator = URLValidator(schemes=["http", "https"])
 # views.py
 from itertools import chain
@@ -27,7 +33,7 @@ from django.db.models import Value, IntegerField, TimeField, CharField
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.exceptions import PermissionDenied
 
 #Res
 from rest_framework.decorators import api_view
@@ -90,6 +96,7 @@ class CurrentUser(RetrieveAPIView):#Receiving a single object, read-only
     serializer_class = CurrentUserSerializer
     def get_object(self):
         return self.request.user #According to the json upon logged in, the user nested content
+
 """
 Instructor Part
 """
@@ -1095,10 +1102,7 @@ class LessonViews:
 """
 See student list / progress 
 """
-from django.http import Http404
-from rest_framework.exceptions import PermissionDenied
-import logging, traceback
-log = logging.getLogger(__name__)
+
 class ProgressView: 
     class InstructorCourseProgress(APIView):
         permission_classes = [IsAuthenticated]
@@ -1659,6 +1663,89 @@ class StudentUnenrolledViews:
             }
             return Response(output, status=status.HTTP_200_OK) 
         
+class StudentClassrooms(APIView):
+     permission_classes = [IsAuthenticated]
+     authentication_classes = [CustomJWTAuthentication]
+
+     def get(self, request):
+         user = self.request.user
+         student = get_object_or_404(StudentProfile, user=user)
+         q = Q(classroomenrollment__student=student)
+         linked_rows = (
+                LessonClassroom.active
+                .filter(q)
+                .select_related("classroom")
+                .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
+                .annotate(
+                    lesson_id=F("lesson__lesson_id"),
+                    lesson_title=F("lesson__title")
+                    )
+                .annotate(
+                    course_id = F("lesson__course__course_id"),
+                    course_title = F("lesson__course__title")
+                )
+                .values(
+                    "lesson_id",
+                    "lesson_title",
+                    "course_id",
+                    "course_title",
+                    "classroom__classroom_id",
+                    "classroom__location",
+                    "day_of_week",
+                    "time_start",
+                    "time_end",
+                    "supervisor__full_name",
+                    "duration_minutes",
+                    "classroom__capacity",
+                    "enrolled_count",   
+                    "classroom__zoom_link",
+                    "classroom__is_online",   
+                    "lesson__lesson_id",  
+                    "duration_weeks",
+                    "lesson_classroom_id"                                        
+                )
+            )
+         def norm_linked(r):
+                return {
+                    "lesson_id":r["lesson_id"],
+                    "lesson_title":r["lesson_title"],
+                    "course_id": r["course_id"],
+                    "course_title": r["course_title"],
+                    "classroom_id": r["classroom__classroom_id"],
+                    "location": r["classroom__location"],
+                    "day_of_week": r["day_of_week"],
+                    "supervisor": r["supervisor__full_name"],
+                    "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
+                    "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
+                    "duration_minutes": r["duration_minutes"],
+                    "capacity": r["classroom__capacity"],
+                    "enrolled_count": r["enrolled_count"],   
+                    "is_online": r["classroom__is_online"],
+                    "zoom_link": r["classroom__zoom_link"], 
+                    "lesson_id": r["lesson__lesson_id"],     
+                    "duration_weeks": r["duration_weeks"],
+                    "lesson_classroom_id"   : r["lesson_classroom_id"   ]          
+                }
+            
+         DAY_ORDER = {
+                "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
+                "Friday": 5, "Saturday": 6, "Sunday": 7,
+            }
+
+         def day_rank(day):
+                """Return numeric rank for a weekday name (None or unknown -> 99)."""
+                return DAY_ORDER.get(day, 99)
+         try:
+                data = [*map(norm_linked, linked_rows)]
+                data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+                return Response(data)
+            
+         except Exception as e:
+                return Response(
+                    {"error": str(e), "trace": traceback.format_exc()},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
 
 """
 Shared
