@@ -8,13 +8,9 @@ from .utils import (_LINE_SPLIT, _split_title_second, _yield_lines,
                     _SEPS, _FORBIDDEN, _ratio, get_course_progress, 
                     compute_lesson_progress, compute_student_singular
                     )
-
-
-import logging, traceback
-log = logging.getLogger(__name__)
 #django 
 from django.shortcuts import render, redirect
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login, logout 
@@ -31,7 +27,6 @@ from django.db.models import Value, IntegerField, TimeField, CharField
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 
 
 #Res
@@ -159,29 +154,24 @@ class InstructorCoursesView(APIView):
         if not instr:
             return Response({"detail": "Not an instructor."}, status=403)
         courses =( Course.objects.filter(Q(owner_instructor=instr) | Q(lesson__designer=instr)).select_related("owner_instructor")
-                      .annotate(enrolled_count=Count('enrollment__student', distinct=True))
+                          .annotate(enrolled_count=Count('enrollment__student', distinct=True))
                           .annotate(
                             tot_lessons=Count('lesson', distinct=True),
                             # distinct student count via lesson enrollments
-                            enrolled_count=Count('lesson__lessonenrollment__student', distinct=True),
-
-                            # total completed lesson enrollments across the course
                             sum_completed=Count(
                                 'lesson__lessonenrollment',
                                 filter=(
-                                    Q(lesson__lessonenrollment__status='Complete')
+                                    Q(lesson__lessonenrollment__status='Completed')
                                 ),
                                 distinct=False,  # counting completions, not distinct students
                             ),
-                            ) .annotate(
-                                avg_completed = _ratio(F('sum_completed'), F('enrolled_count')),
-                                avg_progress  = _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')),
-                                avg_percentages = ExpressionWrapper(
+                             avg_completed = _ratio(F('sum_completed'), F('enrolled_count')),
+                             avg_progress  = _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')),
+                             avg_percentages = ExpressionWrapper(
                                     _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')) * 100.0,
                                     output_field=FloatField()
                                 ),
                             )
-                      
                       )
         
         output = [{
@@ -986,7 +976,6 @@ class LessonViews:
                     t, d = self._validate_item(title, desc)
                     parsed.append((t, d))
             except serializers.ValidationError as e:
-                print("Encountered error")
                 return Response(e.detail, status=400)
 
             incoming_titles = {t for (t, _) in parsed}
@@ -1106,7 +1095,10 @@ class LessonViews:
 """
 See student list / progress 
 """
-
+from django.http import Http404
+from rest_framework.exceptions import PermissionDenied
+import logging, traceback
+log = logging.getLogger(__name__)
 class ProgressView: 
     class InstructorCourseProgress(APIView):
         permission_classes = [IsAuthenticated]
@@ -1131,23 +1123,47 @@ class ProgressView:
     class InstructorLessonProgress(APIView):
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
+        
         def get(self, request, lesson_id):
             try:
-                data = compute_lesson_progress(self.request.user, lesson_id, include_students=True)
-                return Response(data, status=status.HTTP_200_OK)
+                data = compute_lesson_progress(request.user, lesson_id, include_students=True)
+                return Response(data, status=200)
+            except Http404 as e:
+                return Response({"detail": str(e)}, status=404)
+            except PermissionDenied as e:
+                return Response({"detail": str(e)}, status=403)
             except Exception as e:
-                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                log.error("Lesson progress error: %s\n%s", e, traceback.format_exc())
+                return Response({"detail": "Server error while computing progress."}, status=500)
 
     class InstructorStudentProgress(APIView):
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
-        def get(self, request, student_id):
-            course_id = request.query_params.get("course_id")  # optional
+        def get(self, request, student_profile_id):
+            course_id = request.query_params.get("course_id")  # may be None
             try:
-                data = compute_student_singular(student_id, course_id=course_id, session_source="per_student")
-                return Response(data, status=status.HTTP_200_OK)
+                data = compute_student_singular(
+                    student_profile_id,
+                    course_id=course_id,
+                    session_source="per_student"
+                )
+                return Response(data, status=200)
+
+            except Http404 as e:
+                return Response({"detail": str(e)}, status=404)
+
+            except PermissionDenied as e:
+                return Response({"detail": str(e)}, status=403)
+
+            except ValidationError as e:
+                # DRF ValidationError should be a 400 with a clear payload
+                return Response({"detail": str(e.detail)}, status=400)
+
             except Exception as e:
-                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                # Don’t hide real bugs as 400s
+                log.error("Student progress error: %s\n%s", e, traceback.format_exc())
+                return Response({"detail": "Server error while computing student progress."}, status=500)
+
 
 class EnrolledStudentList(APIView):
     """
@@ -1477,7 +1493,6 @@ class StudentUnenrolledViews:
         def post(self, request, course_id, **kwargs):
             user = self.request.user
             student = get_object_or_404(StudentProfile, user=user)
-            print("student:",student.last_name)
             lesson_id = request.data.get("lesson")
             ser = LessonEnrollmentSerializer(
                 data={"lesson": lesson_id,"student": student.student_profile_id},
@@ -1644,74 +1659,6 @@ class StudentUnenrolledViews:
             }
             return Response(output, status=status.HTTP_200_OK) 
         
-class StudentClassroomView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication] 
-
-    def get(self, request): 
-        user = self.request.user 
-        student = get_object_or_404(StudentProfile, user = user)
-        q = Q(classroomenrollment_student=student) 
-        linked_rows = (
-                LessonClassroom.active
-                .filter(q)
-                .select_related("classroom")
-                .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
-                .values(
-                    "classroom__classroom_id",
-                    "classroom__location",
-                    "day_of_week",
-                    "time_start",
-                    "time_end",
-                    "supervisor__full_name",
-                    "duration_minutes",
-                    "classroom__capacity",
-                    "enrolled_count",   
-                    "classroom__zoom_link",
-                    "classroom__is_online",   
-                    "lesson__lesson_id",  
-                    "duration_weeks",
-                    "lesson_classroom_id"                                        
-                )
-            )
-
-        def norm_linked(r):
-            return {
-                    "classroom_id": r["classroom__classroom_id"],
-                    "location": r["classroom__location"],
-                    "day_of_week": r["day_of_week"],
-                    "supervisor": r["supervisor__full_name"],
-                    "time_start": r["time_start"].strftime("%H:%M") if r["time_start"] else None,
-                    "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
-                    "duration_minutes": r["duration_minutes"],
-                    "capacity": r["classroom__capacity"],
-                    "enrolled_count": r["enrolled_count"],   
-                    "is_online": r["classroom__is_online"],
-                    "zoom_link": r["classroom__zoom_link"], 
-                    "lesson_id": r["lesson__lesson_id"],     
-                    "duration_weeks": r["duration_weeks"],
-                    "lesson_classroom_id"   : r["lesson_classroom_id"   ]          
-            }
-            
-        DAY_ORDER = {
-                "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4,
-                "Friday": 5, "Saturday": 6, "Sunday": 7,
-            }
-
-        def day_rank(day):
-            """Return numeric rank for a weekday name (None or unknown -> 99)."""
-            return DAY_ORDER.get(day, 99)
-        try:
-            data = [*map(norm_linked, linked_rows)]
-            data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
-            return Response(data)
-            
-        except Exception as e:
-            return Response(
-                    {"error": str(e), "trace": traceback.format_exc()},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-
 
 """
 Shared
@@ -1723,19 +1670,19 @@ class CourseDetailView(APIView):
     authentication_classes = [CustomJWTAuthentication]
 
     def get(self, request, course_id):
+        completed = LessonEnrollment.EnrollmentStatus.COMPLETED
         course = get_object_or_404(
             Course.objects.select_related('owner_instructor')
                           .annotate(enrolled_count=Count('enrollment__student', distinct=True))
                           .annotate(
                             tot_lessons=Count('lesson', distinct=True),
                             # distinct student count via lesson enrollments
-                            enrolled_count=Count('lesson__lessonenrollment__student', distinct=True),
 
                             # total completed lesson enrollments across the course
                             sum_completed=Count(
                                 'lesson__lessonenrollment',
                                 filter=(
-                                    Q(lesson__lessonenrollment__status='Complete')
+                                    Q(lesson__lessonenrollment__status=completed)
                                 ),
                                 distinct=False,  # counting completions, not distinct students
                             ),

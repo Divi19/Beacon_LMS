@@ -47,8 +47,9 @@ export default function StudentLessonEnroll() {
       console.log("Unenrolled lessons data:", res.data);
       setLessons(res.data);
     } catch (err) {
+      const detail = err?.response?.data?.detail;
       console.error("Error fetching unenrolled lessons", err);
-      alert("Failed to load available lessons.");
+      alert(detail||"Failed to load available lessons.");
     } 
   };
 
@@ -58,27 +59,21 @@ export default function StudentLessonEnroll() {
       setSubmittingId(lessonCode);
       await api.post( `/student/courses/${courseId}/lessons/unenrolled/`, {
         // course_id: courseId,
-        lesson: lessonCode,
+        lesson_id: lessonCode,
       });
 
       navigate(`/student/course/${courseId}/my-lessons`);
       await fetchLessons(); // refresh after write so UI stays correct (the number of unenrolled)
     } catch (err) {
+      
       const detail = err?.response?.data?.detail;
-
-      if (err.response && err.response.status === 400) {
-        const data = err.response.data;
-        const message =
-          data.lesson?.[0] ||                
-          "Validation failed. Please check your prerequisites.";
-        alert(message)
-      }
-      else if (detail === "Student already enrolled") {
+      if (detail === "Student already enrolled") {
         await fetchLessons();
       } else {
         console.error("Enrollment failed", err);
         alert(detail || "Failed to enroll in course.");
       }
+      
     } finally {
       setSubmittingId(null);
     }
@@ -152,7 +147,7 @@ return (
                                 code: lesson.lesson_id,
                                 title: lesson.title,
                                 credit: lesson.credits,
-                                designer: lesson.designer_card,
+                                // director: lesson.director,
                                 duration: lesson.duration_weeks,
                                 description: lesson.description
                             }}
