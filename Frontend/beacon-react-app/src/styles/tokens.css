@@ -24,7 +24,23 @@
   --brand-aqua-600: #5bb2be;
   --topbar-h: 100px;
 }
+html[data-theme="light"] {
+  --bg: #f7f8fb;
+  --text: #0b0f19;
+  --surface: #ffffff;
+  --surface-2: #f6f7fb;
+  --border: #e5e7eb;
+  color-scheme: light;
+}
 
+html[data-theme="dark"] {
+  --bg: #0b0f19;
+  --text: #ebebeb;
+  --surface: #121624;
+  --surface-2: #161b2c;
+  --border: #2a3146;
+  color-scheme: dark;
+}
 /* =========================
    STUDENT — LIGHT (default)
    ========================= */
@@ -41,9 +57,17 @@ html[data-role="student"][data-theme="light"] {
   --brand-stud-link: #06343f;
   --brand-stud-link-hover: white;
   --brand-stud-btn-hover: #005b70;
+  --brand-stud-list-card: #c6ebf3;
 
   /* semantic aliases (use these in your CSS) */
   --bg: #f7f8fb;
+  --surface: #ffffff;
+  --surface-2: #f6f7fb;
+  --text: var(--brand-stud-norm-text);
+  --text-muted: #475569;
+  --border: #e5e7eb;
+  --primary: var(--brand-stud-primary-blue);
+  --primary-contrast: #ffffff;
 
   color-scheme: light;
 }
@@ -53,7 +77,7 @@ html[data-role="student"][data-theme="light"] {
    ========================= */
 html[data-role="student"][data-theme="dark"] {
   /* your original student dark tokens */
-  --brand-stud-title: #e4f4f7;
+  --brand-stud-title: #b8f4ff;
   --brand-stud-label:#c6ebf3;
   --brand-stud-subtitle:#fefefe;
   --brand-stud-pale-gradient: linear-gradient(to bottom, #062d34 0%, #0e4b57 70%, #a65701 100%);
@@ -64,9 +88,18 @@ html[data-role="student"][data-theme="dark"] {
   --brand-stud-link: #c6ebf3;
   --brand-stud-link-hover: #0097b2;
   --brand-stud-btn-hover: #5c9eae;
+  --brand-stud-list-card: #4c8c9b;
+  
 
   /* semantic aliases */
-  --bg: #5c5c5c ;     
+  --bg: #5c5c5c ;    
+  --surface: #121624;           
+  --surface-2: #161b2c;
+  --text: var(--brand-stud-norm-text);
+  --text-muted: #a1a1aa;
+  --border: #2a3146;
+  --primary: var(--brand-stud-primary-blue);
+  --primary-contrast: #0b0f19; 
 
   color-scheme: dark;
 }

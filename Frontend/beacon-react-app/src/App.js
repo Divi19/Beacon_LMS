@@ -47,7 +47,6 @@ import AdminCreateInstructor from "./pages/Admin/AdminCreateInstructor/AdminCrea
 
 export default function App(){
   const [details, setDetails] = useState([]);
-
   useEffect( () => {
     axios.get('http://localhost:8000/courses/frontend')
     .then(res => {
