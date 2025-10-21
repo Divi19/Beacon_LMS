@@ -124,17 +124,6 @@ return (
 
                 </div>
             </header>
-            <header className={i.header}>
-              
-                <div className={i.rect1}>
-           
-                <div className={i.label2}>
-                    <strong>{course.status}</strong>
-                </div>
-              
-
-                </div>
-            </header>
 
             {lessons.length === 0 ? (
                 <div className={i.noLessons}>No lessons yet.</div>
@@ -147,7 +136,7 @@ return (
                                 code: lesson.lesson_id,
                                 title: lesson.title,
                                 credit: lesson.credits,
-                                // director: lesson.director,
+                                designer: lesson.designer,
                                 duration: lesson.duration_weeks,
                                 description: lesson.description
                             }}

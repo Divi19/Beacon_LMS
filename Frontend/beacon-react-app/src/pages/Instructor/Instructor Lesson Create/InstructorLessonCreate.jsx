@@ -218,6 +218,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         setPrereqInput(
           pre.data?.prerequisites?.map((p) => p.lesson_id).join(", ") || ""
         );
+
+        const asn = await api.get(`/student/lessons/<str:lesson_id>/assignments/`)
+        setAssignmentsInput(asn.data)
+        
       } catch (err) {
         console.error("Failed to load lesson details", err);
       }

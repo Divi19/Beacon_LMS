@@ -257,19 +257,22 @@ export default function StudentLessonDetail() {
             <div className={i.topBar}>
                 <StudentTopBar />
             </div>
-
             <header className={i.header}>
                 <div className={i.rect}>
                     <div className={i.courseInfo}>
+                        <div className={i.courseMeta}>
+                                {lesson.credits} Credits ~{" "}
+                                {lesson.duration_weeks} Weeks
+                            </div>
                         <div className={i.courseHeader}>
                             <div className={i.courseCode}>
-                                {lesson.lesson_id}
+                                {lesson.lesson_id} 
+                                <div>{lesson.title}</div>
                             </div>
-                            <div className={i.courseMeta}>
-                                {lesson.credits} Credits ~{" "}
-                                {lesson.duration_week} Weeks
-                            </div>
+                            
+                           
                         </div>
+                        <div  className={i.label1}>{lesson.description}</div>
 
           <Button
             variant="blue"
