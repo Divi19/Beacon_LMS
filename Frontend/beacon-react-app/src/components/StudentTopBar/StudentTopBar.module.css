@@ -4,8 +4,7 @@
   justify-content: space-between;
   align-items: center;
   padding: clamp(12px, 2vw, 15px) 4rem;
-  background: var(--brand-student-pale-gradient);
-  border-bottom: 2px solid #e0e0e0;
+  background: var(--brand-stud-pale-gradient);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: fixed;
   top: 0;
@@ -74,10 +73,10 @@
 
 .navLink {
   text-decoration: none;
-  color: inherit;
+  color: var(--brand-stud-link);
   cursor: pointer;
 }
 .navLink:hover {
-  color: white;
+  color: var(--brand-stud-link-hover);
   opacity: 87%;
 }

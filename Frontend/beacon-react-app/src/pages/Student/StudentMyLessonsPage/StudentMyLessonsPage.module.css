@@ -15,7 +15,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 46px);
-  color: #7ad1d8;
+  color: var(--brand-stud-title);
 }
 
 .label {
@@ -56,11 +56,11 @@
   margin: 0 auto;
   max-width: 1100px;
   min-height: 360px;
-  background: #f7f8fb;
+  background: var(--bg);
   border-radius: 18px;
   border: 2px solid transparent;
   background-image:
-    linear-gradient(#f7f8fb, #f7f8fb),
+    linear-gradient(var(--bg), var(--bg)),
     linear-gradient(180deg, var(--bg-right-top), var(--bg-right-bot));
   background-origin: border-box;
   background-clip: padding-box, border-box;
