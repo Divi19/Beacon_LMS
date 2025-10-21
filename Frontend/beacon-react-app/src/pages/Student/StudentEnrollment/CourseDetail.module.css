@@ -8,18 +8,14 @@
   margin: 0 auto;
   padding: 24px 32px;
   border-radius: 18px;
-  background: linear-gradient(
-    to bottom,
-    var(--bg-right-top),
-    var(--bg-right-bot)
-  );
+  background: var(--brand-stud-pale-gradient);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .title {
   margin: 0 0 12px;
   font-size: clamp(22px, 3.8vw, 30px);
-  color: #0e5f6b;
+  color: var(--brand-stud-subtitle);
   font-weight: 800;
 }
 
@@ -27,13 +23,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 18px 28px;
-  color: #0e5f6b;
+  color: var(--brand-stud-label);
   font-weight: 700;
   margin-bottom: 16px;
 }
 .subhead {
   margin: 18px 0 18px;
-  color: #0e5f6b;
+  color: var(--brand-stud-subtitle);
   font-size: clamp(16px, 2.6vw, 22px);
 }
 .desc {
@@ -50,7 +46,7 @@
   flex-wrap: wrap;
 }
 .chip {
-  background: #6dc7d3;
+  background: var(--brand-stud-primary-blue);
   color: #09323a;
   font-weight: 700;
   border-radius: 10px;
@@ -79,7 +75,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #9fdbe3;
+  background: var(--brand-stud-primary-blue);
   color: #fff;
   border: none;
   cursor: pointer;
@@ -87,5 +83,5 @@
 }
 
 .enrollBtn:hover {
-  background: var(--brand-teal-600);
+  background: var(--brand-stud-btn-hover);
 }

@@ -9,16 +9,21 @@
           window.__USER_ROLE__ || localStorage.getItem("role") || "student";
         html.setAttribute("data-role", role);
 
-        var saved = localStorage.getItem("theme");
+        var saved = localStorage.getItem("theme"); // 'light' | 'dark' | null
         var prefersDark =
           window.matchMedia &&
           window.matchMedia("(prefers-color-scheme: dark)").matches;
-        html.setAttribute(
-          "data-theme",
-          saved || (prefersDark ? "dark" : "light")
-        );
+        var theme = saved || (prefersDark ? "dark" : "light");
+        html.setAttribute("data-theme", theme);
       })();
     </script>
+
+
+    <style>
+      html:not([data-theme]) body {
+        visibility: hidden;
+      }
+    </style>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

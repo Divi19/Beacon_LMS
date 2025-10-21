@@ -12,13 +12,13 @@
 .title {
   margin: 8px 0 16px;
   letter-spacing: 0.18em;
-  color: var(--brand-student-primary-blue);
+  color: var(--brand-stud-title);
   font-weight: 800;
   font-size: 28px;
 }
 
 .clockStrip {
-  background: var(--brand-student-pale-gradient);
+  background: var(--brand-stud-pale-gradient);
   border-radius: 14px;
   padding: 14px;
   display: flex;
@@ -29,7 +29,7 @@
 
 .clockLabel {
   font-weight: 700;
-  color: #083d44;
+  color: var(--brand-stud-label);
 }
 
 .pill {
@@ -42,7 +42,7 @@
 }
 
 .card {
-  background: #c6ebf3;
+  background: var(--brand-stud-list-card);
   border-radius: 14px;
   padding: 16px 18px;
   margin: 14px 0;
@@ -57,13 +57,13 @@
 }
 
 .day {
-  color: #0a6a74;
+  color: var(--brand-stud-subtitle);
   font-weight: 800;
   font-size: 18px;
 }
 
 .time {
-  color: #083d44;
+  color: var(--brand-stud-subtitle);
   font-weight: 700;
 }
 
@@ -71,7 +71,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 22px;
-  color: #23454b;
+  color: var(--brand-stud-label);
   font-weight: 600;
   margin-bottom: 10px;
 }
@@ -89,18 +89,18 @@
 }
 
 .line {
-  color: #0f3b4a;
+  color: var(--brand-stud-label);
   font-weight: 700;
 }
 
 .label {
-  color: #0c5560;
+  color: var(--brand-stud-subtitle);
   font-weight: 800;
   margin-right: 6px;
 }
 
 .linkish {
-  color: #0b5fa2;
+  color: var(--brand-stud-label);
   font-weight: 800;
 }
 
@@ -110,7 +110,7 @@
 }
 
 .weeks {
-  color: #0b4350;
+  color: var(--brand-stud-label);
   font-weight: 700;
 }
 

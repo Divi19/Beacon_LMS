@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "./StudentLogin.module.css";
-import {api} from "../../../api" 
+import { api } from "../../../api";
 
 // Optional: pass a logo URL via props if you prefer
 // Usage: <StudentLogin logoSrc="/assets/beacon-logo.png" />
@@ -11,33 +11,25 @@ export default function StudentLogin({ logoSrc }) {
   const [showPw, setShowPw] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
-  })
+    password: "",
+  });
   const handleChange = (e) => {
-    setFormData(
-      {...formData, 
-        [e.target.name]: e.target.value
-      }
-    )
-  }
-  const [isLoading, setLoading] = useState(false)
-  const [successMessage, setSuccessMessage] = useState(null) 
-  const [error, setError] = useState(null)
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const [isLoading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLoading) return; 
-  
+    if (isLoading) return;
+
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
-  
+
     try {
-      const { data } = await api.post(
-        "/student/login/",
-        formData
-        
-      );
+      const { data } = await api.post("/student/login/", formData);
       console.log("Login response:", data);
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
@@ -78,8 +70,12 @@ export default function StudentLogin({ logoSrc }) {
 
   return (
     <main className={styles.wrap}>
-      <section className={styles.card} role="region" aria-label="Student Sign In">
-       <img src="/logo.svg" alt="Beacon logo" className={styles.logo} />    
+      <section
+        className={styles.card}
+        role="region"
+        aria-label="Student Sign In"
+      >
+        <img src="/logo.svg" alt="Beacon logo" className={styles.logo} />
 
         <h1 className={styles.title}>Sign In - Student</h1>
 
@@ -127,7 +123,11 @@ export default function StudentLogin({ logoSrc }) {
             </button>
           </div>
 
-          {error && <p className={styles.error} role="alert">{error}</p>}
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
 
           <div className={styles.buttonRow}>
             <Link to="/student/signup" className={styles.ctaAlt}>
@@ -135,8 +135,12 @@ export default function StudentLogin({ logoSrc }) {
             </Link>
 
             <button className={styles.cta} type="submit" disabled={isLoading}>
-            {isLoading ? "Logging In…" : <span className={styles.ctaTextUnderline}>Log In</span>}
-          </button>
+              {isLoading ? (
+                "Logging In…"
+              ) : (
+                <span className={styles.ctaTextUnderline}>Log In</span>
+              )}
+            </button>
           </div>
           {/* <button className={styles.cta} type="submit" disabled={isLoading}>
             {isLoading ? "Logging In…" : <span className={styles.ctaTextUnderline}>Log In</span>}
@@ -145,7 +149,9 @@ export default function StudentLogin({ logoSrc }) {
 
         {/* Optional small print / links area */}
         <div className={styles.footerLinks}>
-          <Link to="/" className={styles.backLink}>Back to entry</Link>
+          <Link to="/" className={styles.backLink}>
+            Back to entry
+          </Link>
         </div>
       </section>
     </main>

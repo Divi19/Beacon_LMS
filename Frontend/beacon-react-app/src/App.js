@@ -50,7 +50,6 @@ import InstructorStudentCourse from "./pages/Instructor/InstructorStudentCourse/
 
 export default function App(){
   const [details, setDetails] = useState([]);
-
   useEffect( () => {
     api.get('/instructor/courses/')
     .then(res => {

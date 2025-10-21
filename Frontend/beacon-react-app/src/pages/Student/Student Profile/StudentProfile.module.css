@@ -1,7 +1,6 @@
 .page {
   min-height: 100vh;
   padding: 40px 32px;
-  background: #ececec; 
   box-sizing: border-box;
   padding-top: 22vh;
 }
@@ -10,7 +9,7 @@
   margin: 0 0 28px 0;
   font-size: clamp(26px, 4.8vw, 35px);
   letter-spacing: 0.18em;
-  color: var(--brand-student-title); 
+  color: var(--brand-stud-title); 
   font-weight: 800;
 }
 
@@ -21,7 +20,7 @@
   max-width: 820px;
   padding: 28px 28px;
   border-radius: 18px;
-  background: var(--brand-student-pale-gradient);
+  background: var(--brand-stud-pale-gradient);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -40,7 +39,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 12px;
-  color: var(--brand-student-label);
+  color: var(--brand-stud-label);
 }
 
 .row {
