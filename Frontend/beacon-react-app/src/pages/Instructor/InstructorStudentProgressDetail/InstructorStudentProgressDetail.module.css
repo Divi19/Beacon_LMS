@@ -65,18 +65,21 @@
   width: 100%;
   padding: 20px 50px;
   box-sizing: border-box;
-
   grid-auto-rows: auto;
   align-content: start;
-  min-height: 0;       
+  min-height: 0;    
+  place-items: center;    
+  place-content: center;   
 }
 
 .wrap {
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
   overflow-y: auto;
-  padding-top: 18vh;
-  
+  padding: clamp(16px, 4vw, 1px); 
+  padding-top: 10vh;
 }
 
 .card {

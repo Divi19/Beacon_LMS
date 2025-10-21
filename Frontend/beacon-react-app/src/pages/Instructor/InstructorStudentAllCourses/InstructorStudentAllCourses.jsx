@@ -61,7 +61,7 @@ export default function InstructorStudentAllCourses() {
                         }}
                     >
                         <h1 className={s.title} style={{ margin: 0 }}>
-                            STUDENT PROGRESS - Student All Courses
+                            STUDENT PROGRESS - STUDENT
                         </h1>
                         <Button
                             className={s.enrollBtn}

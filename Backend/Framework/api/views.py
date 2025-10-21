@@ -1663,10 +1663,13 @@ class StudentUnenrolledViews:
             }
             return Response(output, status=status.HTTP_200_OK) 
         
+
+import logging
+from django.http import HttpResponseServerError
+logger = logging.getLogger(__name__)
 class StudentClassrooms(APIView):
      permission_classes = [IsAuthenticated]
      authentication_classes = [CustomJWTAuthentication]
-
      def get(self, request):
          user = self.request.user
          student = get_object_or_404(StudentProfile, user=user)
@@ -1676,19 +1679,11 @@ class StudentClassrooms(APIView):
                 .filter(q)
                 .select_related("classroom")
                 .annotate(enrolled_count=Count("classroomenrollment", distinct=True))   
-                .annotate(
-                    lesson_id=F("lesson__lesson_id"),
-                    lesson_title=F("lesson__title")
-                    )
-                .annotate(
-                    course_id = F("lesson__course__course_id"),
-                    course_title = F("lesson__course__title")
-                )
                 .values(
-                    "lesson_id",
-                    "lesson_title",
-                    "course_id",
-                    "course_title",
+                    "lesson__lesson_id",
+                    "lesson__title",
+                    "lesson__course__course_id",
+                    "lesson__course__title",
                     "classroom__classroom_id",
                     "classroom__location",
                     "day_of_week",
@@ -1707,10 +1702,10 @@ class StudentClassrooms(APIView):
             )
          def norm_linked(r):
                 return {
-                    "lesson_id":r["lesson_id"],
-                    "lesson_title":r["lesson_title"],
-                    "course_id": r["course_id"],
-                    "course_title": r["course_title"],
+                    "lesson_id":r["lesson__lesson_id"],
+                    "lesson_title":r["lesson__title"],
+                    "course_id": r["lesson__course__course_id"],
+                    "course_title": r["lesson__course__title"],
                     "classroom_id": r["classroom__classroom_id"],
                     "location": r["classroom__location"],
                     "day_of_week": r["day_of_week"],
@@ -1738,13 +1733,13 @@ class StudentClassrooms(APIView):
          try:
                 data = [*map(norm_linked, linked_rows)]
                 data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
+                print(data)
                 return Response(data)
-            
          except Exception as e:
-                return Response(
-                    {"error": str(e), "trace": traceback.format_exc()},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
+            # Log the full traceback to the console explicitly
+            logger.exception("Error in student_classrooms_viewing") 
+            # You can even return the error message directly to the user for testing (temporarily)
+            return HttpResponseServerError(f"Debugging Error: {e.__class__.__name__}: {e}")
 
 
 """

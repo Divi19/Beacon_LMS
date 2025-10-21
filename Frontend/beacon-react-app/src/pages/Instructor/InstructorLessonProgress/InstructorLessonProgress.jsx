@@ -56,7 +56,7 @@ export default function InstructorLessonProgress() {
                     <h1 className={s.title}>STUDENT PROGRESS - LESSONS</h1>
 
                     <div className={s.lessonInfo}>
-                        <h2 className={s.lessonName}>{lesson.title}</h2>
+                        <h2 className={s.lessonName}>{lesson.lesson_id} - {lesson.title}</h2>
                         <span className={s.lessonCredit}>
                             ({lesson.credits} credits)
                         </span>
@@ -104,8 +104,7 @@ export default function InstructorLessonProgress() {
                 <div className={s.buttonStack}>
                     <Button
                         className={s.enrollBtn}
-                        onClick={() => navigate(-1)}
-                    >
+                        onClick={() => navigate(-1)}>
                         Back
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

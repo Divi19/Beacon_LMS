@@ -15,6 +15,16 @@ export default function StudentClassroom() {
   const [now, setNow] = useState(new Date());
   const [classrooms, setClassrooms] = useState([]);
 
+  async function fetchClassrooms(){
+    try {
+        const res = await api.get("/student/classrooms/viewing/")
+        setClassrooms(res.data)
+    } catch (err) {
+        const detail = err?.response?.data?.detail;
+        console.error("Error:", detail);
+        alert(detail || "An error occured. Please try again.");
+    }}
+
   // tick the live clock
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -26,14 +36,7 @@ export default function StudentClassroom() {
     // When backend is ready, replace:
     // const { data } = await api.get("/student/classrooms/"); // aggregated
     // setClassrooms(data.results ?? data);
-    try {
-        const {data} = api.get("student/classrooms/viewing/")
-        setClassrooms(data)
-    } catch (err) {
-        const detail = err?.response?.data?.detail;
-        console.error("Error:", detail);
-        alert(detail || "An error occured. Please try again.");
-    }
+    fetchClassrooms()
     ;
   }, []);
 
@@ -96,13 +99,13 @@ export default function StudentClassroom() {
                   <div className={s.line}>
                     <span className={s.label}>Course:</span>{" "}
                     <span className={s.linkish}>
-                      {c.course?.course_id}  {c.course?.title}
+                      {c.course_id}  {c.course_title}
                     </span>
                   </div>
                   <div className={s.line}>
                     <span className={s.label}>Lesson:</span>{" "}
                     <span className={s.linkish}>
-                      {c.lesson?.lesson_id}  {c.lesson?.title}
+                      {c.lesson_id}  {c.lesson_title}
                     </span>
                   </div>
                 </div>
