@@ -1,0 +1,72 @@
+@@ -1,3 +1,4 @@
++import dj_database_url
+ """
+ Django settings for backend project.
+ 
+@@ -28,12 +29,12 @@
+ # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+ 
+ # SECURITY WARNING: keep the secret key used in production secret!
+-SECRET_KEY = 'django-insecure--)hhfofc+1(6y*&ue2=7dxb6*=*jk$d3pd@e6d@rky7h1_v8lw'
++SECRET_KEY = os.environ.get('SECRET_KEY', default='dev-secret-key')
+ 
+ # SECURITY WARNING: don't run with debug turned on in production!
+-DEBUG = True
+-
+-ALLOWED_HOSTS = ["*"]
++DEBUG = 'RENDER' not in os.environ
++
++ALLOWED_HOSTS = []
+ 
+ REST_FRAMEWORK = {
+     "DEFAULT_AUTHENTICATION_CLASSES": (
+@@ -117,24 +118,22 @@
+ # Database
+ # https://docs.djangoproject.com/en/5.2/ref/settings/#databases - pwd superuser: 123
+ DATABASES = {
+-    'default': {
+-        'ENGINE': 'django.db.backends.postgresql',
+-        'NAME': 'lms_db',
+-        'USER': 'myuser',
+-        'PASSWORD': 'mypassword',
+-        'HOST': 'localhost',
+-        'PORT': '5432',
+-    }
++    'default': dj_database_url.config(
++        default='postgresql://postgres:postgres@localhost:5432/backend',
++        conn_max_age=600
++    )
++}
+ }
+ 
+ 
+ if 'test' in sys.argv:
+     DATABASES = {
+-        'default': {
+-            'ENGINE': 'django.db.backends.sqlite3',
+-            'NAME': os.path.join(os.path.dirname(__file__), 'test_db.sqlite3'),
+-        }
+-    }
++    'default': dj_database_url.config(
++        default='postgresql://postgres:postgres@localhost:5432/backend',
++        conn_max_age=600
++    )
++}
++}
+ 
+ 
+ # Password validation
+@@ -189,3 +188,13 @@
+ #CORS_ALLOW_ORIGINS = True
+ 
+ 
++
++
++RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
++if RENDER_EXTERNAL_HOSTNAME:
++    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
++
++
++if not DEBUG:
++    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
++    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
