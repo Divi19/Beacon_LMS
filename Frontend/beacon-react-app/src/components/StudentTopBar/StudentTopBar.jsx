@@ -37,7 +37,7 @@ export default function StudentTopBar() {
 
           <li className={s.navItem}>
             <NavLink
-              to="/student/classroom"
+              to="/student/progress"
               className={({ isActive }) =>
                 [s.navLink, isActive ? s.active : ""].join(" ")
               }

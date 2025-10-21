@@ -39,13 +39,8 @@
 .courseHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   margin-bottom: 12px;
-  max-width: 1000px;
-}
-
-.courseInfo {
-  max-width: 1000px;
 }
 
 .courseCode {
@@ -138,7 +133,6 @@
   min-width: unset !important;
   max-width: fit-content;
   font-size: 15px;
-  margin: 8px;
 }
 
 .enrollBtn:hover {
