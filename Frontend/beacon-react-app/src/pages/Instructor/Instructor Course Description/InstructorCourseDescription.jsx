@@ -161,17 +161,6 @@ export default function InstructorCourseDescription() {
       </div>
       <div className={s.wraprow}>
         <div className={s.row1}>
-          <div
-            className={`${s.panel1} ${
-              activeTab === "students" ? s.tabActive : ""
-            }`}
-            onClick={() =>
-              setActiveTab(activeTab === "students" ? null : "students")
-            }
-            style={{ cursor: "pointer" }}
-          >
-            <h2 className={s.label}>Enrolled Students</h2>
-          </div>
 
           <div
             className={`${s.panel1} ${
@@ -182,18 +171,7 @@ export default function InstructorCourseDescription() {
           >
             <h2 className={s.label}>Lessons</h2>
           </div>
-
-          <div
-            className={`${s.panel1} ${
-              activeTab === "classrooms" ? s.tabActive : ""
-            }`}
-            onClick={() =>
-              setActiveTab(activeTab === "classrooms" ? null : "classrooms")
-            }
-            style={{ cursor: "pointer" }}
-          >
-            <h2 className={s.label}>Active Classrooms</h2>
-          </div>
+   
         </div>
       </div>
 
