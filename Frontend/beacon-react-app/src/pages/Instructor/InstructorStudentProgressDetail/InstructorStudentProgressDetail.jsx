@@ -217,7 +217,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "brown",
+                                            color: "var(--brand-inst-label)",
                                         }}
                                     >
                                         {student.email}
@@ -225,7 +225,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "brown",
+                                            color: "var(--brand-inst-label)",
                                         }}
                                     >
                                         Lessons Completed:{" "}
@@ -236,7 +236,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "brown",
+                                            color: "var(--brand-inst-label",
                                         }}
                                     >
                                         Credits Earned:{" "}
@@ -340,7 +340,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "brown",
+                                            color: "var(--brand-inst-label)",
                                         }}
                                     >
                                         Students Enrolled:{" "}
@@ -361,7 +361,7 @@ export default function InstructorCourseProgressDetail() {
                                             fontSize: "14px",
                                             fontWeight: "600",
                                             marginBottom: "4px",
-                                            color: "brown",
+                                            color: "var(--brand-inst-label)",
                                         }}
                                     >
                                         Average Progress
@@ -379,7 +379,7 @@ export default function InstructorCourseProgressDetail() {
                                             style={{
                                                 flex: 1,
                                                 height: "12px",
-                                                background: "#eee",
+                                                background: "var(--brand-inst-label)",
                                                 borderRadius: "8px",
                                                 overflow: "hidden",
                                             }}
@@ -388,7 +388,7 @@ export default function InstructorCourseProgressDetail() {
                                                 style={{
                                                     width: `${(lesson.lesson_progress_percentage)}%`,
                                                     height: "100%",
-                                                    background: "#1a73e8",
+                                                    background: "var(--brand-inst-progressbar)",
                                                 }}
                                             />
                                         </div>
