@@ -56,6 +56,7 @@ export default function InstructorCourseProgressDetail() {
     sortHighToLow ? b.duration_weeks - a.duration_weeks : a.duration_weeks - b.duration_weeks
   );
 
+<<<<<<< HEAD
 
   return (
     <div className={s.wrap}>
@@ -65,6 +66,23 @@ export default function InstructorCourseProgressDetail() {
           <h1 className={s.title}>STUDENT PROGRESS - COURSES</h1>
         </div>
       </header>
+=======
+    return (
+        <div className={s.wrap}>
+            <InstructorTopBar />
+            <header className={s.header}>
+                <div
+                    className={s.left}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                    }}
+                >
+                    <h1 className={s.title}>STUDENT PROGRESS - COURSES</h1>
+                </div>
+            </header>
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
 
             <div className={s.container}>
                 <div className={s.card}>
@@ -81,6 +99,7 @@ export default function InstructorCourseProgressDetail() {
                     </div>
 
                     <div className={s.cardDesc2}>
+<<<<<<< HEAD
     <span>Average Progress:</span>
     <div
         style={{
@@ -111,6 +130,43 @@ export default function InstructorCourseProgressDetail() {
         <span>{Math.round(course.avg_percentages)}%</span>
     </div>
 </div>
+=======
+                        <span>Average Progress:</span>
+                        <div
+                            style={{
+                                flex: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    flex: 1,
+                                    height: "12px",
+                                    background: "#eee",
+                                    borderRadius: "8px",
+                                    overflow: "hidden",
+                                    marginLeft: "8px",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: `${(course.average_progress || 0) * 100}%`,
+                                        background: "#7ad1d8",
+                                        height: "100%",
+                                    }}
+                                />
+                            </div>
+                            <span>
+                                {Math.round(
+                                    (course.average_progress || 0) * 100,
+                                )}
+                                %
+                            </span>
+                        </div>
+                    </div>
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                 </div>
 
         <div className={s.buttonStack}>
@@ -192,7 +248,11 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
+<<<<<<< HEAD
                                             color: "var(--brand-inst-label)",
+=======
+                                            color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                         }}
                                     >
                                         {student.email}
@@ -200,7 +260,11 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
+<<<<<<< HEAD
                                             color: "var(--brand-inst-label)",
+=======
+                                            color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                         }}
                                     >
                                         Lessons Completed:{" "}
@@ -211,7 +275,11 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
+<<<<<<< HEAD
                                             color: "var(--brand-inst-label)",
+=======
+                                            color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                         }}
                                     >
                                         Credits Earned:{" "}
@@ -264,7 +332,7 @@ export default function InstructorCourseProgressDetail() {
                                 <span
                                     style={{
                                         fontSize: "13px",
-                                        color: "brown",
+                                        color: "#777",
                                         marginTop: "6px",
                                         fontStyle: "italic",
                                     }}
@@ -315,7 +383,11 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
+<<<<<<< HEAD
                                             color: "var(--brand-inst-label)",
+=======
+                                            color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                         }}
                                     >
                                         Students Enrolled:{" "}
@@ -336,7 +408,11 @@ export default function InstructorCourseProgressDetail() {
                                             fontSize: "14px",
                                             fontWeight: "600",
                                             marginBottom: "4px",
+<<<<<<< HEAD
                                             color: "var(--brand-inst-label)",
+=======
+                                            color: "#333",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                         }}
                                     >
                                         Average Progress

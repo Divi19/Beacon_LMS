@@ -91,7 +91,11 @@ export default function InstructorLessonProgress() {
                                 <div
                                     style={{
                                         width: `${avgProgress * 100}%`,
+<<<<<<< HEAD
                                         background: "var(--brand-inst-progressbar)",
+=======
+                                        background: "#1a73e8",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                         height: "100%",
                                     }}
                                 />
@@ -104,8 +108,14 @@ export default function InstructorLessonProgress() {
                 <div className={s.buttonStack}>
                     <Button
                         className={s.enrollBtn}
+<<<<<<< HEAD
                         onClick={() => navigate(-1)}>
                         Back
+=======
+                        onClick={() => navigate("/instructor/student-progress")}
+                    >
+                        Back to Course Progress
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="22"
@@ -169,7 +179,11 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
+<<<<<<< HEAD
                                         color: "var(--brand-inst-label)",
+=======
+                                        color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     }}
                                 >
                                     {student.email}
@@ -179,7 +193,11 @@ export default function InstructorLessonProgress() {
                                         display: "flex",
                                         gap: "20px",
                                         fontSize: "14px",
+<<<<<<< HEAD
                                         color: "var(--brand-inst-label)",
+=======
+                                        color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     }}
                                 >
                                     <span>
@@ -196,7 +214,11 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
+<<<<<<< HEAD
                                         color: "var(--brand-inst-label)",
+=======
+                                        color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     }}
                                 >
                                     <strong>Session: </strong>
@@ -251,7 +273,11 @@ export default function InstructorLessonProgress() {
                             <span
                                 style={{
                                     fontSize: "13px",
+<<<<<<< HEAD
                                     color: "var(--brand-inst-label)",
+=======
+                                    color: "#777",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     marginTop: "6px",
                                     fontStyle: "italic",
                                 }}
