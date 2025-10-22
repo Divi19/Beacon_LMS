@@ -51,12 +51,12 @@ export default function InstructorCourseProgressDetail() {
     if (!course) return <div>No course found.</div>;
 
     const sortedStudents = [...students].sort((a, b) =>
-        sortHighToLow ? b.lessons_completed - a.lessons_completed : a.lessons_completed - b.lessons_completed,
+        sortHighToLow ? a.lessons_completed - b.lessons_completed :  b.lessons_completed - a.lessons_completed ,
     );
 
     const sortedLessons = [...lessons].sort((a, b) => {
-        const key = "duration_weeks";
-        return sortHighToLow ? b[key] - a[key] : a[key] - b[key];
+        const key = "avg_done";
+        return sortHighToLow ?  a[key] - b[key] : b[key] - a[key] ;
     });
 
 
