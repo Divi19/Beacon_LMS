@@ -690,6 +690,7 @@ class LessonBulkCreateInSerializer(serializers.Serializer):
 class LessonItemsBulkSerializer(serializers.Serializer):
     lesson_id = serializers.CharField(required=True)
     items = serializers.CharField(allow_blank=False, trim_whitespace=True)
+    mode = serializers.ChoiceField(choices=["merge", "replace"], required=True)
 
     def validate_lesson_id(self, v):
         if not Lesson.objects.filter(pk=v).exists():
