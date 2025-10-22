@@ -6,16 +6,14 @@ import Button from "../../../components/Button/Button";
 import { api } from "../../../api";
 
 export default function InstructorCourseProgressDetail() {
-    const { courseId } = useParams();
-    const navigate = useNavigate();
-    const [course, setCourse] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [students, setStudents] = useState([]);
-    const [sortHighToLow, setSortHighToLow] = useState(true);
-    const [lessons, setLessons] = useState([]);
-    const [lessonSortBy, setLessonSortBy] = useState("duration");
-    const [lessonSortHighToLow, setLessonSortHighToLow] = useState(true);
-    const [activeTab, setActiveTab] = useState(null);
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [students, setStudents] = useState([]);
+  const [sortHighToLow, setSortHighToLow] = useState(true);
+  const [lessons, setLessons] = useState([]);
+  const [activeTab, setActiveTab] = useState(null);
 
     const handleToggleLessons = () => {
         const willOpen = activeTab !== "lessons"; //ignored 
@@ -44,37 +42,29 @@ export default function InstructorCourseProgressDetail() {
             }
         };
 
-        fetchCourse();
-    }, [courseId]);
+    fetchCourse();
+  }, [courseId]);
 
-    if (loading) return <div>Loading course details…</div>;
-    if (!course) return <div>No course found.</div>;
+  if (loading) return <div>Loading course details…</div>;
+  if (!course) return <div>No course found.</div>;
 
     const sortedStudents = [...students].sort((a, b) =>
         sortHighToLow ? b.lessons_completed - a.lessons_completed : a.lessons_completed - b.lessons_completed,
     );
 
-    const sortedLessons = [...lessons].sort((a, b) => {
-        const key = "duration_weeks";
-        return sortHighToLow ? b[key] - a[key] : a[key] - b[key];
-    });
+  const sortedLessons = [...lessons].sort((a, b) =>
+    sortHighToLow ? b.duration_weeks - a.duration_weeks : a.duration_weeks - b.duration_weeks
+  );
 
 
-    return (
-        <div className={s.wrap}>
-            <InstructorTopBar />
-            <header className={s.header}>
-                <div
-                    className={s.left}
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                    }}
-                >
-                    <h1 className={s.title}>STUDENT PROGRESS - COURSES</h1>
-                </div>
-            </header>
+  return (
+    <div className={s.wrap}>
+      <InstructorTopBar />
+      <header className={s.header}>
+        <div className={s.left}>
+          <h1 className={s.title}>STUDENT PROGRESS - COURSES</h1>
+        </div>
+      </header>
 
             <div className={s.container}>
                 <div className={s.card}>
@@ -123,61 +113,46 @@ export default function InstructorCourseProgressDetail() {
 </div>
                 </div>
 
-                <div className={s.buttonStack}>
-                    <Button
-                        className={s.enrollBtn}
-                        onClick={() => navigate("/instructor/student-progress")}
-                    >
-                        Back to Course Progress
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 8 8 12 12 16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </Button>
-                    <Button
-                        variant="orange"
-                        className={s.enrollBtn}
-                        onClick={() => setSortHighToLow(!sortHighToLow)}
-                    >
-                        Sort {sortHighToLow ? "Low → High" : "High → Low"}
-                    </Button>
-                </div>
-            </div>
+        <div className={s.buttonStack}>
+          <Button
+            className={s.enrollBtn}
+            onClick={() => navigate("/instructor/student-progress")}
+          >
+            Back to Course Progress
+          </Button>
+          <Button
+            variant="orange"
+            className={s.enrollBtn}
+            onClick={() => setSortHighToLow(!sortHighToLow)}
+          >
+            Sort {sortHighToLow ? "Low → High" : "High → Low"}
+          </Button>
+        </div>
+      </div>
 
-            <div className={s.wraprow}>
-                <div className={s.row1}>
-                    <div
-                        className={`${s.panel1} ${activeTab === "students" ? s.tabActive : ""}`}
-                        onClick={() =>
-                            setActiveTab(
-                                activeTab === "students" ? null : "students",
-                            )
-                        }
-                        style={{ cursor: "pointer" }}
-                    >
-                        <h2 className={s.label}>Students</h2>
-                    </div>
+      <div className={s.wraprow}>
+        <div className={s.row1}>
+          <div
+            className={`${s.panel1} ${
+              activeTab === "students" ? s.tabActive : ""
+            }`}
+            onClick={() =>
+              setActiveTab(activeTab === "students" ? null : "students")
+            }
+          >
+            <h2 className={s.label}>Students</h2>
+          </div>
 
-                    <div
-                        className={`${s.panel1} ${activeTab === "lessons" ? s.tabActive : ""}`}
-                        onClick={handleToggleLessons}
-                        style={{ cursor: "pointer" }}
-                    >
-                        <h2 className={s.label}>Lessons</h2>
-                    </div>
-                </div>
-            </div>
+          <div
+            className={`${s.panel1} ${
+              activeTab === "lessons" ? s.tabActive : ""
+            }`}
+            onClick={handleToggleLessons}
+          >
+            <h2 className={s.label}>Lessons</h2>
+          </div>
+        </div>
+      </div>
 
             {activeTab === "students" && (
                 <>

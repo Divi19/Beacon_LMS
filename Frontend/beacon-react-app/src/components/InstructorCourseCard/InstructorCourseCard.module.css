@@ -22,7 +22,7 @@
 }
 .title {
   margin: 0 0 10px 0;
-  font-size: clamp(18px, 2.6vw, 20px);
+  font-size: 1.6rem;
   color: var(--brand-inst-subtitle);
   font-weight: 800;
 }
@@ -35,22 +35,21 @@
 }
 
 .cta {
-  background:var(--brand-inst-primary-orange);
+  background:#ff9c5f ;
   color: #fff;
   border: none;
-  border-radius: 25px;
-  padding: 6px 14px;
-  font-size: 14px;
+  border-radius: 2rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
   font-weight: 600;
-
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  gap: 0.4rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
   cursor: pointer;
   transition: background 0.2s ease, filter 0.2s ease;
 }
+
 .cta:hover {
   background: var(--brand-inst-btn-hover);
 }

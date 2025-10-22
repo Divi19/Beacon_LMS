@@ -1,8 +1,20 @@
-import s from "./InstructorTopBar.module.css";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
+import s from "./InstructorTopBar.module.css";
 import ThemeToggle from "../../state/ThemeToggle";
 
 export default function InstructorTopBar() {
+  const [fontSize, setFontSize] = useState(
+    () => parseInt(localStorage.getItem("fontSize")) || 16
+  );
+
+  // Apply font size globally
+  useEffect(() => {
+    document.body.style.fontSize = `${fontSize}px`;
+    document.documentElement.style.fontSize = `${fontSize}px`;
+    localStorage.setItem("fontSize", fontSize);
+  }, [fontSize]);
+
   return (
     <header className={s.topBar}>
       <NavLink to="/" className={s.leftSide}>
@@ -23,12 +35,15 @@ export default function InstructorTopBar() {
             </a>
           </li>
           <li className={s.navItem}>
-            {" "}
             <a href="/instructor/classrooms" className={s.navLink}>
               Classrooms
             </a>
           </li>
-          <li className={s.navItem}><a href="/instructor/student-progress" className={s.navLink}>Report</a></li>
+          <li className={s.navItem}>
+           <a href="/instructor/student-progress" className={s.navLink}>
+              Report
+            </a>
+          </li>
           <li className={s.navItem}>
             <ThemeToggle />
           </li>
@@ -39,6 +54,24 @@ export default function InstructorTopBar() {
               className={s.profileLogoTop}
             />
             <span className={s.accountText}>Instructor</span>
+          </li>
+          <li className={`${s.navItem} ${s.sliderContainer}`}>
+            <label htmlFor="fontSizeSlider" className={s.sliderLabel}>
+              A
+            </label>
+            <input
+              id="fontSizeSlider"
+              type="range"
+              min="14"
+              max="20"
+              step="1"
+              value={fontSize}
+              onChange={(e) => setFontSize(parseInt(e.target.value))}
+              className={s.slider}
+            />
+            <label htmlFor="fontSizeSlider" className={s.sliderLabelLarge}>
+              A
+            </label>
           </li>
         </ul>
       </nav>

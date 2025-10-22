@@ -1,68 +1,55 @@
+:root {
+  font-size: 16px; /* base scaling for rem */
+}
+
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;           
-  padding: 0 20px;       
-  height: 100px;                   
+  align-items: center;
+  padding: 0 1.25rem;
+  height: 6.25rem;
 }
 
 .left {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: bold;
 }
 
-.right {
-  display: flex;
-  gap: 12px; 
-}
-
 .enrollBtn {
-  max-width: 340px;
+  max-width: 21rem;
   display: grid;
   grid-auto-flow: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-size: clamp(16px, 2.2vw, 20px);
-  margin: 10px 30px 0 30px;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+  margin: 0.6rem 2rem 0 2rem;
   background-color: var(--brand-inst-primary-orange);
+  transition: all 0.2s ease-in-out;
 }
 
-.lessonFile {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 0;
-}
-
-.button:hover {
-  transform: scale(1.05);
-}
-
-.enrollBtn:hover{
+.enrollBtn:hover {
   transform: scale(1.05);
   background-color: var(--brand-inst-primary-orange);
   color: var(--brand-inst-label);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.18);
 }
 
 .title {
   margin: 0;
-  padding-top: 10px;
   letter-spacing: 0.25em;
   font-weight: 800;
-  font-size: clamp(26px, 4.8vw, 46px);
-  color: var(--brand-inst-title); 
-  padding-left: 30px;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  color: var(--brand-inst-title);
+  padding-left: 1.8rem;
 }
 
 .container {
-  flex: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 50px;
+  gap: 3rem;
   width: 100%;
+  padding: 1.25rem 3rem;
   padding: 20px 50px;
   box-sizing: border-box;
   grid-auto-rows: auto;
@@ -79,15 +66,23 @@
   align-items: center;
   flex-direction: column;
   overflow-y: auto;
+  padding-top: 18vh;
+  font-size: 1rem;
   padding: clamp(16px, 4vw, 1px); 
   padding-top: 22vh;
 }
 
 .card {
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  color: brown;
+  transition: transform 0.2s ease-in-out;
+  margin-top: 0.5rem;
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
@@ -102,22 +97,28 @@
 
 .card:hover {
   transform: translateY(-1px);
+  box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.18);
+  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   background: var(--brand-inst-strong-gradient);
 }
 
-
 .cardTitle {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: bold;
+  margin-bottom: 0.6rem;
   margin-bottom: 10px;
   color: var(--brand-inst-label);
 }
 
-.cardDesc1 {
+.cardDesc1,
+.cardDesc2 {
   display: flex;
-  justify-content: left;
+  justify-content: flex-start;
   width: 100%;
+  font-size: 1rem;
+  gap: 1rem;
+  margin-bottom: 0.3rem;
   font-size: 16px;
   color: var(--brand-inst-label);
 }
@@ -129,40 +130,75 @@
 
 .cardDesc2 {
   display: flex;
-  justify-content: left; 
+  align-items: center; /* ✅ vertically align label + bar */
+  justify-content: flex-start;
   width: 100%;
+  font-size: 1rem;
+  gap: 1rem;
+  margin-bottom: 0.3rem;
   font-size: 16px;
   margin-bottom: 2px;
   color: var(--brand-inst-label);
 }
 
+.cardDesc2 span:first-child {
+  min-width: 10rem;
+  text-align: left;
 .cardDesc2 span:last-child {
   margin-left: 10px;
   color: var(--brand-inst-label);
 }
 
-.leftGroup {
+.progressBar {
+  flex: 1;
   display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  background: #eee;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  height: 0.75rem;
+  background: #7ad1d8;
+}
+
+.progressFillBlue {
+  height: 0.75rem;
+  background: #1a73e8;
+}
+
+.progressText {
+  position: absolute;
+  right: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: brown;
   gap: 8px; 
   color: var(--brand-inst-label);
 }
 
 .wraprow {
-  position: relative;
-  padding: clamp(16px, 4vw, 40px);
-  padding-top: 0;
-  max-width: 1200px;
-  width: 100%;
+  padding: 2rem;
+  max-width: 75rem;
   margin: 0 auto;
 }
 
 .row1 {
   display: flex;
-  gap: 8px;
-  padding-top: 0;
+  gap: 0.5rem;
 }
 
 .panel1 {
+  max-width: 18rem;
+  flex: 1;
+  padding: 0.3rem 1.5rem;
+  border-radius: 1.1rem;
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
+  box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.08);
   max-width: 300px;
   width: 100%;
   margin: 0 auto;
@@ -172,12 +208,15 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  cursor: pointer;
   color: var(--brand-inst-label);
 }
 
 .panel1:hover {
   filter: brightness(1.05);
   transform: translateY(-1px);
+  box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.18);
+  background: rgb(255, 208, 147);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   background: var(--brand-inst-strong-gradient);
 }
@@ -185,16 +224,17 @@
 .label {
   color: var(--brand-inst-label);
   text-align: center;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .tabActive {
+  box-shadow: inset 0 0 0 0.2rem rgba(233, 109, 31, 0.35);
   box-shadow: inset 0 0 0 3px var(--brand-inst-primary-orange);
 }
 
 .profileLogoTop {
-  width: 48px;
-  height: 48px;
+  width: 3rem;
+  height: 3rem;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -202,6 +242,7 @@
 .studentInfoGroup {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
   gap: 10px;
   color: var(--brand-inst-label);
 }
@@ -209,6 +250,123 @@
 .studentInfoText {
   display: flex;
   flex-direction: column;
+  gap: 0.2rem;
+}
+
+.studentName {
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.studentEmail {
+  font-size: 0.875rem;
+  color: brown;
+}
+
+.progressColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 12rem;
+  position: relative;
+}
+
+.enrolledText {
+  font-size: 0.8125rem;
+  color: brown;
+  margin-top: 0.3rem;
+  font-style: italic;
+}
+
+.lessonFile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+}
+
+.lessonCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  color: brown;
+  transition: transform 0.2s ease-in-out;
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+}
+.lessonCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.18);
+}
+
+.lessonInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.lessonTitle {
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.lessonSub {
+  font-size: 0.875rem;
+  color: brown;
+}
+
+/* Right section */
+.lessonProgress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  min-width: 12rem;
+}
+
+.lessonAvg {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: brown;
+}
+
+/* Progress bar container + outside text */
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.progressBar {
+  flex: 1;
+  height: 0.75rem;
+  background: #eee;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  width: 10rem;
+}
+
+.progressFillBlue {
+  height: 100%;
+  background: #1a73e8;
+}
+
+.progressTextOutside {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: brown;
+  white-space: nowrap;
+}
+
+.noLessons {
+  text-align: center;
+  font-size: 1rem;
+  color: brown;
   gap: 2px;
   color: var(--brand-inst-label);
+}
 }

@@ -172,3 +172,81 @@ border-radius: 6px;
   display: flex;
   gap: 8px; 
 }
+
+.wrap {
+  padding: calc(clamp(16px, 4vw, 40px) * var(--font-scale));
+  padding-top: calc(22vh * var(--font-scale));
+}
+
+.header {
+  margin-bottom: calc(clamp(16px, 3vw, 28px) * var(--font-scale));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  letter-spacing: 0.25em;
+  font-weight: 800;
+  font-size: calc(clamp(26px, 4.8vw, 46px) * var(--font-scale));
+  color: #7ad1d8;
+}
+
+.label {
+  margin-top: calc(10px * var(--font-scale));
+  margin-left: calc(10px * var(--font-scale));
+  font-weight: normal;
+  font-size: calc(clamp(20px, 3.3vw, 25px) * var(--font-scale));
+  color: #176978;
+}
+
+.label1 {
+  margin-left: calc(10px * var(--font-scale));
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: calc(300px * var(--font-scale));
+  font-weight: normal;
+  font-size: calc(clamp(9px, 2.2vw, 20px) * var(--font-scale));
+  color: #176978;
+}
+
+.label2 {
+  margin: calc(10px * var(--font-scale)) 0 0 calc(55px * var(--font-scale));
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: calc(300px * var(--font-scale));
+  font-weight: normal;
+  font-size: calc(clamp(9px, 2.2vw, 20px) * var(--font-scale));
+  color: #176978;
+}
+
+.card {
+  margin: 0 auto;
+  max-width: calc(1100px * var(--font-scale));
+  min-height: calc(360px * var(--font-scale));
+  padding: calc(clamp(20px, 4vw, 40px) * var(--font-scale));
+  border-radius: calc(18px * var(--font-scale));
+}
+
+.emptyText {
+  font-size: calc(clamp(14px, 2.2vw, 18px) * var(--font-scale));
+}
+
+.enrollBtn {
+  font-size: calc(clamp(16px, 2.2vw, 20px) * var(--font-scale));
+}
+
+.rect {
+  width: calc(700px * var(--font-scale));
+  height: calc(78px * var(--font-scale));
+  border-radius: calc(6px * var(--font-scale));
+}
+
+.rect1 {
+  width: calc(200px * var(--font-scale));
+  height: calc(50px * var(--font-scale));
+  border-radius: calc(6px * var(--font-scale));
+}
