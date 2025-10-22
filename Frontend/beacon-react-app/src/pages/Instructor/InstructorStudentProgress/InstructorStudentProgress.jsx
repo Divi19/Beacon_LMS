@@ -87,7 +87,7 @@ export default function InstructorStudentProgress() {
                                     style={{
                                         flex: 1,
                                         height: "12px",
-                                        background: "#eee",
+                                        background: "var(--brand-inst-primary-orange)",
                                         borderRadius: "8px",
                                         overflow: "hidden",
                                     }}
@@ -95,7 +95,7 @@ export default function InstructorStudentProgress() {
                                     <div
                                         style={{
                                             width: `${(c.avg_completed)/(c.tot_lessons) * 100}%`,
-                                            background: "#7ad1d8",
+                                            background: "var(--brand-inst-progressbar)",
                                             height: "100%",
                                         }}
                                     />
