@@ -1,151 +1,170 @@
 .wrap {
-  padding: clamp(1em, 4vw, 2.5em); /* scales with body font */
+  padding: clamp(16px, 4vw, 1px); 
   padding-top: 22vh;
 }
 
 .header {
-  margin-bottom: clamp(1em, 3vw, 1.75em);
+  margin-bottom: clamp(16px, 3vw, 28px);
   padding-left: 5vh;
   
 }
 
 .title {
-  margin: 1.25em 0 0 0;
+  margin: 20px 0 0 0;
   letter-spacing: 0.25em;
   font-weight: 800;
-  font-size: 2.5em;
+  font-size: clamp(20px, 3vw, 35px);
   color: var(--brand-inst-title);
-  text-align: left;
 }
-
 .formContainer {
   background: var(--brand-inst-form-gradient);
-  padding: 1.875em;
-  border-radius: 1.25em;
-  box-shadow: 0 0.375em 0.75em rgba(0, 0, 0, 0.1);
-  max-width: 43.75em;
-  margin: 1.25em auto;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+  margin: 20px auto;
 }
 
 .row {
   display: flex;
   align-items: center;
-  margin-bottom: 0.9375em;
+  margin-bottom: 15px;
 }
 
 .label {
-  width: 9.375em;
+  width: 150px;
   font-weight: 500;
   text-align: right;
-  margin-right: 1.25em;
-  font-size: 1em;
+  margin-right: 20px;
 }
 
 .input {
   flex: 1;
-  padding: 0.625em;
-  border-radius: 0.5em;
+  padding: 10px;
+  border-radius: 8px;
   border: 1px solid #ccc;
   outline: none;
-  font-size: 1em;
 }
 
 .input:focus {
   outline: none;
-  box-shadow: inset 0 0 0 0.125em #66c9d7;
+  box-shadow: inset 0 0 0 2px #66c9d7;
 }
 
 textarea.input {
-  height: 5em;
+  height: 80px;
   resize: none;
-  font-size: 1em;
 }
 
 .button {
-  margin-right: 0.9375em;
-  padding: 0.625em 1.25em;
+  margin-right: 15px;
+  padding: 10px 20px;
   background-color: var(--brand-inst-primary-orange);
   color: white;
   border: none;
-  border-radius: 0.5em;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 1em;
+}
+
+.button:hover {
+  background-color: var(--brand-inst-btn-hover);
+}
+
+.label {
+  width: 150px;
+  font-weight: bold;
+  text-align: right;
+  margin-right: 20px;
+}
+
+.input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+textarea.input {
+  height: 80px;
+  resize: none;
+}
+
+.createbutton {
+  margin-left: 20px;
+  padding: 10px 20px;
+  background-color: #197a87;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.createbutton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #1cb17b;
+}
+
+.discardbutton {
+  margin-left: 20px;
+  padding: 10px 20px;
+  background-color: #c62e2e;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.discardbutton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background-color: #ab1616;
 }
 
 .button:hover {
   background-color: #0c7a88;
 }
 
-.createbutton {
-  margin-left: 1.25em;
-  padding: 0.625em 1.25em;
-  background-color: #197a87;
-  color: white;
-  border: none;
-  border-radius: 0.3125em;
-  cursor: pointer;
-  font-size: 1em;
-}
-
-.createbutton:hover {
-  transform: translateY(-0.0625em);
-  box-shadow: 0 0.625em 1.875em rgba(0, 0, 0, 0.18);
-  background-color: #1cb17b;
-}
-
-.discardbutton {
-  margin-left: 1.25em;
-  padding: 0.625em 1.25em;
-  background-color: #c62e2e;
-  color: white;
-  border: none;
-  border-radius: 0.3125em;
-  cursor: pointer;
-  font-size: 1em;
-}
-
-.discardbutton:hover {
-  transform: translateY(-0.0625em);
-  box-shadow: 0 0.625em 1.875em rgba(0, 0, 0, 0.18);
-  background-color: #ab1616;
-}
-
 .buttonRow {
   display: flex;
   justify-content: flex-end;
-  gap: 0.9375em;
-  margin-top: 1.25em;
+  gap: 15px;
+  margin-top: 20px;
 }
 
 .lessonHeader {
   display: flex;
   align-items: center;
-  gap: 0.625em;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.label {
+  font-weight: 500;
+  font-size: 16px;
 }
 
 .lessonList {
   display: flex;
-  gap: 0.5em;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .lessonItem {
   background-color: var(--brand-stud-background-orange);
   color: rgb(0, 0, 0);
-  padding: 0.375em 0.625em;
-  border-radius: 0.375em;
-  font-size: 0.875em;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .addButton {
-  padding: 0.3125em 0.625em;
+  padding: 5px 10px;
   background-color: var(--brand-stud-primary-orange);
   color: white;
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  font-size: 1em;
 }
 
 .addButton:hover {
@@ -167,31 +186,29 @@ textarea.input {
 
 .modalContent {
   background: var(--bg);
-  padding: 1.5625em 1.875em;
-  border-radius: 0.75em;
-  max-width: 25em;
+  padding: 25px 30px;
+  border-radius: 12px;
+  max-width: 400px;
   width: 90%;
-  box-shadow: 0 0.375em 0.75em rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  gap: 0.9375em;
-  font-size: 1em;
+  gap: 15px;
 }
 
 .modalButtons {
   display: flex;
   justify-content: flex-end;
-  gap: 0.625em;
+  gap: 10px;
 }
 
 .selectButton {
   background-color: #0f9db0;
   color: white;
-  padding: 0.5em 1em;
+  padding: 8px 16px;
   border: none;
-  border-radius: 0.3125em;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 1em;
 }
 
 .selectButton:hover {
@@ -201,11 +218,10 @@ textarea.input {
 .cancelButton {
   background-color: #f44336;
   color: white;
-  padding: 0.5em 1em;
+  padding: 8px 16px;
   border: none;
-  border-radius: 0.3125em;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 1em;
 }
 
 .cancelButton:hover {
@@ -214,54 +230,50 @@ textarea.input {
 
 .topBar {
   width: 100vw;
-  margin-left: calc(-1 * clamp(1em, 4vw, 2.5em));
-  margin-right: calc(-1 * clamp(1em, 4vw, 2.5em));
-  margin-top: calc(-1 * clamp(1em, 4vw, 2.5em));
+  margin-left: calc(-1 * clamp(16px, 4vw, 40px));
+  margin-right: calc(-1 * clamp(16px, 4vw, 40px));
+  margin-top: calc(-1 * clamp(16px, 4vw, 40px));
   background: #fff;
 }
 
 .addText {
   color: #3fc6e4;
   font-weight: 600;
-  margin-left: 0.5em;
-  font-size: 1em;
+  margin-left: 8px;
 }
 
 .creditsDisplay {
-  height: 2.75em;
+  height: 44px;
   display: flex;
   align-items: center;
   background: #f6b773;
-  border-radius: 0.625em;
-  padding: 0 0.875em;
+  border-radius: 10px;
+  padding: 0 14px;
   font-weight: 600;
-  font-size: 0.75em;
+  font-size: 12px;
 }
 
 .selectWrap {
   position: relative;
 }
-
 .select {
   appearance: none;
   -webkit-appearance: none;
-  height: 2.75em;
+  height: 44px;
   width: 100%;
   background: #ededed;
   border: none;
-  border-radius: 0.625em;
-  padding: 0 2.25em 0 0.875em;
-  font-size: 1em;
+  border-radius: 10px;
+  padding: 0 36px 0 14px;
+  font-size: 16px;
 }
-
 .select:focus {
   outline: none;
-  box-shadow: inset 0 0 0 0.125em #66c9d7;
+  box-shadow: inset 0 0 0 2px #66c9d7;
 }
-
 .selectCaret {
   position: absolute;
-  right: 0.625em;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: #8a8a8a;

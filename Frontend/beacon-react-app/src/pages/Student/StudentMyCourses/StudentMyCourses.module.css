@@ -1,12 +1,12 @@
 .wrap {
-  padding: 1rem;
-  padding-top: 14rem;
+  padding: clamp(16px, 4vw, 40px);
+  padding-top: 22vh;
 }
 
 .header {
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(16px, 3vw, 28px);
   justify-content: space-between;
 }
 
@@ -19,31 +19,31 @@
   margin: 0;
   letter-spacing: 0.25em;
   font-weight: 800;
-  font-size: 2rem;
+  font-size: clamp(26px, 4.8vw, 35px);
   color: var(--brand-stud-title);
 }
 
 .card {
   margin: 0 auto;
-  max-width: 93.75rem;
-  min-height: 22.5rem;
+  max-width: 1500px;
+  min-height: 360px;
   background: #f7f8fb;
-  border-radius: 1.125rem;
-  border: 0.125rem solid transparent;
+  border-radius: 18px;
+  border: 2px solid transparent;
   background-image: linear-gradient(var(--bg)),
     var(--brand-stud-pale-gradient);
   background-origin: border-box;
   background-clip: padding-box, border-box;
-  padding: 2.5rem;
+  padding: clamp(20px, 4vw, 40px);
   display: grid;
   place-items: center;
 }
 
 .emptyText {
-  margin: 0 0 1.125rem;
+  margin: 0 0 18px;
   text-align: center;
   color: var(--brand-stud-label);
-  font-size: 1.125rem;
+  font-size: clamp(14px, 2.2vw, 18px);
 }
 
 .ctaRow {
@@ -53,7 +53,7 @@
 }
 
 .enrollBtn {
-  max-width: 21.25rem;
+  max-width: 340px;
   display: grid;
   grid-auto-flow: column;
   background-color: var(--brand-stud-btn);
@@ -61,13 +61,15 @@
   justify-content: center;
   gap: 10px;
   font-size: clamp(16px, 2.2vw, 20px);
+  color: var(--brand-stud-label);
   
 }
 
 .enrollBtn:hover {
-  transform: scale(1.05) translateY(-0.0625rem);
+  transform: scale(1.05);
   background-color: var(--brand-stud-btn-hover);
-  box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 .arrow {
@@ -76,7 +78,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  gap: 1.125rem;
-  margin-top: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(16px, 3vw, 28px);
+  margin-top: 20px;
 }

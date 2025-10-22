@@ -506,12 +506,6 @@ class ClassroomViews:
                 )
             )
 
-            print("instructor:", InstructorProfile.objects.filter(user=request.user).values("instructor_profile_id","full_name").first())
-
-            # 2) How many LessonClassroom rows supervised by this instructor?
-            print("LC by me:", LessonClassroom.objects.filter(supervisor__user=request.user).count())
-
-
             unlinked_rows = (
                 Classroom.objects
                 .filter(Q(lessonclassroom__supervisor=instructor) | Q(lessonclassroom__isnull=True))
@@ -582,7 +576,6 @@ class ClassroomViews:
                     str(x["time_start"]) if x["time_start"] else ""
                     )
             )
-            print(data)
             return Response(data)
 
     class CreateClassroomView(APIView):

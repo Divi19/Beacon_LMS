@@ -3,27 +3,23 @@
   padding-top: 22vh;
 }
 
-.wraprow {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 2rem;
-}
-
-.panel {
+.wraprow{
   position: relative;
-  max-width: 75rem;
+  padding: clamp(16px, 4vw, 40px);
+  padding-top: 0vh;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: 1.5rem 2rem;
-  border-radius: 1.125rem;
-  background: linear-gradient(
-    to bottom,
-    #f1cea8 0%,
-    #f1cea8 70%,
-    #71bfcd 100%
-  );
-  box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.08);
+}
+.panel {
+  position: relative;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 32px;
+  border-radius: 18px;
+  background: var(--brand-inst-pale-gradient);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .title {
@@ -105,113 +101,103 @@ gap: 16px;
 }
 
 .panel1 {
-  flex: 1;
-  min-width: 13rem;
-  max-width: 20rem;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
-  border-radius: 1.25rem;
-  padding: 2rem 1.5rem;
-  color: brown;
-  text-align: center;
-  box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  transition: all 0.25s ease-in-out;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  max-width: 300px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 5px 24px;
+  border-radius: 18px;
+  background: var(--brand-inst-pale-gradient);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.panel1:hover {
-  transform: translateY(-3px);
+.panel1:hover{
   filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: var(--brand-inst-strong-gradient);
 }
-
 
 .row1 {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 100%;
-  max-width: 65rem;
+display: flex;
+gap: 8px; 
+padding-top: 0px
 }
 
 .label {
-  font-size: clamp(1rem, 2vw, 1.4rem);
-  font-weight: bold;
-  color: var(--brand-inst-label);
-  margin: 0;
+color: var(--brand-inst-label);
+text-align: center;
+font-size: 20px;
 }
 
 .enrollBtn {
-  position: absolute;
-  bottom: 1.25rem;
-  right: 1.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  font-size: clamp(0.75rem, 2vw, 1.125rem);
-  padding: 0.5rem 0.75rem;
-  max-width: 15.625rem;
-  max-height: 3.75rem;
-  border-radius: 0.75rem;
+position: absolute;
+bottom: 20px;
+right: 20px;
+max-width: 250px;
+max-height: 60px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+font-size: clamp(12px, 2.2vw, 18px);
+padding: 8px 12px;
 background-color: var(--brand-inst-btn);
 }
 
-.enrollBtn:hover {
+.enrollBtn:hover{
   filter: brightness(1.05);
   transform: translateY(-1px);
-  box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   background-color: var(--brand-inst-btn-hover);
 }
-.lessonsCard {
-  margin: 2rem auto;
-  width: 90%;
-  max-width: 70rem;
-  background: #fffaf1;
-  border-radius: 1.5rem;
-  padding: 2rem 2.5rem;
-  box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.1);
-  transition: all 0.25s ease;
-  text-align: left;
-}
 
-.lessonsCard:hover {
-  box-shadow: 0 0.625rem 2rem rgba(0, 0, 0, 0.15);
+.lessonsCard {
+max-width: 1200px;
+width: 100%;
+aspect-ratio: auto;
+margin: 16px auto;
+border-radius: 18px;
+background: var(--brand-inst-pale-gradient);
+
+box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+padding: 24px;
+display: flex;
+align-items: flex-start;
+justify-content: flex-start;
+overflow: hidden;
 }
 
 .lessonsLabel {
-  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
-  font-weight: bold;
-  color: var(--brand-inst-label);
-  text-align: left;
-  margin-bottom: 1.25rem;
+font-size: 24px;
+font-weight: 700;
+color: var(--brand-inst-label);
 }
 
 .card {
-  flex: 1 1 18rem;
-  max-width: 22rem;
-  background: var(--brand-inst-list-card, #f4d7ab);
-  border-radius: 1.25rem;
-  padding: 1.25rem 1.5rem;
-  color: var(--brand-inst-label);
-  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
+display: flex;
+flex-direction: column; 
+justify-content: flex-start;
+align-items: flex-start;
+padding: 20px;
+border-radius: 20px;
+background: var(--brand-inst-list-card);
+color: var(--brand-inst-label);
+box-sizing: border-box;
+cursor: pointer;
+transition: transform 0.2s ease-in-out;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.18);
-  background: linear-gradient(#ebc989, #f1cea8);
+transform: translateY(-1px);
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+background: var(--brand-inst-btn-hover);
 }
 
+
 .cardTitle {
-  font-size: clamp(1rem, 2.2vw, 1.3rem);
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+font-size: 22px;
+font-weight: bold;
+margin-top: 1px;
 }
 
 .cardDesc1 span:last-child {
@@ -241,16 +227,6 @@ margin-bottom: 30px;
 margin-right: 10px;
 }
 
-.cardDesc1,
-.cardDesc2,
-.cardDesc3 {
-  display: flex;
-  justify-content: left;
-  width: 100%;
-  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
-  margin-bottom: 0.5rem;
-}
-
 .leftGroup {
 display: flex;
 gap: 8px; 
@@ -269,20 +245,19 @@ gap: 16px;
 }
 
 .lessonsLabel {
-  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
-  font-weight: 700;
-  color: var(--brand-inst-label);
-  text-align: left;
-  margin-bottom: 1.25rem;
+font-size: 24px;
+font-weight: 700;
+color: var(--brand-inst-label);
 }
 
 .container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  justify-content: left;
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 30px 50px;
+width: 100%;
+padding: 20px 50px;
+box-sizing: border-box;
 }
-
 
 .createLessonBtn{
   color: white;
@@ -297,9 +272,7 @@ gap: 16px;
 }
 
 .tabActive {
-  background: linear-gradient(to bottom, #f9dcb0 0%, #ffd18c 100%);
-  border: 3px solid #f5a623;
-  box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 0 0 3px rgba(233, 109, 31, 0.35);
 }
 
 
@@ -315,28 +288,4 @@ gap: 16px;
 
 .lessonsCard{
   margin-bottom: 12px;
-}
-
-.cardDesc1,
-.cardDesc2,
-.cardDesc3 {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
-  margin-bottom: 0.3rem;
-}
-
-.createLessonBtn {
-  align-self: center;
-  margin-top: 0.75rem;
-  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
-}
-
-.empty,
-.noLessons {
-  text-align: center;
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  color: #8b5a2b;
-  margin-top: 1rem;
 }

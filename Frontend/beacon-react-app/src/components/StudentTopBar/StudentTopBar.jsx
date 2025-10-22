@@ -1,15 +1,10 @@
-import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
+import { useEffect } from "react";
 import s from "./StudentTopBar.module.css";
 import ThemeToggle from "../../state/ThemeToggle";
 
 export default function StudentTopBar() {
-  // State for font size slider
-  const [fontSize, setFontSize] = useState(
-    () => parseInt(localStorage.getItem("fontSize")) || 16
-  );
-
-  // Apply role & theme on mount
+  // Ensure theme + role are applied whenever this shell mounts
   useEffect(() => {
     const html = document.documentElement;
 
@@ -17,6 +12,7 @@ export default function StudentTopBar() {
       html.setAttribute("data-role", "student");
     }
 
+    // theme: restore saved, else follow OS preference
     const saved = localStorage.getItem("theme");
     const prefersDark =
       window.matchMedia &&
@@ -28,12 +24,6 @@ export default function StudentTopBar() {
     }
   }, []);
 
-  // Apply font size whenever it changes
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${fontSize}px`;
-    localStorage.setItem("fontSize", fontSize);
-  }, [fontSize]);
-
   return (
     <header className={s.topBar}>
       <NavLink to="/" className={s.leftSide}>
@@ -41,13 +31,20 @@ export default function StudentTopBar() {
         <h1 className={s.title}>B E A C O N</h1>
       </NavLink>
 
-      <nav className={s.rightSide}>
+      <nav className={s.rightSide} aria-label="Student navigation">
         <ul className={s.navList}>
           <li className={s.navItem}>
-            <a href="/student/my-courses" className={s.navLink}>
-              Courses
-            </a>
+            <NavLink
+              to="/student/my-courses"
+              className={({ isActive }) =>
+                [s.navLink, isActive ? s.active : ""].join(" ")
+              }
+            >
+              <span>My Courses</span>
+              <span className={s.underline} />
+            </NavLink>
           </li>
+
           <li className={s.navItem}>
             <NavLink
               to="/student/profile"
@@ -59,6 +56,7 @@ export default function StudentTopBar() {
               <span className={s.underline} />
             </NavLink>
           </li>
+
           <li className={s.navItem}>
             <NavLink
               to="/student/classroom"
@@ -70,6 +68,7 @@ export default function StudentTopBar() {
               <span className={s.underline} />
             </NavLink>
           </li>
+
           <li className={s.navItem}>
             <NavLink
               to="/student/reports"
@@ -82,12 +81,11 @@ export default function StudentTopBar() {
             </NavLink>
           </li>
 
-          {/* Theme toggle */}
+          {/* Theme toggle persists choice via localStorage */}
           <li className={s.navItem}>
             <ThemeToggle />
           </li>
 
-          {/* Profile */}
           <li className={s.navItem}>
             <img
               src="/profile_picture.png"
@@ -95,26 +93,6 @@ export default function StudentTopBar() {
               className={s.profileLogoTop}
             />
             <span className={s.accountText}>Student</span>
-          </li>
-
-          {/* Font size slider */}
-          <li className={`${s.navItem} ${s.sliderContainer}`}>
-            <label htmlFor="fontSizeSlider" className={s.sliderLabel}>
-              A
-            </label>
-            <input
-              id="fontSizeSlider"
-              type="range"
-              min="14"
-              max="20"
-              step="1"
-              value={fontSize}
-              onChange={(e) => setFontSize(parseInt(e.target.value))}
-              className={s.slider}
-            />
-            <label htmlFor="fontSizeSlider" className={s.sliderLabelLarge}>
-              A
-            </label>
           </li>
         </ul>
       </nav>
