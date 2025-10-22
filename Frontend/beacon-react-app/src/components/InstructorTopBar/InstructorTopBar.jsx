@@ -33,9 +33,6 @@ export default function InstructorTopBar() {
             <ThemeToggle />
           </li>
           <li className={s.navItem}>
-            <ThemeToggle />
-          </li>
-          <li className={s.navItem}>
             <img
               src="/profile_picture.png"
               alt="Profile"
