@@ -25,7 +25,7 @@
   gap: 10px;
   font-size: clamp(16px, 2.2vw, 20px);
   margin: 10px 30px 0 30px;
-  background-color: #f8a247;
+  background-color: var(--brand-inst-primary-orange);
 }
 
 .lessonFile {
@@ -41,7 +41,7 @@
 
 .enrollBtn:hover{
   transform: scale(1.05);
-  background-color: #fee0c0;
+  background-color: var(--brand-inst-primary-orange);
   color: #fa972d;
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
@@ -53,7 +53,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 46px);
-  color: #e4973f; 
+  color: var(--brand-inst-title); 
   padding-left: 30px;
 }
 
@@ -70,6 +70,7 @@
   min-height: 0;    
   place-items: center;    
   place-content: center;   
+  max-width: 1600px;
 }
 
 .wrap {
@@ -90,8 +91,8 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
-  color: brown;
+  background: var(--brand-inst-pale-gradient);
+  color: var(--brand-inst-label);
   box-sizing: border-box;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -101,7 +102,7 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
+  background: var(--brand-inst-strong-gradient);
 }
 
 
@@ -120,6 +121,7 @@
 
 .cardDesc1 span:last-child {
   margin-right: 30px;
+  color: var(--brand-inst-label);
 }
 
 .cardDesc2 {
@@ -128,6 +130,7 @@
   width: 100%;
   font-size: 16px;
   margin-bottom: 2px;
+  color: var(--brand-inst-label);
 }
 
 .cardDesc2 span:last-child {
@@ -160,7 +163,7 @@
   margin: 0 auto;
   padding: 5px 24px;
   border-radius: 18px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   transition: all 0.2s ease-in-out;

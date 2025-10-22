@@ -2,9 +2,10 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: felx-start;           
+  align-items: flex-start;           
   padding: 0 20px;       
-  height: auto;                   
+  height: auto; 
+  padding-top: 22vh;                  
 }
 
 .left {
@@ -78,7 +79,7 @@
   overflow-y: auto;
 
   padding: clamp(16px, 4vw, 1px); 
-  padding-top: 10vh;
+  padding-top: 22vh;
 }
 
 .card {
