@@ -3,9 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import Button from "../../../components/Button/Button";
 import s from "./InstructorStudentProgress.module.css";
+import { api } from "../../../api";
+
 
 export default function InstructorStudentProgress() {
-    const { instructorId } = useParams();
+    const { instructorId } = useParams(); //ignored 
     const navigate = useNavigate();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,39 +17,18 @@ export default function InstructorStudentProgress() {
         const fetchCourses = async () => {
             setLoading(true);
             try {
-                // Example mock courses (simulate backend for now)
-                const mockCourses = [
-                    {
-                        course_id: "CS101",
-                        course_title: "Intro to Computer Science",
-                        course_credits: 3,
-                        course_director: "Dr. Wong",
-                        status: "Active",
-                        average_progress: 0.45,
-                    },
-                    {
-                        course_id: "CS102",
-                        course_title: "Data Structures",
-                        course_credits: 4,
-                        course_director: "Dr. Wong",
-                        status: "Active",
-                        average_progress: 0.78,
-                    },
-                ];
-
-                const filtered = mockCourses.filter(
-                    c => instructorId === "instructor1", // example mock up (can be changed)
-                );
-
-                setCourses(filtered.length ? filtered : mockCourses);
-            } catch (err) {
-                console.error("Failed to load courses", err);
-                alert("Failed to load courses.");
-            } finally {
-                setLoading(false);
-            }
+                          api.get(`/instructor/courses/`).then(
+                            res => setCourses(res.data)
+                          )
+                         
+                } catch (err) {
+                          const detail = err?.response?.data?.detail;
+                          console.error("Error showing courses:", err);
+                          alert(detail || "Error showing courses. Please try again.");
+                } finally {
+                    setLoading(false)
+                }
         };
-
         fetchCourses();
     }, [instructorId]);
 
@@ -106,22 +87,22 @@ export default function InstructorStudentProgress() {
                                     style={{
                                         flex: 1,
                                         height: "12px",
-                                        background: "#eee",
+                                        background: "var(--brand-inst-primary-orange)",
                                         borderRadius: "8px",
                                         overflow: "hidden",
                                     }}
                                 >
                                     <div
                                         style={{
-                                            width: `${(c.average_progress || 0) * 100}%`,
-                                            background: "#7ad1d8",
+                                            width: `${(c.avg_completed)/(c.tot_lessons) * 100}%`,
+                                            background: "var(--brand-inst-progressbar)",
                                             height: "100%",
                                         }}
                                     />
                                 </div>
                                 <span>
                                     {Math.round(
-                                        (c.average_progress || 0) * 100,
+                                        (c.avg_completed)/(c.tot_lessons) * 100
                                     )}
                                     %
                                 </span>

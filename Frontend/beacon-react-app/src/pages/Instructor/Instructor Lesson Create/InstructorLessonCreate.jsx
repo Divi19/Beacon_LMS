@@ -25,7 +25,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
 
   const CREATE_ONLINE_CLASS_URL = (lessonId) => 
-    `/intructor/classrooms/online/${lessonId}/`
+    `/instructor/classrooms/online/${lessonId}/`
   ;
 
   const LINK_CLASSROOM_URLS = (lessonId, classroomId) => [
@@ -48,9 +48,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     title: "",
     credits: "",
     duration_weeks: "",
-    director: "",
+    designer_email: "",
     description: "",
     objectives: "",
+    estimated_effort: 0,
   });
 
   // PHYSICAL CLASSROOM LINKING STATE
@@ -129,14 +130,18 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }
   };
 
-  const goToCoursePage = () => {
+  const goToLessonPage = () => {
     setShowOptionalModal(false);
-    navigate("/instructor/course-list");
-  };
+    navigate(`/instructor/course/${courseId}/lesson/${lessonId}`);
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (name === 'estimated_effort') {
+      setFormData({ ...formData, [name]: value === '' ? 0 : Number(value)});
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const resetForm = () => {
@@ -181,21 +186,55 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
   // For form filling if information was provided before
   // Load lesson details and prefill the form when the page opens
+  // For form filling if information was provided before
+  // Load lesson details and prefill the form when the page opens
   useEffect(() => {
     if (!lessonId) return;
 
     (async () => {
       try {
+          const pre = await api.get(
+            `/instructor/prereqs/${lessonId}/`
+          );
+          setPrereqInput(
+            pre.data?.prerequisites?.map((p) => p.lesson_id).join(", ") || ""
+          );
+        } catch (err) {
+          console.warn("Could not load prerequisites:", err);
+        }
+
+        // Fetch assignments separately with error handling
+        try {
+          const asn = await api.get(`/instructor/assignments/${lessonId}/`);
+          console.log("Assignments response:", asn.data); // Debug log
+          setAssignmentsInput(typeof asn.data === 'string' ? asn.data : (asn.data?.assignments_text || ""));
+        } catch (err) {
+          console.warn("Could not load assignments:", err);
+        }
+
+        // Fetch reading list separately with error handling
+        try {
+          const read = await api.get(`/instructor/readings/${lessonId}/`);
+          console.log("Readings response:", read.data); // Debug log
+          setReadingListInput(typeof read.data === 'string' ? read.data : (read.data?.readings_text || ""));
+        } catch (err) {
+          console.warn("Could not load readings:", err);
+        }
+      try {
         const { data } = await api.get(
           `/instructor/lessons/${lessonId}/detail/`
         );
         // data shape from LessonDetails view:
-        // { lesson_id, title, credits, description, objectives, duration_weeks, status, created_by, ... }
+        // { lesson_id, title, credits, description, objectives, duration_weeks, status, created_by, estimated_effort, ... }
 
         setFormData((prev) => ({
           ...prev,
           lesson_id: asStr(data.lesson_id),
           title: asStr(data.title),
+          estimated_effort: 
+            data.estimated_effort !== null && data.estimated_effort !== undefined
+              ? Number(data.estimated_effort)
+              : 0,
           credits:
             data.credits === null || data.credits === undefined
               ? ""
@@ -207,17 +246,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           description: asStr(data.description),
           objectives: asStr(data.objectives),
           status: asStr(data.status || "Inactive"),
-          // pick whichever field you want displayed for "designer"
-          designer: asStr(data.created_by), // or keep "", depending on your UI
+          designer: asStr(data.designer_email || data.created_by || ""),
         }));
 
-        // to prefill prerequisites too (optional) and have a GET endpoint for it:
-        const pre = await api.get(
-          `/instructor/lessons/${lessonId}/prerequisites/`
-        );
-        setPrereqInput(
-          pre.data?.prerequisites?.map((p) => p.lesson_id).join(", ") || ""
-        );
+        // Fetch prerequisites separately with error handling        
       } catch (err) {
         console.error("Failed to load lesson details", err);
       }
@@ -229,7 +261,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     if (!lessonId) return;
     (async () => {
       try {
-        const { data } = await api.get(`intructor/classrooms/online/${lessonId}/`);
+        const { data } = await api.get(`instructor/classrooms/online/${lessonId}/`);
         setOnlineClassrooms(data)
       } catch (e) {
         // non-blocking
@@ -278,7 +310,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       }
     };
 
-    const payload = {
+const payload = {
       lesson_id: formData.lesson_id || lessonId,
       course: courseId,
       ...(formData.title?.trim() ? { title: formData.title } : {}),
@@ -289,38 +321,55 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
         ? { objectives: formData.objectives }
         : {}),
       ...(formData.duration_weeks !== ""
-        ? { duration_weeks: formData.duration_weeks }
+        ? { duration_weeks: Number(formData.duration_weeks) }
         : {}),
       ...(formData.credits?.trim() ? { credits: creditsNum } : {}),
       status: formData.status,
       ...(formData.designer?.trim()
         ? { designer_input: formData.designer.trim() } // email string
         : {}),
+      ...(formData.estimated_effort !== null && formData.estimated_effort !== undefined
+        ? { estimated_effort: Number(formData.estimated_effort) }
+        : {}),
     };
 
-    try {
+try {
       await api.patch(`/instructor/lessons/${lessonId}/update/`, payload);
-      submitPrereqs();
+      await submitPrereqs();
 
-      if (readingListInput.trim()) {
+      // Always send readings (even if empty) with mode
+      try {
         await api.post(
           `/instructor/lessons/${lessonId}/readings/`,
-          { lesson_id: lessonId, items: readingListInput },
+          { 
+            lesson_id: lessonId, 
+            items: readingListInput || "",
+            mode: "replace"
+          },
           { headers: { "Content-Type": "application/json" } }
         );
+      } catch (readErr) {
+        console.error("Failed to save readings:", readErr);
+        // Continue anyway - don't block the whole save
       }
 
-      //----------for submitting readings and assignments 
-      if (assignmentsInput.trim()) {
+      // Always send assignments (even if empty) with mode
+      try {
         await api.post(
           `/instructor/lessons/${lessonId}/assignments/`,
-          { lesson_id: lessonId, items: assignmentsInput },
+          { 
+            lesson_id: lessonId, 
+            items: assignmentsInput || "",
+            mode: "replace"
+          },
           { headers: { "Content-Type": "application/json" } }
         );
+      } catch (asnErr) {
+        console.error("Failed to save assignments:", asnErr);
+        // Continue anyway - don't block the whole save
       }
 
-      alert("Lesson saved successfully!");
-      navigate(`/instructor/course/${courseId}`);
+      setShowOptionalModal(true);
     } catch (error) {
       console.error("Error saving lesson:", error);
       alert("Error saving lesson. Please try again.");
@@ -333,7 +382,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
     (async () => {
       try {
-        const { data } = await api.get(`/instructor/classrooms/`);
+        const { data } = await api.get(`/instructor/classrooms/own/`);
         const rows = Array.isArray(data) ? data : data?.results || [];
 
         // physical = has a location (and/or not online if the API returns is_online)
@@ -362,7 +411,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
 
     (async () => {
       try {
-        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL, {course_id: courseId});
+        const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(), {params: {lesson_id: lessonId}});
         const rows = Array.isArray(data) ? data : [];
         // Physical heuristic: has location
         const physicalLinked = rows.find((r) => r.location ?? null);
@@ -375,7 +424,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
             time_end: physicalLinked.time_end || "",
             duration_minutes: physicalLinked.duration_minutes ?? null,
             capacity: physicalLinked.capacity ?? null,
-            supervisor: physicalLinked.director || "", // if your serializer returns it
+            supervisor: physicalLinked.supervisor || "", // if your serializer returns it
           });
         } else {
           setLinkedPhysical(null);
@@ -446,7 +495,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       try {
         const { data } = await api.get(LIST_LESSON_CLASSROOMS_URL(lessonId));
         const rows = Array.isArray(data) ? data : [];
-        const physicalLinked = rows.find((r) => r.location ?? null);
+        const physicalLinked = rows.find((r) => r.is_online === false);
         if (physicalLinked) {
           setLinkedPhysical({
             classroom_id: physicalLinked.classroom_id,
@@ -579,7 +628,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
               <label className={i.label}>Estimated Effort:</label>
               <input
                 className={i.input}
-                type="text"
+                type="number"
                 name="estimated_effort"
                 value={formData.estimated_effort}
                 onChange={handleChange}
@@ -809,7 +858,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
           <div className={i.modalContent}>
             <h3>Lesson saved successfully!</h3>
             <div className={i.modalButtons}>
-              <button className={i.selectButton} onClick={goToCoursePage}>
+              <button className={i.selectButton} onClick={goToLessonPage}>
                 Go to lesson page
               </button>
             </div>

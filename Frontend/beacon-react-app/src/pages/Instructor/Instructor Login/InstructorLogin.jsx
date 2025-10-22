@@ -40,6 +40,7 @@ export default function InstructorLogin({ logoSrc }) {
       // Backend returns: { access, refresh, user: {...} }
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
+      localStorage.setItem("role", "instructor");
       setSuccessMessage("Login successful");
       navigate("/instructor/course-list", { replace: true });
     } catch (err) {

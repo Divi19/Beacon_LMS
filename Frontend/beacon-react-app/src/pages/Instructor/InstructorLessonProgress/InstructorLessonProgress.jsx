@@ -3,162 +3,43 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import s from "./InstructorLessonProgress.module.css";
 import Button from "../../../components/Button/Button";
+import { api } from "../../../api";
 
 export default function InstructorLessonProgress() {
-    const { courseId } = useParams();
+    const { courseId, lessonId } = useParams();
     const navigate = useNavigate();
-    const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [students, setStudents] = useState([]);
     const [sortHighToLow, setSortHighToLow] = useState(true);
-    const [lessons, setLessons] = useState([]);
-    const [lessonSortBy, setLessonSortBy] = useState("duration");
-    const [lessonSortHighToLow, setLessonSortHighToLow] = useState(true);
-    const [activeTab, setActiveTab] = useState(null);
-    const location = useLocation();
-    const { lessonName = "Unknown Lesson", lessonCredit = 0 } =
-        location.state || {};
-
-    const handleToggleLessons = () => {
-        const willOpen = activeTab !== "lessons";
-        setActiveTab(willOpen ? "lessons" : null);
-
-        if (willOpen) {
-            const mockLessons = [
-                {
-                    lesson_id: "L1",
-                    title: "Intro",
-                    designer: "Alice",
-                    duration_weeks: 2,
-                    enrolled_count: 10,
-                },
-                {
-                    lesson_id: "L2",
-                    title: "Advanced",
-                    designer: "Bob",
-                    duration_weeks: 3,
-                    enrolled_count: 12,
-                },
-            ];
-            setLessons(mockLessons);
-        }
-    };
+    const [lesson, setLesson] = useState();
 
     useEffect(() => {
-        const fetchCourse = async () => {
+        const fetchLesson = async () => {
             setLoading(true);
             try {
-                const mockCourse = {
-                    course_id: courseId,
-                    course_title:
-                        courseId === "CS101"
-                            ? "Intro to Computer Science"
-                            : "Data Structures",
-                    course_credits: courseId === "CS101" ? 3 : 4,
-                    students_enrolled: courseId === "CS101" ? 25 : 30,
-                    average_progress: courseId === "CS101" ? 0.45 : 0.78,
-                    course_director: "Dr. Smith", // added mock director
-                };
-                setCourse(mockCourse);
-
-                const mockStudents = [
-                    {
-                        id: "S1",
-                        name: "Alice Tan",
-                        gmail: "alice.tan@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        credits_earned: 12,
-                        progress: 0.8,
-                        enrolled_date: "2025-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                    {
-                        id: "S2",
-                        name: "Bob Lee",
-                        gmail: "bob.lee@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        total_lessons: 5,
-                        credits_earned: 9,
-                        progress: 0.6,
-                        enrolled_date: "2023-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                    {
-                        id: "S3",
-                        name: "Chloe Wong",
-                        gmail: "chloe.wong@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        total_lessons: 5,
-                        credits_earned: 6,
-                        progress: 0.4,
-                        enrolled_date: "2025-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                    {
-                        id: "S4",
-                        name: "Daniel Lim",
-                        gmail: "daniel.lim@gmail.com",
-                        readings_completed: 3,
-                        total_readings: 5,
-                        assignments_completed: 2,
-                        total_assignments: 3,
-                        total_lessons: 5,
-                        credits_earned: 15,
-                        progress: 1.0,
-                        enrolled_date: "2023-01-02",
-                        session_day: "Monday",
-                        session_start: "9:00",
-                        session_end: "10:30",
-                        building: "A",
-                        enrolled_hour: "8:00",
-                    },
-                ];
-                setStudents(mockStudents);
+                const res =  await api.get(`/instructor/lesson/progress/${lessonId}/`)
+                    setLesson(res.data.lesson)
+                    setStudents(res.data.students)
             } catch (err) {
-                console.error("Failed to fetch course details", err);
-                alert("Failed to load course details.");
+                const errorMessage = 
+                    (err?.response?.data?.detail && typeof err.response.data.detail === 'string')
+                    ? err.response.data.detail
+                    : "An unexpected error occurred. Please try again.";
+                console.error("Failed to fetch lesson details", errorMessage);
+                alert(`Failed to load lesson details.`);
             } finally {
                 setLoading(false);
             }
         };
-
-        fetchCourse();
+        fetchLesson();
     }, [courseId]);
 
-    if (loading) return <div>Loading course details…</div>;
-    if (!course) return <div>No course found.</div>;
+    if (loading) return <div>Loading lesson details…</div>;
 
     const sortedStudents = [...students].sort((a, b) =>
-        sortHighToLow ? b.progress - a.progress : a.progress - b.progress,
+        sortHighToLow ? b.tot_completed - a.tot_completed : a.tot_completed - b.tot_completed,
     );
-
-    const sortedLessons = [...lessons].sort((a, b) => {
-        const key = "duration_weeks";
-        return sortHighToLow ? b[key] - a[key] : a[key] - b[key];
-    });
-    const totalProgress = students.reduce((sum, s) => sum + s.progress, 0);
-    const avgProgress = students.length ? totalProgress / students.length : 0;
+    const avgProgress = students.length ? lesson.lesson_progress: 0;
 
     return (
         <div className={s.wrap}>
@@ -175,9 +56,9 @@ export default function InstructorLessonProgress() {
                     <h1 className={s.title}>STUDENT PROGRESS - LESSONS</h1>
 
                     <div className={s.lessonInfo}>
-                        <h2 className={s.lessonName}>{lessonName}</h2>
+                        <h2 className={s.lessonName}>{lesson.lesson_id} - {lesson.title}</h2>
                         <span className={s.lessonCredit}>
-                            ({lessonCredit} credits)
+                            ({lesson.credits} credits)
                         </span>
                     </div>
                 </div>
@@ -202,7 +83,7 @@ export default function InstructorLessonProgress() {
                                 style={{
                                     flex: 1,
                                     height: "12px",
-                                    background: "#eee",
+                                    background: "var(--brand-inst-primary-orange)",
                                     borderRadius: "8px",
                                     overflow: "hidden",
                                 }}
@@ -210,7 +91,11 @@ export default function InstructorLessonProgress() {
                                 <div
                                     style={{
                                         width: `${avgProgress * 100}%`,
-                                        background: "#7ad1d8",
+<<<<<<< HEAD
+                                        background: "var(--brand-inst-progressbar)",
+=======
+                                        background: "#1a73e8",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                         height: "100%",
                                     }}
                                 />
@@ -223,9 +108,14 @@ export default function InstructorLessonProgress() {
                 <div className={s.buttonStack}>
                     <Button
                         className={s.enrollBtn}
-                        onClick={() => navigate(-1)}
-                    >
+<<<<<<< HEAD
+                        onClick={() => navigate(-1)}>
                         Back
+=======
+                        onClick={() => navigate("/instructor/student-progress")}
+                    >
+                        Back to Course Progress
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="22"
@@ -255,7 +145,7 @@ export default function InstructorLessonProgress() {
             <div className={s.studentList}>
                 {sortedStudents.map(student => (
                     <div
-                        key={student.id}
+                        key={student.student_profile_id}
                         className={s.card}
                         style={{
                             flexDirection: "row",
@@ -267,20 +157,7 @@ export default function InstructorLessonProgress() {
                         }}
                         onClick={() =>
                             navigate(
-                                `/instructor/student-progress-detail/${student.id}`,
-                                {
-                                    state: {
-                                        studentName: student.name,
-                                        studentGmail: student.gmail,
-                                        progress: student.progress,
-                                        creditsEarned: student.credits_earned,
-                                        studentId: student.id,
-                                        enrolledDate: student.enrolled_date,
-                                        enrolledHour: student.enrolled_hour,
-                                        lessonName,
-                                        lessonCredit,
-                                    },
-                                },
+                                `/instructor/student-progress-detail/${student.student_profile_id}`
                             )
                         }
                     >
@@ -297,45 +174,61 @@ export default function InstructorLessonProgress() {
                                         fontSize: "20px",
                                     }}
                                 >
-                                    {student.id} - {student.name}
+                                    {student.student_no} - {student.first_name + " " + student.last_name}
                                 </span>
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "brown",
+<<<<<<< HEAD
+                                        color: "var(--brand-inst-label)",
+=======
+                                        color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     }}
                                 >
-                                    {student.gmail}
+                                    {student.email}
                                 </span>
                                 <div
                                     style={{
                                         display: "flex",
                                         gap: "20px",
                                         fontSize: "14px",
-                                        color: "brown",
+<<<<<<< HEAD
+                                        color: "var(--brand-inst-label)",
+=======
+                                        color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     }}
                                 >
                                     <span>
                                         Readings Completed:{" "}
-                                        {student.readings_completed}/
-                                        {student.total_readings}
+                                        {student.reading_completed}/
+                                        {lesson.read_count}
                                     </span>
                                     <span>
                                         Assignments Completed:{" "}
-                                        {student.assignments_completed}/
-                                        {student.total_assignments}
+                                        {student.asgn_completed}/
+                                        {lesson.asgn_count}
                                     </span>
                                 </div>
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "brown",
+<<<<<<< HEAD
+                                        color: "var(--brand-inst-label)",
+=======
+                                        color: "#555",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     }}
                                 >
-                                    Session: {student.session_day}{" "}
-                                    {student.session_start} -{" "}
-                                    {student.session_end}, Building:{" "}
-                                    {student.building}
+                                    <strong>Session: </strong>
+                                    {" "}
+                                    
+                                    {student.session.day_of_week}{" "}
+                                    {student.session.time_start.slice(0,-3)} -{" "}
+                                    {student.session.time_end.slice(0,-3)} &nbsp;&nbsp;&nbsp;
+                                    {student.session.location}
+                                    
                                 </span>
                             </div>
                         </div>
@@ -360,32 +253,36 @@ export default function InstructorLessonProgress() {
                                     style={{
                                         flex: 1,
                                         height: "12px",
-                                        background: "#eee",
+                                        background: "var(--brand-inst-primary-orange)",
                                         borderRadius: "8px",
                                         overflow: "hidden",
                                     }}
                                 >
                                     <div
                                         style={{
-                                            width: `${(student.progress || 0) * 100}%`,
+                                            width: `${(student.lesson_progress|| 0) * 100}%`,
                                             height: "100%",
-                                            background: "#7ad1d8",
+                                            background: "var(--brand-inst-progressbar)",
                                         }}
                                     />
                                 </div>
                                 <span>
-                                    {Math.round((student.progress || 0) * 100)}%
+                                    {Math.round((student.lesson_progress || 0) * 100)}%
                                 </span>
                             </div>
                             <span
                                 style={{
                                     fontSize: "13px",
-                                    color: "#000000ff",
+<<<<<<< HEAD
+                                    color: "var(--brand-inst-label)",
+=======
+                                    color: "#777",
+>>>>>>> parent of 73acaa9 (US4 - Fix coloring and logic)
                                     marginTop: "6px",
                                     fontStyle: "italic",
                                 }}
                             >
-                                Enrolled: {student.enrolled_date}
+                                Enrolled: {student.enrolled_at}
                             </span>
                         </div>
                     </div>

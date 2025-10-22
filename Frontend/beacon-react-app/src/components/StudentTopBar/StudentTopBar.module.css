@@ -4,8 +4,7 @@
   justify-content: space-between;
   align-items: center;
   padding: clamp(12px, 2vw, 15px) 4rem;
-  background: linear-gradient(to bottom, #71bfcd 0%, #b6c2ae 70%, #f1cea8 100%);
-  border-bottom: 2px solid #e0e0e0;
+  background: var(--brand-stud-pale-gradient);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: fixed;
   top: 0;
@@ -47,7 +46,7 @@
   cursor: pointer;
   font-weight: 500;
   font-size: clamp(14px, 1.8vw, 18px);
-  color: #07464f;
+  color: var(--brand-student-subtitle);
 }
 
 .profileLogoTop {
@@ -74,10 +73,58 @@
 
 .navLink {
   text-decoration: none;
-  color: inherit;
+  color: var(--brand-stud-link);
   cursor: pointer;
 }
 .navLink:hover {
-  color: white;
+  color: var(--brand-stud-link-hover);
   opacity: 87%;
+}
+
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+}
+
+.slider {
+  appearance: none;
+  width: 80px;
+  height: 4px;
+  border-radius: 5px;
+  background: #ccc;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+}
+
+.sliderLabel {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.sliderLabelLarge {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.title {
+  font-size: 1.5rem;
+}
+
+.navItem {
+  font-size: 1rem;
+}
+
+.accountText {
+  font-size: 0.875rem;
 }

@@ -1,5 +1,5 @@
 .wrap {
-  padding: clamp(16px, 4vw, 40px);
+  padding: clamp(16px, 4vw, 1px); 
   padding-top: 22vh;
 }
 

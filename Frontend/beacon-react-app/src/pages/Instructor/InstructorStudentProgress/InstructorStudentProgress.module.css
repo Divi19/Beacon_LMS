@@ -44,7 +44,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 46px);
-  color: #e4973f; 
+  color: var(--brand-inst-title); 
   padding-left: 30px;
 }
 
@@ -66,7 +66,8 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding-top: 18vh;
+  padding: clamp(16px, 4vw, 1px); 
+  padding-top: 22vh;
   
 }
 
@@ -78,7 +79,7 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   color: brown;
   box-sizing: border-box;
   cursor: pointer;
@@ -88,7 +89,7 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
+  background: var(--brand-inst-strong-gradient);
 }
 
 
@@ -96,6 +97,7 @@
   font-size: 22px;
   font-weight: bold;
   margin-bottom: 10px;
+  color: var(--brand-inst-subtitle);
 }
 
 .cardDesc1 {
@@ -103,6 +105,7 @@
   justify-content: left;
   width: 100%;
   font-size: 16px;
+  color: var(--brand-inst-label);
 }
 
 .cardDesc1 span:last-child {
@@ -115,6 +118,7 @@
   width: 100%;
   font-size: 16px;
   margin-bottom: 2px;
+  color: var(--brand-inst-label);
 }
 
 .cardDesc2 span:last-child {

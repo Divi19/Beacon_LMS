@@ -2,9 +2,10 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: felx-start;           
+  align-items: flex-start;           
   padding: 0 20px;       
-  height: auto;                   
+  height: auto; 
+  padding-top: 20vh;                  
 }
 
 .left {
@@ -26,7 +27,7 @@
   gap: 10px;
   font-size: clamp(16px, 2.2vw, 20px);
   margin: 10px 30px 0 30px;
-  background-color: #f8a247;
+  background-color: var(--brand-inst-primary-orange);
 }
 
 .lessonFile {
@@ -54,7 +55,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 46px);
-  color: #e4973f; 
+  color: var(--brand-inst-title); 
   padding-left: 30px;
 }
 
@@ -66,17 +67,21 @@
   width: 100%;
   padding: 20px 50px;
   box-sizing: border-box;
-
   grid-auto-rows: auto;
   align-content: start;
-  min-height: 0;       
+  min-height: 0;   
+  place-items: center;    
+  place-content: center;       
 }
 
 .wrap {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding-top: 18vh;
+  place-items: center;    
+  place-content: center;  
+  padding: clamp(16px, 4vw, 1px); 
+  padding-top: 3vh;
   
 }
 
@@ -88,8 +93,8 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
-  color: brown;
+  background: var(--brand-inst-pale-gradient);
+  color: var(--brand-inst-label);
   box-sizing: border-box;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -97,6 +102,7 @@
   width: 1300%;
   max-width: 1300px;
   margin: 10px auto;
+  
 }
 
 .card1 {
@@ -107,8 +113,8 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
-  color: brown;
+  background: var(--brand-inst-pale-gradient);
+  color: var(--brand-inst-label);
   box-sizing: border-box;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -126,8 +132,8 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: #fee0c0;
-  color: brown;
+  background: var(--brand-inst-list-card);
+  color: var(--brand-inst-label);
   box-sizing: border-box;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -140,13 +146,13 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
+  background: var(--brand-inst-strong-gradient);
 }
 
 .card2:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
+  background: var(--brand-inst-strong-gradient);
 }
 
 
@@ -155,6 +161,7 @@
   font-size: 22px;
   font-weight: bold;
   margin-bottom: 10px;
+  color: var(--brand-inst-title);
 }
 
 .allCourses {
@@ -165,8 +172,8 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: #fee0c0;
-  color: brown;
+  background: var(--brand-inst-pale-orange);
+  color: var(--brand-inst-label);
   box-sizing: border-box;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -232,7 +239,7 @@
   margin: 0 auto;
   padding: 5px 24px;
   border-radius: 18px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -246,7 +253,7 @@
 }
 
 .label {
-  color: brown;
+  color: var(--brand-inst-label);
   text-align: center;
   font-size: 20px;
 }
@@ -292,7 +299,7 @@
   font-family: "Georgia", serif;
   font-size: clamp(16px, 2vw, 22px);
   font-weight: 600;
-  color: #8b4513;
+  color: var(--brand-inst-label);
   margin: 0;
 }
 
@@ -321,30 +328,32 @@
   flex: 1;
   width: 300px;
   height: 16px;
-  background-color: #3700ff;
+  background-color: var(--brand-inst-primary-orange);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background-color: #ff0000;
+  background-color: var(--brand-inst-progressbar);
   border-radius: 8px 0 0 8px;
 }
 
 .progressText {
   font-weight: bold;
   min-width: 40px;
+  color: var(--brand-inst-label)
 }
 
 .lessonsText {
   margin-left: 20px;
   font-size: 16px;
-  color: brown;
+  color: var(--brand-inst-label);
 }
 
 .studentInfoGroup {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: var(--brand-inst-label);
 }

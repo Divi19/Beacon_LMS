@@ -121,8 +121,6 @@ class InstructorCreateSerializer(serializers.ModelSerializer):
             return f"I{digits}"
         
         staff_no = generate_staff_no()
-        while InstructorProfile.objects.filter(staff_no=staff_no).exists():
-            staff_no = generate_staff_no()
         
         user = User.objects.create(
             email=email,
@@ -160,17 +158,21 @@ class StudentSerializer(serializers.ModelSerializer):
     Json parsing for student creation (registration) and reading in POST and GET
     """
     #password for student creation
-    email = serializers.EmailField(write_only = True)
-    password = serializers.CharField(write_only = True) 
-    first_name = serializers.CharField(write_only = True) 
-    last_name = serializers.CharField(write_only = True) 
-    title = serializers.CharField(write_only = True)  
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True) 
+    first_name = serializers.CharField() 
+    last_name = serializers.CharField() 
+    title = serializers.CharField()  
     #user = UserSerializer() 
+    #Readonly field 
+    student_no = serializers.CharField(read_only=True)  
+    email_output = serializers.EmailField(source='user.email', read_only=True)
+
 
     class Meta:
         model = StudentProfile
-        fields = ['first_name', 'last_name', 'title', 'locked_at', 'password', 'email']
-        read_only_fields = ['student_profile_id']
+        fields = ['first_name', 'email_output','student_no', 'last_name', 'title', 'locked_at', 'password', 'email']
+        read_only_fields = ['student_no', 'email_output']
 
     #during post 
     def create(self, validated_data):
@@ -688,6 +690,7 @@ class LessonBulkCreateInSerializer(serializers.Serializer):
 class LessonItemsBulkSerializer(serializers.Serializer):
     lesson_id = serializers.CharField(required=True)
     items = serializers.CharField(allow_blank=False, trim_whitespace=True)
+    mode = serializers.ChoiceField(choices=["merge", "replace"], required=True)
 
     def validate_lesson_id(self, v):
         if not Lesson.objects.filter(pk=v).exists():
@@ -713,3 +716,8 @@ class LessonAssignmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["assignment_id", "created_at", "updated_at"]
 
+class StudentLessonProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentLessonProgress
+        fields = ["lesson", "student", "progress_percent"]
+        read_only_fields = ["lesson", "student", "progress_percent"]

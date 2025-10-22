@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Button from "../../../components/Button/Button";
 import i from "./StudentLessonDetail.module.css";
 import StudentTopBar from "../../../components/StudentTopBar/StudentTopBar";
@@ -19,19 +19,20 @@ export default function StudentLessonDetail() {
     const [classrooms, setClassrooms] = useState([]);
     const [chosenClassroom, setChosenClassroom] = useState(null);
     const [assignments, setAssignments] = useState([]);
-    const [checkedAssignments, setCheckedAssignments] = useState(() => {
-        const saved = localStorage.getItem("checkedAssignments");
-        return saved ? JSON.parse(saved) : {};
-    });
     const [readings, setReadings] = useState([]);
-    const [checkedReadings, setCheckedReadings] = useState(() => {
-        const saved = localStorage.getItem("checkedReadings");
-        return saved ? JSON.parse(saved) : {};
-    });
+    // const [checkedAssignments, setCheckedAssignments] = useState(() => {
+    //     const saved = localStorage.getItem("checkedAssignments");
+    //     return saved ? JSON.parse(saved) : {};
+    // });
+    // const [checkedReadings, setCheckedReadings] = useState(() => {
+    //     const saved = localStorage.getItem("checkedReadings");
+    //     return saved ? JSON.parse(saved) : {};
+    // });
 
     // modal
     const [showModal, setShowModal] = useState(false);
     const [modalText, setModalText] = useState("");
+    const [result, setResult] = useState("");
 
     async function apiGetLesson() {
         //GET
@@ -108,53 +109,61 @@ export default function StudentLessonDetail() {
         })();
     }, [courseId, lessonId, refreshKey]);
 
-    useEffect(() => {
-        localStorage.setItem(
-            "checkedAssignments",
-            JSON.stringify(checkedAssignments),
-        );
-    }, [checkedAssignments]);
-
     async function toggleAssignment(assignmentId) {
-        const newCompleted = !checkedAssignments[assignmentId];
-        setCheckedAssignments(prev => ({
-            ...prev,
-            [assignmentId]: newCompleted,
-        }));
+      const assignment = assignments.find(a => a.assignment_id === assignmentId);
+      const newCompleted = !assignment?.completed;
 
-        try {
-            await api.post(`/student/lessons/${lessonId}/assignments/`, {
-                assignment_id: assignmentId,
-                completed: newCompleted,
-            });
-        } catch (err) {
-            console.error("Failed to update assignment progress:", err);
+      setAssignments(prev =>
+        prev.map(a =>
+          a.assignment_id === assignmentId
+          ? { ...a, completed: newCompleted }
+          :a
+        )
+      );
+      try {
+                await api.post(`/student/lessons/${lessonId}/assignments/`, {
+                    assignment_id: assignmentId,
+                    completed: newCompleted,
+                });
+            } catch (err) {
+                console.error("Failed to update assignment progress:", err);
+                setAssignments(prev =>
+                  prev.map(a =>
+                    a.assignment_id === assignmentId
+                    ? { ...a, completed: !newCompleted }
+                    :a
+                  )
+                );
+            }
         }
-    }
-
-    useEffect(() => {
-        localStorage.setItem(
-            "checkedReadings",
-            JSON.stringify(checkedReadings),
-        );
-    }, [checkedReadings]);
 
     async function toggleReading(readingId) {
-        const newCompleted = !checkedReadings[readingId];
-        setCheckedReadings(prev => ({
-            ...prev,
-            [readingId]: newCompleted,
-        }));
+      const reading = readings.find(r => r.reading_id === readingId);
+      const newCompleted = !reading?.completed;
 
-        try {
-            await api.post(`/student/lessons/${lessonId}/readings/`, {
-                reading_id: readingId,
-                completed: newCompleted,
-            });
-        } catch (err) {
-            console.error("Failed to update reading progress:", err);
+      setReadings(prev =>
+        prev.map(r =>
+          r.reading_id === readingId
+          ? { ...r, completed: newCompleted }
+          :r
+        )
+      );
+      try {
+                await api.post(`/student/lessons/${lessonId}/readings/`, {
+                    reading_id: readingId,
+                    completed: newCompleted,
+                });
+            } catch (err) {
+                console.error("Failed to update assignment progress:", err);
+                setReadings(prev =>
+                  prev.map(r =>
+                    r.reading_id === readingId
+                    ? { ...r, completed: !newCompleted }
+                    :r
+                  )
+                );
+            }
         }
-    }
 
     const objectiveItems = useMemo(() => {
         if (!lesson) return [];
@@ -195,7 +204,7 @@ export default function StudentLessonDetail() {
             await apiEnrollClassroom(c.classroom_id);
             setChosenClassroom(c);
             setClassrooms([]);
-
+            setResult("Success")
             setModalText(
                 `Enrolled to classroom:\n${c.day_of_week} ${c.time_start} - ${c.time_end}`,
             );
@@ -203,6 +212,7 @@ export default function StudentLessonDetail() {
             reload();
         } catch (err) {
             console.error("Enroll classroom failed", err?.response || err);
+            setResult("Failed")
             setModalText(
                 err?.response?.data?.detail ||
                     "Could not enroll to this classroom.",
@@ -255,69 +265,84 @@ export default function StudentLessonDetail() {
             <div className={i.topBar}>
                 <StudentTopBar />
             </div>
-
             <header className={i.header}>
                 <div className={i.rect}>
                     <div className={i.courseInfo}>
+                        <div className={i.courseMeta}>
+                                {lesson.credits} Credits ~{" "}
+                                {lesson.duration_weeks} Weeks
+                            </div>
                         <div className={i.courseHeader}>
                             <div className={i.courseCode}>
-                                {lesson.lesson_id}
+                                {lesson.lesson_id} 
+                                <div>{lesson.title}</div>
                             </div>
-                            <div className={i.courseMeta}>
-                                {lesson.credits} Credits ~{" "}
-                                {lesson.duration_week} Weeks
-                            </div>
+                            
+                           
                         </div>
+                        <div  className={i.label1}>{lesson.description}</div>
 
-                        <div className={i.courseName}>
-                            {lesson.title || "Untitled Lesson"}
-                        </div>
-                        <div className={i.courseDesigner}>
-                            Lesson Designer: Ms. Wong
-                        </div>
-                        <div className={i.courseDesigner}>
-                            Description: {lesson.description || ""}
-                        </div>
-                    </div>
+          <Button
+            variant="blue"
+            className={i.rectBtn}
+            onClick={() => navigate(`/student/course/${courseId}/my-lessons`)}
+          >
+            <span>Go to my course lessons</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 8 16 12 12 16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </Button>
+          
+          <Button
+            variant="blue"
+            className={i.rectBtn}
+            onClick={() => navigate(`/student/reports/course/${courseId}`)}
+          >
+            <span>View Progress</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 8 16 12 12 16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </Button>
+        </div>
 
-                    <Button
-                        variant="blue"
-                        className={i.rectBtn}
-                        onClick={() => navigate("/student/lesson-enrollment")}
-                    >
-                        <span>Go to my course lessons</span>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 8 16 12 12 16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </Button>
-                </div>
-
-                <div className={i.rect3}>
-                    <div className={i.label}>
-                        <strong>Objective</strong>
-                    </div>
-                    <div className={i.label1}>
-                        <ul style={{ margin: 0, paddingLeft: 20 }}>
-                            {objectiveItems.map((o, idx) => (
-                                <li key={idx}>{o}</li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            </header>
-
+        </div>
+        <div className={i.rect3}>
+          <div className={i.label}>
+            <strong>Objective</strong>
+          </div>
+          <div className={i.label1}>
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {objectiveItems.map((o, idx) => (
+                <li key={idx}>{o}</li>
+              ))}
+            </ul>
+            </div>
+          </div>
+      </header>
             {/* --- Classrooms section --- */}
             <div className={i.rect4}>
                 <div className={i.label}>
@@ -392,13 +417,16 @@ export default function StudentLessonDetail() {
                                                 {c.time_start} - {c.time_end}
                                             </div>
                                             <div className={i.clsMetaRow}>
-                                                <span>10 students</span>
+                                                <span> {c.capacity} students</span>
                                                 <span>
                                                     Availability: {occupied}/
                                                     {c.capacity}
                                                 </span>
                                                 <span>
                                                     ID: {c.classroom_id}
+                                                </span>
+                                                <span>
+                                                    Supervisor: {c.supervisor}
                                                 </span>
                                             </div>
                                         </div>
@@ -489,127 +517,87 @@ export default function StudentLessonDetail() {
                                 </Button>
                             </div>
                         </div>
-
-                        <div className={i.readingAndProgress}>
-                            <section className={i.panelBox}>
-                                <h3 className={i.panelTitle}>Reading List</h3>
-                            </section>
-                            <section className={i.panelBoxSmall}>
-                                <h3 className={i.panelTitle}>
-                                    Course Progress
-                                </h3>
-                            </section>
-                        </div>
                     </div>
                 )}
+
                 {/* Temporarily outside the showChosenClass, since no classroom is selected yet and that is a conditional
   to check if there is a classroom, with it assignment list would not render, move it back once that is figured out */}
             </div>
 
             <section className={i.panelBox}>
-                    <h3 className={i.panelTitle}>Assignment List</h3>
-                    {assignments.length === 0 ? (
-                        <p>No assignments yet.</p>
-                    ) : (
-                        <ul style={{ listStyle: "none", paddingLeft: 0 }}>
-                            {assignments.map(a => (
-                                <li
-                                    key={a.assignment_id}
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={
-                                            !!checkedAssignments[
-                                                a.assignment_id
-                                            ]
-                                        }
-                                        onChange={() =>
-                                            toggleAssignment(a.assignment_id)
-                                        }
-                                        style={{ marginRight: 10 }}
-                                    />
-                                    <div>
-                                        <strong>{a.title}</strong>
-                                        {a.description && (
-                                            <div
-                                                style={{
-                                                    fontSize: 13,
-                                                    color: "#666",
-                                                }}
-                                            >
-                                                {a.description}
-                                            </div>
-                                        )}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </section>
-                <section className={i.panelBox}>
-                    <h3 className={i.panelTitle}>Reading List</h3>
-                    {readings.length === 0 ? (
-                        <p>No reading items yet.</p>
-                    ) : (
-                        <ul style={{ listStyle: "none", paddingLeft: 0 }}>
-                            {readings.map(b => (
-                                <li
-                                    key={b.reading_id}
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={
-                                            !!checkedReadings[b.reading_id]
-                                        }
-                                        onChange={() =>
-                                            toggleReading(b.reading_id)
-                                        }
-                                        style={{ marginRight: 10 }}
-                                    />
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                        }}
-                                    >
-                                        {b.url && (
-                                            <a
-                                                href={b.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{
-                                                    textDecoration: "none",
-                                                    color: "#1a73e8",
-                                                    fontWeight: "bold",
-                                                }}
-                                            ></a>
-                                        )}
-                                        <strong>{b.title}</strong>
-                                        {/* {b.description && (
-              <div style={{ fontSize: 13, color: "#666" }}>{b.description}</div>
-            )} */}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </section>
+
+
+                
+                <h3 className={i.panelTitle}>Assignment List</h3>
+                {assignments.length === 0 ? (
+                  <p>No assignments yet.</p>
+                ) : (
+                  <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+                    {assignments.map(a => (
+                      <li
+                        key={a.assignment_id}
+                        style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!a.completed}
+                          onChange={() => toggleAssignment(a.assignment_id)}
+                          style={{ marginRight: 10 }}
+                        />
+                        <div>
+                          <strong>{a.title}</strong>
+                          {a.description && (
+                            <div style={{ fontSize: 13, color: "#666" }}>{a.description}</div>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              <section className={i.panelBox}>
+                <h3 className={i.panelTitle}>Reading List</h3>
+                {readings.length === 0 ? (
+                  <p>No reading items yet.</p>
+                ) : (
+                  <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+                    {readings.map(b => (
+                      <li
+                        key={b.reading_id}
+                        style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!b.completed}
+                          onChange={() => toggleReading(b.reading_id)}
+                          style={{ marginRight: 10 }}
+                        />
+                        <div style={{ marginBottom: 8 }}>
+                          <strong>{b.title}</strong>: {" "}
+                          {b.url && (
+                            <a
+                              href={b.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ textDecoration: "underline", color: "#1a73e8", fontWeight: "bold", marginRight: 8 }}
+                            >
+                              Link
+                            </a>
+                          )}
+                          {/* {b.description && (
+                            <div style={{ fontSize: 13, color: "#666" }}>{b.description}</div>
+                          )} */}
+                                                  </div>
+                                              </li>
+                                          ))}
+                                      </ul>
+                                  )}
+                              </section>
 
             {showModal && (
                 <div className={i.modalOverlay} role="dialog" aria-modal="true">
                     <div className={i.modalCard}>
-                        <h3 className={i.modalTitle}>Successfully</h3>
+                        <h3 className={i.modalTitle}>{result}</h3>
                         <p className={i.modalBody}>{modalText}</p>
                         <Button
                             variant="blue"

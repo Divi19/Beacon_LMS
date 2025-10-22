@@ -10,44 +10,23 @@ import { api } from "../../../api";
 export default function InstructorCourseDescription() {
   const navigate = useNavigate();
   const { enroll, isEnrolled } = useEnrollment();
-  const [showLessons, setShowLessons] = useState(false);
-
   const { courseId } = useParams();
-  const [showStudents, setShowStudents] = useState(false);
-  const [students, setStudents] = useState([
-    { id: "1", name: "Amina Hassan", email: "amina.hassan13@beaccon.edu" },
-    { id: "2", name: "Kenji Sato", email: "kenji21sato@beacon.edu" },
-  ]); //mock data
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [placeholders, setPlaceholders] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [activeClassrooms, setActiveClassrooms] = useState([])
 
-  // fetch the lessons only when user opens the lessons panel
-  const handleToggleLessons = async () => {
-    const willOpen = activeTab !== "lessons";
-    setActiveTab(willOpen ? "lessons" : null);
-    setShowLessons(willOpen);
-
-    if (willOpen && course?.course_id) {
-      try {
-        
-        const res = await api.get(`/instructor/courses/${courseId}/lessons/`);
-        console.log("Lessons API response", res.data);
-
-        setLessons(res.data);
-      } catch (err) {
-        console.error("Error fetching lessons", err);
-        setLessons([]);
-      }
-    }
-  };
+  
   /**
    * GET method to show course details according courseId routing
    */
   useEffect(() => {
     try {
+      api
+        .get(`/instructor/courses/${courseId}/lessons/`)
+        .then((res) => setLessons(res.data))
+        .catch(() => setLessons([]));
       api
         .get(`/courses/${courseId}/detail/`)
         .then((res) => setCourse(res.data))
@@ -70,17 +49,6 @@ export default function InstructorCourseDescription() {
     }
   }, [courseId]);
 
-  /**
-   * Placeholder for lesson rerouting
-   * Something here is causing problems
-   * @param {*} lessonId
-   */
-  const handleGoToLesson = (lessonId) => {
-    /**
-     * Seeing the lesson details
-     */
-    navigate(`/instructor/course/${courseId}/lesson/${lessonId}`);
-  };
 
   if (!course) {
     return (
@@ -136,7 +104,6 @@ export default function InstructorCourseDescription() {
           <br />
           <br />
           <Button
-            variant="orange"
             className={s.enrollBtn}
             onClick={() => navigate("/instructor/course-list")}
           >
@@ -161,50 +128,10 @@ export default function InstructorCourseDescription() {
       </div>
       <div className={s.wraprow}>
         <div className={s.row1}>
-          <div
-            className={`${s.panel1} ${
-              activeTab === "students" ? s.tabActive : ""
-            }`}
-            onClick={() =>
-              setActiveTab(activeTab === "students" ? null : "students")
-            }
-            style={{ cursor: "pointer" }}
-          >
-            <h2 className={s.label}>Enrolled Students</h2>
-          </div>
-
-          <div
-            className={`${s.panel1} ${
-              activeTab === "lessons" ? s.tabActive : ""
-            }`}
-            onClick={handleToggleLessons}
-            style={{ cursor: "pointer" }}
-          >
-            <h2 className={s.label}>Lessons</h2>
-          </div>
-
-          <div
-            className={`${s.panel1} ${
-              activeTab === "classrooms" ? s.tabActive : ""
-            }`}
-            onClick={() =>
-              setActiveTab(activeTab === "classrooms" ? null : "classrooms")
-            }
-            style={{ cursor: "pointer" }}
-          >
-            <h2 className={s.label}>Active Classrooms</h2>
-          </div>
         </div>
       </div>
 
-      {activeTab === "students" && (
-        <div className={s.lessonsCard}>
-          <h2 className={s.lessonsLabel}>Enrolled Students</h2>
-          <p className={s.empty}>No students enrolled yet</p>
-        </div>
-      )}
 
-      {activeTab === "lessons" &&  (
         <div className={s.lessonsCard}>
           <h2 className={s.lessonsLabel}>Lessons</h2>
 
@@ -222,7 +149,7 @@ export default function InstructorCourseDescription() {
                     )
                   }
                 >
-                  <h2 className={s.cardTitle}>{lesson.title}</h2>
+                  <h2 className={s.cardTitle}>{lesson.title + "     ["+ lesson.status + "]"}</h2>
                   <div className={s.cardDesc1}>
                     <div className={s.leftGroup}>
                       <span>Code:</span>
@@ -248,7 +175,6 @@ export default function InstructorCourseDescription() {
                     <span> {lesson.enrolled_count}</span>
                   </div>
                   <Button
-                    variant="orange"
                     className={s.createLessonBtn}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -268,7 +194,7 @@ export default function InstructorCourseDescription() {
             )}
           </div>
         </div>
-      )}
+      
     </>
   );
 }

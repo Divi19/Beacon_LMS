@@ -148,7 +148,7 @@ export default function LessonDetail() {
 
                       <div className={s.clsColTime}>
                         <div className={s.clsTime}>
-                          {c.time_start} – {c.time_end}
+                          {c.time_start}  {c.time_end}
                         </div>
 
                         <div className={s.clsMetaRow}>
@@ -171,42 +171,11 @@ export default function LessonDetail() {
                           </span>
                         </div>}
                       </div>
-
-                      
-
-
-
-                      <div className={s.clsColActions}>
-                        <button
-                          className={s.studentsBtn}
-                          type="button"
-                          disabled
-                        >
-                          Students
-                        </button>
-                        <button className={s.arrowBtn} type="button" disabled>
-                          →
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
-
-            <div className={s.clsFooter}>
-              <button
-                className={s.addBottomBtn}
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/instructor/course/${courseId}/lesson/${lessonId}/classroom/new`
-                  )
-                }
-              >
-                Add Classroom →
-              </button>
-            </div>
           </section>
         </section>
       </main>

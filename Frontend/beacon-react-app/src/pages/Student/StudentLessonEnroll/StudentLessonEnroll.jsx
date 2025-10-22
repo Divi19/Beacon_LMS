@@ -47,8 +47,9 @@ export default function StudentLessonEnroll() {
       console.log("Unenrolled lessons data:", res.data);
       setLessons(res.data);
     } catch (err) {
+      const detail = err?.response?.data?.detail;
       console.error("Error fetching unenrolled lessons", err);
-      alert("Failed to load available lessons.");
+      alert(detail||"Failed to load available lessons.");
     } 
   };
 
@@ -64,6 +65,7 @@ export default function StudentLessonEnroll() {
       navigate(`/student/course/${courseId}/my-lessons`);
       await fetchLessons(); // refresh after write so UI stays correct (the number of unenrolled)
     } catch (err) {
+      
       const detail = err?.response?.data?.detail;
       if (detail === "Student already enrolled") {
         await fetchLessons();
@@ -71,6 +73,7 @@ export default function StudentLessonEnroll() {
         console.error("Enrollment failed", err);
         alert(detail || "Failed to enroll in course.");
       }
+      
     } finally {
       setSubmittingId(null);
     }
@@ -121,17 +124,6 @@ return (
 
                 </div>
             </header>
-            <header className={i.header}>
-              
-                <div className={i.rect1}>
-           
-                <div className={i.label2}>
-                    <strong>{course.status}</strong>
-                </div>
-              
-
-                </div>
-            </header>
 
             {lessons.length === 0 ? (
                 <div className={i.noLessons}>No lessons yet.</div>
@@ -144,7 +136,7 @@ return (
                                 code: lesson.lesson_id,
                                 title: lesson.title,
                                 credit: lesson.credits,
-                                // director: lesson.director,
+                                designer: lesson.designer,
                                 duration: lesson.duration_weeks,
                                 description: lesson.description
                             }}

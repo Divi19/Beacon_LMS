@@ -1,6 +1,6 @@
 .wrap {
   padding: clamp(16px, 4vw, 40px);
-  padding-top: 20vh;
+  padding-top: 22vh;
 }
 
 .page {
@@ -16,7 +16,7 @@
 
 .cardBase {
   border-radius: 18px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   padding: clamp(14px, 2.4vw, 22px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
@@ -30,18 +30,18 @@
 
 .rect3 {
   border-radius: 18px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
   padding: 24px;
 }
 
 .label1 {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--brand-inst-list-card);
   border-radius: 12px;
   padding: 12px 14px;
 }
 .label {
-  color:  #9c440c;
+  color:  var(--brand-inst-subtitle);
   font-size: 22px;
   font-weight: 800;
   margin-bottom: 12px;
@@ -55,11 +55,11 @@
 }
 .code {
   font-size: clamp(18px, 2.2vw, 22px);
-  color: #9c440c;
+  color: var(--brand-inst-label);
   letter-spacing: 0.02em;
 }
 .metaRight {
-  color: #9c440c;
+  color: var(--brand-inst-label);
   font-weight: 600;
 }
 .metaValue {
@@ -70,7 +70,7 @@
   font-size: clamp(28px, 4.2vw, 40px);
   line-height: 1.1;
   margin: 2px 0 12px;
-  color: #9c440c;
+  color: var(--brand-inst-subtitle);
 }
 
 .kv {
@@ -78,11 +78,11 @@
 }
 .k {
   font-weight: 700;
-  color: #9c440c;
+  color: var(--brand-inst-title);
   margin-right: 6px;
 }
 .v {
-  color: #9c440c;
+  color: var(--brand-inst-title);
 }
 
 .cta {
@@ -91,14 +91,14 @@
   padding: 0 20px;
   border: none;
   border-radius: 999px;
-  background: #ffb267;
+  background: var(--brand-inst-primary-orange);
   color: #ffffff;
   font-weight: 700;
   cursor: pointer;
 }
 .cta:hover {
   filter: brightness(1.05);
-  background-color: #71bfcd;
+  background-color: var(--brand-inst-btn-hover-blue);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
@@ -109,7 +109,7 @@
 .objTitle {
   font-size: clamp(18px, 2.4vw, 24px);
   font-weight: 800;
-  color: #9c440c;
+  color: var(--brand-inst-title);
   margin-bottom: 10px;
 }
 .objList {
@@ -119,7 +119,7 @@
 .clsTitle {
   font-size: clamp(18px, 2.4vw, 24px);
   font-weight: 800;
-  color: #9c440c;
+  color: var(--brand-inst-label);
   margin-bottom: clamp(10px, 2vw, 14px);
 }
 .clsBody {
@@ -135,7 +135,7 @@
   height: 44px;
   padding: 0 18px;
   border-radius: 999px;
-  background: #ffb267;
+  background: var(--brand-inst-list-card);
   color: #fff;
   border: none;
 }
@@ -186,7 +186,7 @@
   grid-template-columns: 200px 1fr auto;
   align-items: center;
   gap: 18px;
-  background: #ffe9d3;
+  background: var(--brand-inst-list-card);
   border-radius: 14px;
   padding: 14px 16px;
 }
@@ -194,10 +194,10 @@
 .clsDay {
   font-size: 20px;
   font-weight: 800;
-  color: #6a3a1f;
+  color: var(--brand-inst-subtitle);
 }
 .clsDur {
-  color: #6a3a1f;
+  color: var(--brand-inst-label);
   opacity: 0.9;
 }
 .clsTime {
@@ -209,7 +209,7 @@
   gap: 18px;
   font-size: 14px;
   margin-top: 4px;
-  color: #333;
+  color: var(--brand-inst-label);
 }
 .clsColActions {
   display: flex;

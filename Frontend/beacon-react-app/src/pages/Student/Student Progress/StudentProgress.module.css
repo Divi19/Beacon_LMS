@@ -1,0 +1,138 @@
+.page {
+  padding: 28px 36px 60px;
+  min-height: 100vh;
+  padding-top: 22vh;
+}
+
+.pageTitle {
+  letter-spacing: 0.2em;
+  color: var(--brand-stud-title);
+  font-weight: 800;
+  font-size: 32px;
+  margin: 8px 0 24px;
+}
+
+.card {
+  border-radius: 18px;
+  padding: 22px 22px 20px;
+  margin: 16px 0 28px;
+  background: var(--brand-stud-pale-gradient);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.cardHeader {
+  margin-bottom: 14px;
+}
+
+.small {
+  color: var(--brand-stud-subtitle);
+  opacity: 0.85;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.courseTitle {
+  color: var(--brand-stud-subtitle);
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1.25;
+  max-width: 820px;
+}
+
+.progressBlock {
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
+
+.progressLabel {
+  color: var(--brand-stud-subtitle);
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  margin: 12px 0 12px;
+}
+
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.progressTrack {
+  position: relative;
+  height: 40px;
+  width: min(520px, 60vw);
+  border-radius: 999px;
+  background: var(--brand-stud-primary-blue);
+  overflow: hidden;
+}
+
+.progressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--brand-stud-label);
+  width: 0%;
+  transition: width 320ms ease;
+}
+
+.progressText {
+  color: var(--brand-stud-subtitle);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.completedPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 26px;
+  border-radius: 999px;
+  background: var(--brand-stud-label);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  width: fit-content;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.primaryGhost {
+  background: var(--brand-stud-primary-blue);
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primaryGhost:hover {
+  transform: scale(1.05);
+  background-color: var(--brand-stud-btn-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.success {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.success:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

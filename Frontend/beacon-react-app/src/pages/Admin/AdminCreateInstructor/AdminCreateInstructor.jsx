@@ -107,7 +107,7 @@ export default function AdminCreateInstructor() {
           />
 
           <label htmlFor="full_name" className={styles.label}>
-            Full Name:
+            Full Name: 
           </label>
           <input
             id="full_name"

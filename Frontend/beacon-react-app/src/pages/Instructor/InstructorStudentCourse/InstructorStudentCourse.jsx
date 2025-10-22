@@ -3,97 +3,36 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
 import s from "./InstructorStudentCourse.module.css";
 import Button from "../../../components/Button/Button";
+import { api } from "../../../api";
 
-export default function InstructorStudentLesson() {
-    const { courseId } = useParams();
+export default function InstructorStudentCourse() {
+    const { courseId, studentId} = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
-
-    const [course, setCourse] = useState(null);
+    const [course, setCourse] = useState(null)
+    const [student, setStudent] = useState(null)
     const [loading, setLoading] = useState(true);
     const [lessons, setLessons] = useState([]);
-    const [activeTab, setActiveTab] = useState(null);
 
-    const {
-        studentName,
-        studentGmail,
-        studentId,
-        enrolledDate,
-        enrolledHour,
-        enrolledCourses = [],
-    } = location.state || {};
 
-    // Populate lessons state (instead of studentCourses)
     useEffect(() => {
-        const formattedLessons = (
-            enrolledCourses.length
-                ? enrolledCourses
-                : [
-                      // Mock lessons for course
-                      {
-                          lessonCode: "L1",
-                          lessonTitle: "Intro",
-                          lessonSchedule: "Mon 09:00 - 11:00 Building A",
-                          progress: 0.65,
-                          readingsCompleted: 3,
-                          totalReadings: 5,
-                          assignmentsCompleted: 2,
-                          totalAssignments: 3,
-                      },
-                      {
-                          lessonCode: "L2",
-                          lessonTitle: "Advanced",
-                          lessonSchedule: "Wed 14:00 - 16:00 Building B",
-                          progress: 0.4,
-                          readingsCompleted: 1,
-                          totalReadings: 5,
-                          assignmentsCompleted: 1,
-                          totalAssignments: 3,
-                      },
-                  ]
-        ).map(lesson => ({
-            lessonCode: lesson.lessonCode,
-            lessonTitle: lesson.lessonTitle,
-            lessonSchedule: lesson.lessonSchedule,
-            progress: lesson.progress || 0,
-            readingsCompleted: lesson.readingsCompleted || 0,
-            totalReadings: lesson.totalReadings || 0,
-            assignmentsCompleted: lesson.assignmentsCompleted || 0,
-            totalAssignments: lesson.totalAssignments || 0,
-        }));
-
-        setLessons(formattedLessons);
-    }, []);
-
-    // Mock fetch course data
-    useEffect(() => {
-        const fetchCourse = async () => {
-            setLoading(true);
-            try {
-                const mockCourse = {
-                    course_id: courseId,
-                    course_code: courseId,
-                    course_title:
-                        courseId === "CS101"
-                            ? "Intro to Computer Science"
-                            : "Data Structures",
-                    students_enrolled: courseId === "CS101" ? 25 : 30,
-                };
-                setCourse(mockCourse);
+        try {
+            api.get(`instructor/student/progress/${studentId}/`, {params:{course_id : courseId}}).then(
+                res => {
+                            setStudent(res.data.student)
+                            setLessons(res.data.lessons)
+                            setCourse(res.data.course)
+                        }
+                      )
+            setLoading(false)
             } catch (err) {
-                console.error("Failed to fetch course details", err);
-                alert("Failed to load course details.");
-            } finally {
-                setLoading(false);
+                const detail = err?.response?.data?.detail;
+                console.error("Error:", detail);
+                alert(detail || "An error occured. Please try again.");
             }
-        };
+    }, [studentId]);
 
-        fetchCourse();
-    }, [courseId]);
-
-    if (loading) return <div>Loading course details…</div>;
+    if (loading) return <div>Loading course progress details...</div>;
     if (!course) return <div>No course found.</div>;
-
     return (
         <div className={s.wrap}>
             <InstructorTopBar />
@@ -118,7 +57,7 @@ export default function InstructorStudentLesson() {
                         }}
                     >
                         <h1 className={s.title} style={{ margin: 0 }}>
-                            STUDENT PROGRESS - LESSONS
+                            STUDENT PROGRESS - STUDENT
                         </h1>
                         <Button
                             className={s.enrollBtn}
@@ -154,8 +93,8 @@ export default function InstructorStudentLesson() {
                     }}
                 >
                     <h2 className={s.lessonName} style={{ margin: 0 }}>
-                        {course.course_code} - {course.course_title} (
-                        {course.students_enrolled} students)
+                        {course.course_id} - {course.title} (
+                        {course.enrolled_count} students)
                     </h2>
                 </div>
             </header>
@@ -169,18 +108,18 @@ export default function InstructorStudentLesson() {
                                                 className={s.profileLogoTop}
                                             />
                                             <div className={s.studentInfoText}>
-                    <div className={s.cardTitle}>{studentName}</div>
+                    <div className={s.cardTitle}>{student.first_name + " " + student.last_name}</div>
                     <div className={s.cardDesc1}>
                         <span>
-                            Email: <strong>{studentGmail}</strong>
+                            Email: <strong>{student.email}</strong>
                         </span>
                         <span style={{ marginLeft: "20px" }}>
-                            Student ID: <strong>{studentId}</strong>
+                            Student ID: <strong>{student.student_no}</strong>
                         </span>
                         <span style={{ marginLeft: "20px" }}>
                             Registered at:{" "}
                             <strong>
-                                {enrolledDate} {enrolledHour}
+                                {student.registered_at}
                             </strong>
                         </span>
                     </div>
@@ -193,7 +132,7 @@ export default function InstructorStudentLesson() {
                 <div className={s.card1}>
                     <div>
                         <div className={s.cardTitle}>
-                            Lessons for {course.course_code} {" "}
+                            Lessons For {course.course_code} {" "}
                             {course.course_title}
                         </div>
                         {lessons.length === 0 ? (
@@ -201,24 +140,24 @@ export default function InstructorStudentLesson() {
                         ) : (
                             lessons.map(lesson => (
                                 <div
-                                    key={lesson.lessonCode}
+                                    key={lesson.lesson_id}
                                     className={s.card2}
                                     style={{ cursor: "pointer" }}
                                 >
                                     <div className={s.cardTitleRow}>
                                         <div className={s.cardTitle}>
-                                            <strong>{lesson.lessonCode}</strong>{" "}
-                                            {lesson.lessonTitle}
+                                            <strong>{lesson.lesson_id}</strong>{" "}
+                                            {lesson.title}
                                         </div>
                                         <div className={s.enrolledAt}>
                                             Enrolled at:{" "}
-                                            <strong>{enrolledDate}</strong>
+                                            <strong>{lesson.joined_at}</strong>
                                         </div>
                                     </div>
 
                                     <div className={s.courseBody}>
                                         <div className={s.lessonsText}>
-                                            <strong>{lesson.lessonSchedule}</strong>
+                                            <strong>{lesson.day_of_week} &nbsp; {lesson.time_start.slice(0,-3)}-{lesson.time_end.slice(0,-3)}  &nbsp; &nbsp; {lesson.location}</strong>
                                         </div>
                                         <div className={s.progressWrapper}>
                                             <div className={s.progressBar}>
@@ -237,11 +176,11 @@ export default function InstructorStudentLesson() {
                                             </span>
                                             <span className={s.lessonsText}>
                                                 Readings completed:{" "}
-                                                <strong>{lesson.readingsCompleted}/{lesson.totalReadings}</strong>
+                                                <strong>{lesson.reading_completed}/{lesson.tot_readings}</strong>
                                             </span>
                                             <span className={s.lessonsText}>
                                                 Assignments completed:{" "}
-                                                <strong>{lesson.assignmentsCompleted}/{lesson.totalAssignments}</strong>
+                                                <strong>{lesson.asgn_completed}/{lesson.tot_asgns}</strong>
                                             </span>
                                         </div>
                                     </div>

@@ -1,5 +1,5 @@
 .card {
-  background: linear-gradient(to bottom, #f1cea8 0%, #b6c2ae 70%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   border-radius: 13px;
   padding: clamp(18px, 3vw, 28px);
   display: grid;
@@ -14,7 +14,7 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #ffc07d 0%, #f0c89b 70%, #0dbad8);
+  background: var(--brand-inst-strong-gradient);
 }
 
 .body {
@@ -22,14 +22,14 @@
 }
 .title {
   margin: 0 0 10px 0;
-  font-size: clamp(18px, 2.6vw, 20px);
-  color: #9c440c;
+  font-size: 1.6rem;
+  color: var(--brand-inst-subtitle);
   font-weight: 800;
 }
 .metaRow {
   display: flex;
   gap: 28px;
-  color: #9c440c;
+  color: var(--brand-inst-label);
   margin: 6px 0;
   font-weight: 600;
 }
@@ -38,21 +38,20 @@
   background:#ff9c5f ;
   color: #fff;
   border: none;
-  border-radius: 25px;
-  padding: 6px 14px;
-  font-size: 14px;
+  border-radius: 2rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
   font-weight: 600;
-
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  gap: 0.4rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
   cursor: pointer;
   transition: background 0.2s ease, filter 0.2s ease;
 }
+
 .cta:hover {
-  background: var(--brand-teal-600);
+  background: var(--brand-inst-btn-hover);
 }
 
 .footer {
