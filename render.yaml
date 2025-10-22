@@ -1,0 +1,22 @@
+databases:
+  - name: appdb
+    plan: free
+    databaseName: appdb
+    user: appuser
+
+services:
+  - type: web
+    plan: free
+    name: django-app
+    runtime: python
+    buildCommand: 'bash Backend/Framework/build.sh'
+    startCommand: 'bash -lc "cd Backend/Framework && python -m gunicorn backend.asgi:application -k uvicorn.workers.UvicornWorker"'
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: appdb
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 2
