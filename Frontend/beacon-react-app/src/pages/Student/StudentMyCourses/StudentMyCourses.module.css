@@ -30,7 +30,7 @@
   background: #f7f8fb;
   border-radius: 18px;
   border: 2px solid transparent;
-  background-image: linear-gradient(#f7f8fb, #f7f8fb),
+  background-image: linear-gradient(var(--bg)),
     var(--brand-stud-pale-gradient);
   background-origin: border-box;
   background-clip: padding-box, border-box;
@@ -49,6 +49,7 @@
 .ctaRow {
   display: grid;
   place-items: center;
+  color: var(--brand-stud-label);
 }
 
 .enrollBtn {
@@ -60,6 +61,7 @@
   justify-content: center;
   gap: 10px;
   font-size: clamp(16px, 2.2vw, 20px);
+  color: var(--brand-stud-label);
   
 }
 
