@@ -40,7 +40,7 @@ export default function InstructorStudentProgress() {
             <InstructorTopBar />
             <header className={s.header}>
                 <div className={s.left}>
-                    <h1 className={s.title}>STUDENT PROGRESS - COURSES</h1>
+                    <h1 className={s.title}>STUDENT PROGRESS</h1>
                 </div>
                 <div className={s.right}></div>
             </header>

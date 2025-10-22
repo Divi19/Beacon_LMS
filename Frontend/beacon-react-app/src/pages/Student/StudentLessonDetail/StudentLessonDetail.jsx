@@ -492,7 +492,24 @@ export default function StudentLessonDetail() {
                                     {chosenClassroom.time_end}
                                 </div>
                                 <div className={i.clsMetaRow}>
-                                    <span>10 students</span>
+                                    
+                                    <span>{chosenClassroom.enrolled_count} students</span>
+                                    <span>
+
+                                    {chosenClassroom?.zoom_link ? (
+                                                <a
+                                                    href={chosenClassroom.zoom_link}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    style={{ color: "#1a73e8", textDecoration: "underline" }}
+                                                >
+                                                    {chosenClassroom.zoom_link}
+                                                </a>
+                                                ) : (
+                                                <span></span>
+                                                )}
+                                    </span>
+                                    
                                     <span>
                                         Availability:{" "}
                                         {Math.max(

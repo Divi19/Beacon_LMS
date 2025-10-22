@@ -86,7 +86,7 @@ export default function LessonDetail() {
 
               <h2 className={s.title}>{lesson.title || "Untitled Lesson"}</h2>
               <p className={s.kv}>
-                <span className={s.k}>Lesson Designer:</span> {lesson.created_by}
+                <span className={s.k}>Lesson Designer:</span> {lesson.designer}
               </p>
               <p className={s.kv}>
                 <span className={s.k}>Description:</span>{" "}

@@ -32,6 +32,7 @@ def _split_title_second(line: str):
             left, right = line.split(sep, 1)
             title, second = left.strip(), right.strip()
             break
+        print("title", title, "second", second)
     return title, second
 
 
@@ -76,6 +77,10 @@ def mark_enrollment_complete_if_ready(enrollment_id: int) -> None:
         if enrollment.status != new_status:
             enrollment.status = new_status
             enrollment.save(update_fields=["status"])
+
+"""
+For singular lesson to look at progress of students related to it 
+"""
 
 """
 For singular lesson to look at progress of students related to it 

@@ -164,7 +164,7 @@ export default function InstructorCourseDescription() {
                   </div>
                   <div className={s.cardDesc2}>
                     <span>Lesson Designer:</span>
-                    <span> {lesson.designer}</span>
+                    <span> {lesson.designer_card}</span>
                   </div>
                   <div className={s.cardDesc3}>
                     <span>Duration:</span>

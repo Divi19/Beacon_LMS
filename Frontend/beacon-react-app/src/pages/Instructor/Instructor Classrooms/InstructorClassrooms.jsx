@@ -65,7 +65,7 @@ export default function InstructorClassrooms() {
               Capacity: {c.capacity || "Unlinked"}
             </p>
             <p className={i.meta}>
-              Type: {c.is_online ? "-" : "Physical"}
+              Type: {c.is_online ? "Online" : "Physical"}
             </p>
           </div>
         ))}

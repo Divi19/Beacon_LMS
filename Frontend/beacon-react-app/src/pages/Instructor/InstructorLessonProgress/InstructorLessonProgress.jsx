@@ -56,7 +56,7 @@ export default function InstructorLessonProgress() {
                     <h1 className={s.title}>STUDENT PROGRESS - LESSONS</h1>
 
                     <div className={s.lessonInfo}>
-                        <h2 className={s.lessonName}>{lesson.lesson_id} - {lesson.title}</h2>
+                        <h2 className={s.lessonName}>{lesson.title}</h2>
                         <span className={s.lessonCredit}>
                             ({lesson.credits} credits)
                         </span>
@@ -83,7 +83,7 @@ export default function InstructorLessonProgress() {
                                 style={{
                                     flex: 1,
                                     height: "12px",
-                                    background: "var(--brand-inst-primary-orange)",
+                                    background: "#eee",
                                     borderRadius: "8px",
                                     overflow: "hidden",
                                 }}
@@ -91,7 +91,7 @@ export default function InstructorLessonProgress() {
                                 <div
                                     style={{
                                         width: `${avgProgress * 100}%`,
-                                        background: "var(--brand-inst-progressbar)",
+                                        background: "#7ad1d8",
                                         height: "100%",
                                     }}
                                 />
@@ -104,7 +104,8 @@ export default function InstructorLessonProgress() {
                 <div className={s.buttonStack}>
                     <Button
                         className={s.enrollBtn}
-                        onClick={() => navigate(-1)}>
+                        onClick={() => navigate(-1)}
+                    >
                         Back
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -169,7 +170,7 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "var(--brand-inst-label)",
+                                        color: "brown",
                                     }}
                                 >
                                     {student.email}
@@ -179,7 +180,7 @@ export default function InstructorLessonProgress() {
                                         display: "flex",
                                         gap: "20px",
                                         fontSize: "14px",
-                                        color: "var(--brand-inst-label)",
+                                        color: "brown",
                                     }}
                                 >
                                     <span>
@@ -196,7 +197,7 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "var(--brand-inst-label)",
+                                        color: "brown",
                                     }}
                                 >
                                     <strong>Session: </strong>
@@ -231,7 +232,7 @@ export default function InstructorLessonProgress() {
                                     style={{
                                         flex: 1,
                                         height: "12px",
-                                        background: "var(--brand-inst-primary-orange)",
+                                        background: "#eee",
                                         borderRadius: "8px",
                                         overflow: "hidden",
                                     }}
@@ -240,7 +241,7 @@ export default function InstructorLessonProgress() {
                                         style={{
                                             width: `${(student.lesson_progress|| 0) * 100}%`,
                                             height: "100%",
-                                            background: "var(--brand-inst-progressbar)",
+                                            background: "#7ad1d8",
                                         }}
                                     />
                                 </div>
@@ -251,7 +252,7 @@ export default function InstructorLessonProgress() {
                             <span
                                 style={{
                                     fontSize: "13px",
-                                    color: "var(--brand-inst-label)",
+                                    color: "#000000ff",
                                     marginTop: "6px",
                                     fontStyle: "italic",
                                 }}

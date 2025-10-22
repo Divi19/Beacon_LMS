@@ -292,10 +292,8 @@ class ClassroomViews:
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
 
-
         def get(self, request, lesson_id):
             q = Q(lesson__lesson_id=lesson_id) & Q(classroom__is_online = True)
-
             linked_rows = (
                 LessonClassroom.active
                 .filter(q)
@@ -345,9 +343,11 @@ class ClassroomViews:
                 return DAY_ORDER.get(day, 99)
 
             try:
+
                 data = [*map(norm_linked, linked_rows)]
                 data.sort(key=lambda x: (x["classroom_id"], day_rank(x["day_of_week"]), x["time_start"]))
                 return Response(data)
+            
             except Exception as e:
                 return Response(
                     {"error": str(e), "trace": traceback.format_exc()},
@@ -374,6 +374,7 @@ class ClassroomViews:
             if not  online_lesson_classroom.is_valid():
                 print("ERR:", online_lesson_classroom.errors)
                 return Response(online_lesson_classroom.errors, status=400)
+            
             online_lesson_classroom_obj = online_lesson_classroom.save()
             
             
@@ -505,12 +506,6 @@ class ClassroomViews:
                     "lesson__lesson_id"                                           
                 )
             )
-
-            print("instructor:", InstructorProfile.objects.filter(user=request.user).values("instructor_profile_id","full_name").first())
-
-            # 2) How many LessonClassroom rows supervised by this instructor?
-            print("LC by me:", LessonClassroom.objects.filter(supervisor__user=request.user).count())
-
 
             unlinked_rows = (
                 Classroom.objects
@@ -801,8 +796,10 @@ class LessonViews:
                 data=request.data,
                 context={"request": request, "lesson_id": lesson_id}
             )
-            ser.is_valid(raise_exception=True)
-
+            if not ser.is_valid():
+                print("SERIALIZER ERRORS:", ser.errors)      # <-- see exact keys & messages
+                return Response({"errors": ser.errors}, status=400)
+            
             lesson = ser.validated_data["lesson"]
             prereq_list = ser.validated_data["prereq_list"]  # list[Lesson]
             mode = ser.validated_data["mode"]
@@ -850,11 +847,12 @@ class LessonViews:
                 status=status.HTTP_201_CREATED
             )
 
+    
     class LessonReadingBulkCreateView(APIView):
         """
         POST body:
-        { "items": "Title | https://a\nOnly a Title\nhttps://b\nTitle - https://c" }
-        Splits on newlines; within a line, supports " | " or " - " as title/url separators.
+        { "items": "Title | https://a\nOnly a Title\nhttps://b\nTitle - https://c",
+            "mode": "merge" | "replace" }
         """
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
@@ -867,66 +865,102 @@ class LessonViews:
 
         def _validate_item(self, title: str, url: str):
             t = (title or "").strip()
+            u = (url or "").strip()
+
             if not t:
                 raise serializers.ValidationError({"title": "Title cannot be empty."})
+
             if any(ch in t for ch in _FORBIDDEN):
-                raise serializers.ValidationError({"title": "Title must not contain '|' or '-'."})
-            u = (url or "").strip()
+                raise serializers.ValidationError({"title": "Title must not contain '|'."})
+
             if u:
                 try:
-                    _url_validator(u)
+                    _url_validator(u)  # your existing validator
                 except ValidationError:
-                    raise serializers.ValidationError({"url": "Invalid URL."})
+                    raise serializers.ValidationError({"url": f"Invalid URL: {u}"})
+
             return t, u
 
         @transaction.atomic
         def post(self, request, lesson_id):
-            existing = list(LessonReading.objects.filter(lesson__lesson_id=lesson_id))
-            by_title = {o.title: o for o in existing}
-            by_url   = {(o.url or "").strip(): o for o in existing if (o.url or "").strip()}
-
+            # Envelope
+            print("data", request.data)
             ser = LessonItemsBulkSerializer(data=request.data)
             ser.is_valid(raise_exception=True)
             items = ser.validated_data["items"]
             mode  = ser.validated_data["mode"]
             lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+            print(items)
 
+            if items == "":
+                return Response({"lesson_id": ["This field is required."]}, status=400)
+
+            # Existing rows scoped to THIS lesson
+            existing = list(LessonReading.objects.filter(lesson=lesson))
+            by_title = {o.title: o for o in existing}
+            by_url   = {(o.url or "").strip(): o for o in existing if (o.url or "").strip()}
+
+            # ---- Parse + VALIDATE ALL LINES, ACCUMULATE ERRORS ----
             parsed = []
-            try:
-                for line in _yield_lines(items):
+            errors = []
+            raw_lines = list(_yield_lines(items))  
+
+            for idx, line in enumerate(raw_lines, start=1):
+                try:
                     title, url = _split_title_second(line)
                     t, u = self._validate_item(title, url)
                     parsed.append((t, u))
-            except serializers.ValidationError as e:
-                return Response(e.detail, status=400)
+                except serializers.ValidationError as e:
+                    errors.append({"line": idx, "content": line, "error": e.detail})
+                except Exception as e:
+                    errors.append({"line": idx, "content": line, "error": f"Unexpected: {str(e)}"})
+
+            if errors:
+                # print everything for your console/logs
+                print("DEBUG: Validation errors detected:")
+                for err in errors:
+                    print(err)
+                return Response(
+                    {"message": "One or more items failed validation", "errors": errors},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             incoming_titles = {t for (t, _) in parsed}
             saved = []
 
+            # ---- Upsert loop ----
             for t, u in parsed:
                 u = (u or "").strip()
 
                 if t in by_title:
-                    # same title → normal update (only if URL provided)
                     obj = by_title[t]
-                    if u != "":
+                    if u != "" and obj.url != u:
                         obj.url = u
-                        obj.save()
-                elif u != "" and u in by_url:
-                    # SAME URL, NEW TITLE → DISCARD old and CREATE new
+                        obj.save(update_fields=["url"])
+                    saved.append(obj)
+                    continue
+
+                if u != "" and u in by_url:
                     old = by_url[u]
                     if old.title != t:
                         old.delete()
                     obj = LessonReading.objects.create(lesson=lesson, title=t, url=u)
-                else:
-                    # brand new (seed empty url when not provided)
-                    obj = LessonReading.objects.create(lesson=lesson, title=t, url=u or "")
+                    saved.append(obj)
+                    # keep maps consistent
+                    by_title[t] = obj
+                    by_url[u] = obj
+                    continue
 
+                obj = LessonReading.objects.create(lesson=lesson, title=t, url=u or "")
                 saved.append(obj)
+                by_title[t] = obj
+                if u:
+                    by_url[u] = obj
 
+            # ---- Replace only within this lesson ----
             deleted_count = 0
             if mode == "replace":
-                qs_del = LessonReading.objects.exclude(title__in=incoming_titles)
+                qs_del = LessonReading.objects.filter(lesson=lesson).exclude(title__in=incoming_titles)
                 deleted_count = qs_del.count()
                 qs_del.delete()
 
@@ -942,9 +976,9 @@ class LessonViews:
     class LessonAssignmentBulkCreateView(APIView):
         """
         GET  /instructor/lessons/<lesson_id>/assignments/
-        POST /instructor/lessons/<lesson_id>/assignments/   (body: { "items": "..." })
+        POST /instructor/lessons/<lesson_id>/assignments/   (body: { items, mode[, lesson_id?] })
 
-        items (comma- or newline-separated lines, we split by newline):
+        items: newline-separated lines
         - "Title | Description"
         - "Only a Title"
         """
@@ -958,70 +992,114 @@ class LessonViews:
                 .order_by("-created_at", "-pk")
                 .values("assignment_id", "title", "description", "created_at", "updated_at"))
             return Response(list(qs), status=status.HTTP_200_OK)
-        
+
         def _validate_item(self, title: str, desc: str):
             t = (title or "").strip()
+            d = (desc or "").strip()
+            
             if not t:
                 raise serializers.ValidationError({"title": "Title cannot be empty."})
+
             if any(ch in t for ch in _FORBIDDEN):
-                raise serializers.ValidationError({"title": "Title must not contain '|' or '-'."})
-            d = (desc or "").strip()
+                raise serializers.ValidationError({"title": "Title must not contain '|'."})
+
             if d and any(ch in d for ch in _FORBIDDEN):
-                raise serializers.ValidationError({"description": "Description must not contain '|' or '-'."})
+                raise serializers.ValidationError({"description": "Description must not contain '|'."})
+
             return t, d
 
         @transaction.atomic
         def post(self, request, lesson_id):
-            existing = list(LessonAssignment.objects.filter(lesson__lesson_id=lesson_id))
-            by_title = {o.title: o for o in existing}
-            by_desc   = {(o.description or "").strip(): o for o in existing if (o.description or "").strip()}
-
+            # Envelope
+            print("data", request.data)
             ser = LessonItemsBulkSerializer(data=request.data)
-            ser.is_valid(raise_exception=True)
-            lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
+            if not ser.is_valid():
+                print("SERIALIZER ERRORS:", ser.errors)      # <-- see exact keys & messages
+                return Response({"errors": ser.errors}, status=400)
+            body_lesson = (ser.validated_data.get("lesson_id") or "").strip()
 
+            if body_lesson and body_lesson != lesson_id:
+                return Response(
+                    {"lesson_id": ["Body lesson_id does not match URL path."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
             items = ser.validated_data["items"]
             mode  = ser.validated_data["mode"]  # "merge" or "replace"
 
+            # Preload existing for THIS lesson only
+            existing = list(LessonAssignment.objects.filter(lesson=lesson))
+            by_title = {o.title: o for o in existing}
+            by_desc  = {(o.description or "").strip(): o
+                        for o in existing if (o.description or "").strip()}
+
+            # Parse all lines and COLLECT ALL ERRORS
             parsed = []
-            try:
-                for line in _yield_lines(items):
+            errors = []
+            raw_lines = list(_yield_lines(items))
+            for idx, line in enumerate(raw_lines, start=1):
+                try:
                     title, desc = _split_title_second(line)
                     t, d = self._validate_item(title, desc)
                     parsed.append((t, d))
-            except serializers.ValidationError as e:
-                return Response(e.detail, status=400)
+                except serializers.ValidationError as e:
+                    errors.append({"line": idx, "content": line, "error": e.detail})
+                except Exception as e:
+                    errors.append({"line": idx, "content": line, "error": f"Unexpected: {str(e)}"})
+
+            if errors:
+                # You can also print(errors) here while debugging
+                return Response(
+                    {"message": "One or more items failed validation", "errors": errors},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             incoming_titles = {t for (t, _) in parsed}
             saved = []
 
+            # Upsert logic (using DESCRIPTION, not url)
             for t, d in parsed:
                 d = (d or "").strip()
-
+                print("t", t, "d", d)
                 if t in by_title:
-                    # same title → normal update (only if URL provided)
+                    # same title → update description ONLY if provided (non-empty)
                     obj = by_title[t]
-                    if d != "":
-                        obj.url = d
-                        obj.save()
-                elif d != "" and d in by_desc:
-                    # SAME URL, NEW TITLE → DISCARD old and CREATE new
+                    if d != "" and obj.description != d:
+                        obj.description = d
+                        obj.save(update_fields=["description"])
+                    saved.append(obj)
+                    continue
+
+                if d != "" and d in by_desc:
+                    # SAME DESCRIPTION, NEW TITLE → DISCARD old and CREATE new
                     old = by_desc[d]
                     if old.title != t:
                         old.delete()
                     obj = LessonAssignment.objects.create(lesson=lesson, title=t, description=d)
-                else:
-                    # brand new (seed empty url when not provided)
-                    obj = LessonAssignment.objects.create(lesson=lesson, title=t, description=d or "")
+                    saved.append(obj)
+                    # keep maps consistent if later lines refer to them
+                    by_title[t] = obj
+                    by_desc[d]  = obj
+                    continue
 
+                # brand new
+                obj = LessonAssignment.objects.create(lesson=lesson, title=t, description=d or "")
                 saved.append(obj)
+                by_title[t] = obj
+                if d:
+                    by_desc[d] = obj
 
-
+            # replace mode: ONLY within this lesson
             deleted_count = 0
             if mode == "replace":
-                qs_del = LessonAssignment.objects.exclude(title__in=incoming_titles)
+                qs_del = LessonAssignment.objects.filter(lesson=lesson).exclude(title__in=incoming_titles)
                 deleted_count = qs_del.count()
                 qs_del.delete()
+            
+            print("URL lesson_id:", lesson_id, "Body lesson_id:", body_lesson)
+            print("RAW lines:", list(_yield_lines(items)))
+            print("Existing titles:", list(by_title.keys()))
 
             return Response(
                 {
@@ -1031,7 +1109,6 @@ class LessonViews:
                 },
                 status=status.HTTP_201_CREATED,
             )
-
     class AssignmentTextView(APIView):
         """
         Return all assignments in a plain text format:
@@ -1040,11 +1117,10 @@ class LessonViews:
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
 
-
         def get(self, request, lesson_id):
+            print("id", lesson_id)
             # 1. Query all assignments
             assignments = LessonAssignment.objects.filter(lesson__lesson_id = lesson_id).values("title", "description")
-
             # 2. Build each line as "title | description"
             lines = []
             for a in assignments:
@@ -1054,7 +1130,7 @@ class LessonViews:
 
             # 3. Join by newline
             output_text = "\n".join(lines)
-
+            
             # 4. Return as plain text (or JSON if you prefer)
             return Response({"assignments_text": output_text})
 
@@ -1070,7 +1146,7 @@ class LessonViews:
         def get(self, request, lesson_id):
             # 1. Query all assignments
             readings = LessonReading.objects.filter(lesson__lesson_id = lesson_id).values("title", "url")
-
+            
             # 2. Build each line as "title | description"
             lines = []
             for a in readings:
@@ -1099,9 +1175,10 @@ class LessonViews:
                 .filter(lesson__lesson_id=lesson_id)
                 .values_list("prereq_lesson__lesson_id", flat=True)  # fetch related lesson_id directly
             )
-
+            
             # 2. Convert to comma-separated string
             output_text = ", ".join(prereqs)
+            print("prereqs", output_text)
 
             # 3. Return as JSON so frontend can use it easily
             return Response({"prereqs_text": output_text})
@@ -1123,9 +1200,10 @@ class ProgressView:
             """
             try:
                 data = get_course_progress(self.request.user, course_id)
+                print("course", data)
                 return Response(data, status=status.HTTP_200_OK)
-
             except Exception as e:
+                print(str(e))
                 return Response(
                     {"detail": str(e)},
                     status=status.HTTP_400_BAD_REQUEST
@@ -1138,6 +1216,7 @@ class ProgressView:
         def get(self, request, lesson_id):
             try:
                 data = compute_lesson_progress(request.user, lesson_id, include_students=True)
+                print("lesson_data", data)
                 return Response(data, status=200)
             except Http404 as e:
                 return Response({"detail": str(e)}, status=404)
@@ -1158,6 +1237,7 @@ class ProgressView:
                     course_id=course_id,
                     session_source="per_student"
                 )
+                print("student", data)
                 return Response(data, status=200)
 
             except Http404 as e:
@@ -1369,7 +1449,6 @@ class StudentEnrolledViews:
         
         def get(self, request, lesson_id):
             student = get_object_or_404(StudentProfile, user=request.user)
-
             linked_rows = (
                 LessonClassroom.active
                 .filter(lesson__lesson_id=lesson_id, classroomenrollment__student=student, classroom__is_active=True)
@@ -1383,9 +1462,11 @@ class StudentEnrolledViews:
                     "time_end",
                     "duration_minutes",
                     "classroom__capacity",
-                    "enrolled_count",                                                  
+                    "enrolled_count",   
+                    "classroom__zoom_link"                                               
                 )
             )
+
 
             def norm_linked(r):
                 return {
@@ -1396,11 +1477,14 @@ class StudentEnrolledViews:
                     "time_end": r["time_end"].strftime("%H:%M") if r["time_end"] else None,
                     "duration_minutes": r["duration_minutes"],
                     "capacity": r["classroom__capacity"],
-                    "enrolled_count": r["enrolled_count"],                             # ✅
+                    "enrolled_count": r["enrolled_count"], 
+                    "zoom_link": r["classroom__zoom_link"] 
+                                               
                 }
-
             data = [*map(norm_linked, linked_rows)]
             data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+            print("selected classroom:", data)
+            
             return Response(data)
         def delete(self, request, lesson_id, classroom_id, **kwargs):
             student = get_object_or_404(StudentProfile, user=request.user)
@@ -1496,24 +1580,40 @@ class StudentUnenrolledViews:
             student = get_object_or_404(StudentProfile, user=user)
             course = get_object_or_404(Course, course_id=course_id)
             unenrolled_lessons = Lesson.objects.filter(
-                Q(course=course)
-                ).exclude(lessonenrollment__student=student, status="Inactive").distinct()
+                Q(course=course) &  Q(status="Active")
+                ).exclude(Q(lessonenrollment__student=student)).distinct()
             serializer = LessonSerializer(unenrolled_lessons, many=True, context={"request": request})
             return Response(serializer.data,  status=status.HTTP_200_OK)
         
         def post(self, request, course_id, **kwargs):
             user = self.request.user
             student = get_object_or_404(StudentProfile, user=user)
-            lesson_id = request.data.get("lesson")
+            lesson_id = request.data.get("lesson_id")
+
+            if not lesson_id:
+                return Response({"lesson_id": ["This field is required."]}, status=400)
+
+
             ser = LessonEnrollmentSerializer(
-                data={"lesson": lesson_id,"student": student.student_profile_id},
+                 data={"lesson_id": lesson_id},     # <-- match the serializer field name
+                 context={"student": student},
             )
+
+            # Debug prints
+            print("CONTENT-TYPE:", request.content_type)
+            print("REQUEST.DATA:", dict(request.data))
+            print("lesson_id (input):", lesson_id)
+            
             if not ser.is_valid():
-                return Response(ser.errors, status=400)
+                print("SERIALIZER ERRORS:", ser.errors)
+                   # <-- see exact keys & messages
+                return Response({"errors": ser.errors}, status=400)
             try:
                 obj = ser.save()
             except ValidationError as e:
+                print("error in validation")
                 return Response(e.message_dict, status=400)
+            print("error in validation")
             return Response(LessonEnrollmentSerializer(obj).data, status=201)
         
         def delete(self, request, lesson_id, classroom_id, course_id, **kwargs):
@@ -1554,7 +1654,8 @@ class StudentUnenrolledViews:
                     "duration_minutes",
                     "classroom__capacity",
                     "enrolled_count",   
-                    "supervisor__full_name"                                              
+                    "supervisor__full_name",
+                    "classroom__zoom_link"                                              
                 )
             )
 
@@ -1568,16 +1669,19 @@ class StudentUnenrolledViews:
                     "duration_minutes": r["duration_minutes"],
                     "capacity": r["classroom__capacity"],
                     "enrolled_count": r["enrolled_count"], 
-                    "supervisor" : r["supervisor__full_name"]                           
+                    "supervisor" : r["supervisor__full_name"],
+                    "zoom_link" : r["classroom__zoom_link"]                           
                 }
 
             data = [*map(norm, qs)]
             data.sort(key=lambda x: (x["classroom_id"], x["day_of_week"] or 99, x["time_start"] or ""))
+            print("data", data)
+            
             return Response(data, status=200)
         
         def post(self, request, lesson_id, classroom_id):
             student = get_object_or_404(StudentProfile, user=request.user)
-
+            print("enrolling")
             # ensure this classroom belongs to the lesson
             lc = get_object_or_404(
                 LessonClassroom,
@@ -1647,7 +1751,8 @@ class StudentUnenrolledViews:
                         "time_end": fmt_time(lc.time_end),
                         "duration_minutes": lc.duration_minutes,
                         "capacity": getattr(lc.classroom, "capacity", None),  
-                        "enrolled_count": ce.enrolled_count,                  
+                        "enrolled_count": ce.enrolled_count,
+                        "zoom_link": ce.lesson_classroom.classroom.zoom_link                  
                     }
 
             # 5) Designer name (safe)

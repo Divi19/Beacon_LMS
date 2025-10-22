@@ -72,7 +72,7 @@ export default function InstructorCourseProgressDetail() {
                         gap: "12px",
                     }}
                 >
-                    <h1 className={s.title}>STUDENT PROGRESS - COURSES</h1>
+                    <h1 className={s.title}>STUDENT PROGRESS </h1>
                 </div>
             </header>
 

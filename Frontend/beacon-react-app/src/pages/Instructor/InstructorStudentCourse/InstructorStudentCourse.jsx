@@ -57,7 +57,7 @@ export default function InstructorStudentCourse() {
                         }}
                     >
                         <h1 className={s.title} style={{ margin: 0 }}>
-                            STUDENT PROGRESS - STUDENT
+                            STUDENT PROGRESS 
                         </h1>
                         <Button
                             className={s.enrollBtn}
@@ -132,7 +132,7 @@ export default function InstructorStudentCourse() {
                 <div className={s.card1}>
                     <div>
                         <div className={s.cardTitle}>
-                            Lessons For {course.course_code} {" "}
+                            Lessons for {course.course_id} - {course.title} {" "}
                             {course.course_title}
                         </div>
                         {lessons.length === 0 ? (
@@ -157,7 +157,9 @@ export default function InstructorStudentCourse() {
 
                                     <div className={s.courseBody}>
                                         <div className={s.lessonsText}>
-                                            <strong>{lesson.day_of_week} &nbsp; {lesson.time_start.slice(0,-3)}-{lesson.time_end.slice(0,-3)}  &nbsp; &nbsp; {lesson.location}</strong>
+                                            <strong>{lesson.day_of_week} &nbsp; {lesson.time_start && lesson.time_end
+                                                ? `${lesson.time_start.slice(0, -3)} - ${lesson.time_end.slice(0, -3)}`
+                                                : "No classroom enrolled"}</strong>
                                         </div>
                                         <div className={s.progressWrapper}>
                                             <div className={s.progressBar}>

@@ -49,7 +49,7 @@ export default function StudentLessonEnroll() {
     } catch (err) {
       const detail = err?.response?.data?.detail;
       console.error("Error fetching unenrolled lessons", err);
-      alert(detail||"Failed to load available lessons.");
+      alert(detail || "Failed to load available lessons.");
     } 
   };
 
@@ -57,24 +57,27 @@ export default function StudentLessonEnroll() {
     console.log("Enroll clicked for lesson:", lessonCode);
     try {
       setSubmittingId(lessonCode);
-      await api.post( `/student/courses/${courseId}/lessons/unenrolled/`, {
-        // course_id: courseId,
+      await api.post( `/student/courses/${courseId}/lessons/enroll/${lessonCode}/`, {
         lesson_id: lessonCode,
       });
 
       navigate(`/student/course/${courseId}/my-lessons`);
       await fetchLessons(); // refresh after write so UI stays correct (the number of unenrolled)
     } catch (err) {
-      
-      const detail = err?.response?.data?.detail;
-      if (detail === "Student already enrolled") {
+const detail = err?.response?.data?.detail;
+      if (err.response && err.response.status === 400) {
+        const data = err.response.data;
+        const message =
+          data.lesson?.[0] ||                
+          "Validation failed. Please check your prerequisites.";
+        alert(message)
+      }
+      else if (detail === "Student already enrolled") {
         await fetchLessons();
       } else {
         console.error("Enrollment failed", err);
-        alert(detail || "Failed to enroll in course.");
-      }
       
-    } finally {
+    } }finally {
       setSubmittingId(null);
     }
   };
@@ -136,7 +139,7 @@ return (
                                 code: lesson.lesson_id,
                                 title: lesson.title,
                                 credit: lesson.credits,
-                                designer: lesson.designer,
+                                designer: lesson.designer_card,
                                 duration: lesson.duration_weeks,
                                 description: lesson.description
                             }}
