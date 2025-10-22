@@ -83,7 +83,7 @@ export default function InstructorLessonProgress() {
                                 style={{
                                     flex: 1,
                                     height: "12px",
-                                    background: "#eee",
+                                    background: "var(--brand-inst-primary-orange)",
                                     borderRadius: "8px",
                                     overflow: "hidden",
                                 }}
@@ -91,7 +91,7 @@ export default function InstructorLessonProgress() {
                                 <div
                                     style={{
                                         width: `${avgProgress * 100}%`,
-                                        background: "#7ad1d8",
+                                        background: "var(--brand-inst-progressbar)",
                                         height: "100%",
                                     }}
                                 />
@@ -169,7 +169,7 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "brown",
+                                        color: "var(--brand-inst-label)",
                                     }}
                                 >
                                     {student.email}
@@ -179,7 +179,7 @@ export default function InstructorLessonProgress() {
                                         display: "flex",
                                         gap: "20px",
                                         fontSize: "14px",
-                                        color: "brown",
+                                        color: "var(--brand-inst-label)",
                                     }}
                                 >
                                     <span>
@@ -196,7 +196,7 @@ export default function InstructorLessonProgress() {
                                 <span
                                     style={{
                                         fontSize: "14px",
-                                        color: "brown",
+                                        color: "var(--brand-inst-label)",
                                     }}
                                 >
                                     <strong>Session: </strong>
@@ -231,7 +231,7 @@ export default function InstructorLessonProgress() {
                                     style={{
                                         flex: 1,
                                         height: "12px",
-                                        background: "#eee",
+                                        background: "var(--brand-inst-primary-orange)",
                                         borderRadius: "8px",
                                         overflow: "hidden",
                                     }}
@@ -240,7 +240,7 @@ export default function InstructorLessonProgress() {
                                         style={{
                                             width: `${(student.lesson_progress|| 0) * 100}%`,
                                             height: "100%",
-                                            background: "#7ad1d8",
+                                            background: "var(--brand-inst-progressbar)",
                                         }}
                                     />
                                 </div>
@@ -251,7 +251,7 @@ export default function InstructorLessonProgress() {
                             <span
                                 style={{
                                     fontSize: "13px",
-                                    color: "#000000ff",
+                                    color: "var(--brand-inst-label)",
                                     marginTop: "6px",
                                     fontStyle: "italic",
                                 }}

@@ -104,7 +104,7 @@ export default function InstructorCourseProgressDetail() {
             style={{
                 flex: 1,
                 height: "12px",
-                background: "#eee",
+                background: "var(--brand-inst-primary-orange)",
                 borderRadius: "8px",
                 overflow: "hidden",
                 marginLeft: "8px",
@@ -113,7 +113,7 @@ export default function InstructorCourseProgressDetail() {
             <div
                 style={{
                     width: `${course.avg_percentages}%`,
-                    background: "#7ad1d8",
+                    background: "var(--brand-inst-progressbar)",
                     height: "100%",
                 }}
             />
@@ -236,7 +236,7 @@ export default function InstructorCourseProgressDetail() {
                                     <span
                                         style={{
                                             fontSize: "14px",
-                                            color: "var(--brand-inst-label",
+                                            color: "var(--brand-inst-label)",
                                         }}
                                     >
                                         Credits Earned:{" "}
@@ -266,7 +266,7 @@ export default function InstructorCourseProgressDetail() {
                                         style={{
                                             flex: 1,
                                             height: "12px",
-                                            background: "#eee",
+                                            background: "var(--brand-inst-primary-orange)",
                                             borderRadius: "8px",
                                             overflow: "hidden",
                                         }}
@@ -275,7 +275,7 @@ export default function InstructorCourseProgressDetail() {
                                             style={{
                                                 width: `${(student.lessons_completed / course.tot_lessons || 0) * 100}%`,
                                                 height: "100%",
-                                                background: "#7ad1d8",
+                                                background: "var(--brand-inst-progressbar)",
                                             }}
                                         />
                                     </div>
@@ -379,7 +379,7 @@ export default function InstructorCourseProgressDetail() {
                                             style={{
                                                 flex: 1,
                                                 height: "12px",
-                                                background: "var(--brand-inst-label)",
+                                                background: "var(--brand-inst-primary-orange)",
                                                 borderRadius: "8px",
                                                 overflow: "hidden",
                                             }}

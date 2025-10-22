@@ -122,7 +122,7 @@ html[data-role="instructor"][data-theme="light"] {
   --brand-inst-btn-hover: #a45a2b;
   --brand-inst-list-card: #f8d7b7;
   --brand-inst-btn: #ff8537;
-  --brand-inst-progressbar: #8a4215;
+  --brand-inst-progressbar: #5b2809;
   --brand-inst-form-gradient: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%);
   --brand-inst-btn-hover-blue: #5c9eae;
   --brand-inst-link-btn: #ff8537;
@@ -159,7 +159,7 @@ html[data-role="instructor"][data-theme="dark"] {
   --brand-inst-btn-hover: #d48859;
   --brand-inst-list-card: #6a3f14;
   --brand-inst-btn: #8a4215;
-  --brand-inst-progressbar: #d49168;
+  --brand-inst-progressbar: #e1b69b;
   --brand-inst-form-gradient: linear-gradient(to right, #5a3c1d 0%, #83490c 50%, #1b5e91 100%);
   --brand-inst-btn-hover-blue: #135965;
   --brand-inst-link-btn: #3d1700;
