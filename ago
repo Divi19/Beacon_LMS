@@ -1,0 +1,12 @@
+* [33m8d253fa[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mFrontend_Isabella[m[33m, [m[1;31morigin/Frontend_Isabella[m[33m)[m Revert "US4 - Fix coloring and logic"
+* [33mf464410[m US6 - Erase unecessary comments and learning comments
+* [33mb88ea2f[m US6 - integrate slider with theme
+*   [33med9dcf2[m Merge remote-tracking branch 'origin/backend_mandy' into Frontend_Isabella
+[32m|[m[33m\[m  
+[32m|[m * [33ma5fc781[m[33m ([m[1;31morigin/backend_mandy[m[33m)[m US6 - Completing dark mode
+[32m|[m * [33mfa0d2fd[m[33m ([m[1;31morigin/frontend_miro[m[33m)[m US6 - Completed css change for dark mode one all instructors report screen
+[32m|[m * [33m0a911e9[m US6 - Changed css for instructor student progress detail screen for darkmode.
+[32m|[m * [33mf1f605c[m US6 - added gunicorn for webhosting and changed instructor course progress css for dark theme.
+[32m|[m * [33mf75ddf6[m US6 - Complete merging with complete backend
+[32m|[m *   [33m8a871a8[m Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy
+[32m|[m [34m|[m[35m\[m  

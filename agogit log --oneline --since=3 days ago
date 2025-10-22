@@ -1,0 +1,74 @@
+[33m8d253fa[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mFrontend_Isabella[m[33m, [m[1;31morigin/Frontend_Isabella[m[33m)[m Revert "US4 - Fix coloring and logic"
+[33mf464410[m US6 - Erase unecessary comments and learning comments
+[33mb88ea2f[m US6 - integrate slider with theme
+[33med9dcf2[m Merge remote-tracking branch 'origin/backend_mandy' into Frontend_Isabella
+[33m27beb72[m US6 - Implement almost font size
+[33ma5fc781[m[33m ([m[1;31morigin/backend_mandy[m[33m)[m US6 - Completing dark mode
+[33mfa0d2fd[m[33m ([m[1;31morigin/frontend_miro[m[33m)[m US6 - Completed css change for dark mode one all instructors report screen
+[33m0a911e9[m US6 - Changed css for instructor student progress detail screen for darkmode.
+[33mf1f605c[m US6 - added gunicorn for webhosting and changed instructor course progress css for dark theme.
+[33mf75ddf6[m US6 - Complete merging with complete backend
+[33m8a871a8[m Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy
+[33m28a82d1[m US6 - Modified css colors to global variable in all instructors screen to match darkmode.
+[33ma0d204e[m Spike 10 - Confirming the bugs in lesson creation page empty fields and student progress not updating fixed
+[33m8502c98[m (US5 S2)Fix bugs for the lesson creation form not showing existing classrooms - Alter the LessonBulkCreate serializer to have the model field inside of it - Change the navigation routing for the InstructorClassrooms file to be correct - Refactor InstructorLessonCreate to properly show classrooms, reading list and assignments when updating a lesson
+[33mcf54ee7[m Cherry-picking commits from divi to assess emerging bugs
+[33m7cb1efc[m (US4)Remove localStorage use for assignment and reading list checklist function - Removed the localStorage persistence and related useState hooks for manageing the completion status - Refactor toggleAssigment and toggleReading functions to perform updates on the main assigments and reading state arrays - Update checkbox inputs to bind their checked status directly to the item.completed property from the API-sourced data - Refactored the navigation links of view my lessons and view progress to route to the correct pages
+[33ma54949f[m US7 - tested Student dark mode functionality
+[33m2559ba2[m Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy
+[33mb3ee26b[m Spike 9-Assisting frontend in elements centering
+[33mfdf67f6[m US6 - Changed all student screens css colours to global variables to enable darkmode student side.
+[33m985d0b9[m (US6) - Decomposed themetoggler into themecontextprovider and updated index so that dark theme persist along all pages.
+[33m1468a4f[m US6 - Added global variable for colours to be able to change theme. Added a toggle button of both top bar to change theme
+[33m2a32950[m cherry picking from frontend_miro as resolution to missing changes from merging
+[33me5851a0[m Removed enrolled students and active classrooms from instructor course description.
+[33m1b06285[m Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy
+[33m16d7df4[m US6 - Changed css colours of global variables in student lesson detail and courseenrolled detail to support darkmode.
+[33m5e14e4e[m Resolving wrong merge conflicts when merging into frontend_miro.
+[33mb20d186[m Revert "Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy"
+[33m4954da3[m Revert "Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy"
+[33mad1bc90[m US6 - reverting merge due to wrong conflict resolution
+[33m42d1b2b[m Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy
+[33m25eab00[m US5 - Integration into frontend for report complete
+[33m1390f86[m US6 - Added global variable for colours to be able to change theme. Added a toggle button of both top bar to change theme
+[33m58ba753[m Implemented css for styling of student classroom to match the designed ux
+[33ma73aeb2[m Created frontend page for student classroom page, so that student can view all their enrolled classrooms.
+[33m73acaa9[m US4 - Fix coloring and logic
+[33m79a3a5f[m US4 - Linking process
+[33m76954c7[m US4 - FInish UI
+[33mec019dd[m US4 - Preparing to create the last page of US4
+[33m246d22e[m US4 - Finish creating student focused page part 1
+[33m70673ff[m US4 - Student Lesson detail fixing more layout
+[33m688abe5[m US4 - Student personalised progress almost done
+[33m397eafc[m US4 - Student personalised screen almost done
+[33m08000ca[m US4 - Finish creating screen after instructor clicks on the lesson
+[33ma289b2b[m US4 - Screen 2 finish
+[33mbea5979[m US4 - Student card almost done
+[33m1344d3f[m US4 - Group together the picture and student's information on the leftmost side of the card
+[33mb0aea67[m US4 - Create layout for students and lessons
+[33m8f93eeb[m US4 - Update lesson card in progress
+[33m29f5867[m Removed enrolled students and active classrooms from instructor course description.
+[33mdf937e4[m US4 - Make the lesson stacking instead of side by side
+[33m905f4e3[m Merge remote-tracking branch 'origin/backend_mandy' into frontend_miro
+[33mdd95d22[m Adjusted incorrect design for lesson detail for student side
+[33m2ee17f2[m US4 - Implement the ascending feature
+[33m85197a9[m (US4-S2) - Integration of Student listing with backend complete
+[33m109898b[m US4 - Progress screen 2
+[33m75ba641[m Merge remote-tracking branch 'origin/frontend_miro' into backend_mandy
+[33m35118dd[m (US5) - Backend logic for student progress report ready
+[33m7c7dbad[m US4 - Half progress  f or 2nd page student progress
+[33m7b2f259[m Merge remote-tracking branch 'origin/backend_mandy' into frontend_miro
+[33m33d4045[m Merge remote-tracking branch 'origin/backend_mandy' into frontend_miro
+[33m5b473d7[m (US4 S2) - Refined styling for both InstructorStudentinCourse and instructorstudentlsnClass
+[33mff492af[m US4 - Create first screen for report
+[33mb455d98[m (US4 S2) -  Added css styling code for all new 3 pages, for student list from instructor side
+[33m119618a[m (US4 S2) - Implemented Studentlist view per lessons and classrooms
+[33med5cd67[m (US4 S2) - Created student in course page to view all students details in one sepcific course.
+[33m8dabfea[m (US4 S2) Implemented instructor screen for entry page of students, to see all courses to view students
+[33md1d2e1d[m Revert "Merge branch 'backend_mandy' of https://git.infotech.monash.edu/fit2101/fit2101-s2-2025/group-repo/MA_Thursday2pm_Team1 into Frontend_Isabella"
+[33mcc634a4[m Merge branch 'backend_mandy' of https://git.infotech.monash.edu/fit2101/fit2101-s2-2025/group-repo/MA_Thursday2pm_Team1 into Frontend_Isabella
+[33m5be2654[m Merge remote-tracking branch 'origin/backend_divieleisch' into backend_mandy
+[33md1151a2[m Spike 7 - Fixed bugs from refinement for null enrolled_at time
+[33m7a2224d[m Spike 7 -Refined validation guards on lesson enrollment and lesson credit settings
+[33m4e9b74f[m (US3)Integrate course progress frontend page with the backend system - Utilized useEffect to gather course data similar to the lesson progress page and we use the Promise.all() to get data for multiple courses - Remove the hardcoded temporary course cards used to display the frontend with the actual courses from the my courses page of the student side - Added calculations to calculate the overall progress of a course based on all the lessons progress in the form of measuring its average and computing from there - Refactored the update_lesson_progress() function in views to use the round() method to keep percentages in 2 decimal places for simplicity
+[33m2e1cca8[m (US3)Integrate lesson progress frontend page with the backend - Removed all hardcoded lessons in the frontend system and replaced with the actual lessons of the students - Utilized a useEffect to aid in the extraction of lessons directly from the enrolled page for students and show the progress of those lessons - Called the progress_percent field in the lesson progress model to extract the real-time calculated percentage value that the bar should be at - Deleted the LessonProgress file as 
