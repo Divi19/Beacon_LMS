@@ -132,7 +132,7 @@ export default function InstructorStudentCourse() {
                 <div className={s.card1}>
                     <div>
                         <div className={s.cardTitle}>
-                            Lessons for {course.course_code} {" "}
+                            Lessons For {course.course_code} {" "}
                             {course.course_title}
                         </div>
                         {lessons.length === 0 ? (

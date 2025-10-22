@@ -47,6 +47,11 @@ export default function StudentProfile() {
           </div>
 
           <div className={s.row}>
+            <span className={s.label}>Student ID:</span>
+            <span className={s.value}>{student.student_no || "—"}</span>
+          </div>
+
+          <div className={s.row}>
             <span className={s.label}>Student Email:</span>
             <span className={s.value}>{student.email_output || "—"}</span>
           </div>
