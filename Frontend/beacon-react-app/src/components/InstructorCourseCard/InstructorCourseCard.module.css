@@ -1,5 +1,5 @@
 .card {
-  background: linear-gradient(to bottom, #f1cea8 0%, #b6c2ae 70%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   border-radius: 13px;
   padding: clamp(18px, 3vw, 28px);
   display: grid;
@@ -14,7 +14,7 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #ffc07d 0%, #f0c89b 70%, #0dbad8);
+  background: var(--brand-inst-strong-gradient);
 }
 
 .body {
@@ -23,19 +23,19 @@
 .title {
   margin: 0 0 10px 0;
   font-size: clamp(18px, 2.6vw, 20px);
-  color: #9c440c;
+  color: var(--brand-inst-subtitle);
   font-weight: 800;
 }
 .metaRow {
   display: flex;
   gap: 28px;
-  color: #9c440c;
+  color: var(--brand-inst-label);
   margin: 6px 0;
   font-weight: 600;
 }
 
 .cta {
-  background:#ff9c5f ;
+  background:var(--brand-inst-primary-orange);
   color: #fff;
   border: none;
   border-radius: 25px;
@@ -52,7 +52,7 @@
   transition: background 0.2s ease, filter 0.2s ease;
 }
 .cta:hover {
-  background: var(--brand-teal-600);
+  background: var(--brand-inst-btn-hover);
 }
 
 .footer {
