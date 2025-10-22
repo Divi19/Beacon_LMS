@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../../../api";
 import i from "./InstructorClassrooms.module.css";
 import InstructorTopBar from "../../../components/InstructorTopBar/InstructorTopBar";
@@ -8,14 +8,19 @@ export default function InstructorClassrooms() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedClassroomId = location.state?.selectedClassroomId || null;
 
   useEffect(() => {
     let ignore = false;
     (async () => {
       try {
-        const { data } = await api.get("/instructor/classrooms/");
+        const { data } = await api.get("/instructor/classrooms/own/");
         if (!ignore) {
-          setItems(data);
+          const classrooms = Array.isArray(data) 
+            ? data
+            : [];
+          setItems(classrooms);
         }
       } catch (e) {
         console.error("Failed to fetch classrooms", e);
@@ -44,7 +49,7 @@ export default function InstructorClassrooms() {
 
       <div className={i.grid}>
         {items.map((c) => (
-          <div key={c.classroom_id} className={i.card}>
+          <div key={c.classroom_id} className={`${i.card} ${c.classroom_id === selectedClassroomId ? i.selected : ""}`}>
             {/*<div className={i.icon} aria-hidden>Class</div>*/}
             <h4 className={i.courseName}>
               {c.location ? c.location : "Unlinked"}

@@ -50,16 +50,6 @@ import InstructorStudentCourse from "./pages/Instructor/InstructorStudentCourse/
 
 export default function App(){
   const [details, setDetails] = useState([]);
-  useEffect( () => {
-    api.get('/instructor/courses/')
-    .then(res => {
-      setDetails(res.data);
-    })
-        .catch(err => {
-          console.error('Error fetching data', err)
-        });
-      }, []);
-
     return (
       <div>
         {details.map((output, id) => (
