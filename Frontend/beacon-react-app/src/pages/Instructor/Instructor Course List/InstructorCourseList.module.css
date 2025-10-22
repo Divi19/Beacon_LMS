@@ -67,7 +67,7 @@
   flex-direction: column;
   overflow-y: auto;
   padding: clamp(16px, 4vw, 1px); 
-  padding-top: 10vh;
+  padding-top: 22vh;
   
 }
 

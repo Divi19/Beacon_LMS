@@ -150,7 +150,7 @@ export default function InstructorCourseDescription() {
                     )
                   }
                 >
-                  <h2 className={s.cardTitle}>{lesson.title}</h2>
+                  <h2 className={s.cardTitle}>{lesson.title + "     ["+ lesson.status + "]"}</h2>
                   <div className={s.cardDesc1}>
                     <div className={s.leftGroup}>
                       <span>Code:</span>

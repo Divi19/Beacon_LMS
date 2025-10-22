@@ -130,10 +130,10 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }
   };
 
-  const goToCoursePage = () => {
+  const goToLessonPage = () => {
     setShowOptionalModal(false);
-    navigate("/instructor/course-list");
-  };
+    navigate(`/instructor/course/${courseId}/lesson/${lessonId}`);
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -858,7 +858,7 @@ try {
           <div className={i.modalContent}>
             <h3>Lesson saved successfully!</h3>
             <div className={i.modalButtons}>
-              <button className={i.selectButton} onClick={goToCoursePage}>
+              <button className={i.selectButton} onClick={goToLessonPage}>
                 Go to lesson page
               </button>
             </div>
