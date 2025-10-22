@@ -4,7 +4,7 @@
   justify-content: space-between;
   align-items: center;
   padding: clamp(12px, 2vw, 15px) 4rem;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: fixed;
   top: 0;
@@ -46,7 +46,7 @@
   cursor: pointer;
   font-weight: 500;
   font-size: clamp(14px, 1.8vw, 18px);
-  color:#431a01;
+  color:var(--brand-inst-link);
 }
 
 .profileLogoTop {
@@ -77,6 +77,6 @@
   cursor: pointer;
 }
 .navLink:hover {
-  color: white;
+  color: var(--brand-inst-link-hover);
   opacity: 87%;
 }

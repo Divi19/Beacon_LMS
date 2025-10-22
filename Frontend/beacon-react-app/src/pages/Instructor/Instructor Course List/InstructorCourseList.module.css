@@ -33,7 +33,7 @@
 
 .enrollBtn:hover{
   transform: scale(1.05);
-  background-color: #71bfcd;
+  background-color: var(--brand-inst-btn-hover);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
@@ -44,7 +44,7 @@
   letter-spacing: 0.25em;
   font-weight: 800;
   font-size: clamp(26px, 4.8vw, 46px);
-  color: #e4973f; 
+  color: var(--brand-inst-title); 
   padding-left: 30px;
 }
 
@@ -79,7 +79,7 @@
   padding: 20px;
   padding-bottom: 50px; 
   border-radius: 20px;
-  background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 80%, #71bfcd 100%);
+  background: var(--brand-inst-pale-gradient);
   color: brown;
   box-sizing: border-box;
   cursor: pointer;
@@ -89,7 +89,7 @@
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: linear-gradient(to bottom, #f8a247 0%, #e5b582 80%, #4ab1c4 100%);
+  background: var(--brand-inst-strong-gradient);
 }
 
 

@@ -18,19 +18,14 @@
   margin: 0 auto;
   padding: 24px 32px;
   border-radius: 18px;
-  background: linear-gradient(
-  to bottom,
-  #f1cea8 0%,  
-  #f1cea8 70%, 
-  #71bfcd 100% 
-);
+  background: var(--brand-inst-pale-gradient);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .title {
   margin: 0 0 12px;
   font-size: clamp(22px, 3.8vw, 30px);
-  color: #e96d1f;
+  color: var(--brand-inst-title);
   font-weight: 800;
 }
 
@@ -38,13 +33,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 18px 28px;
-  color: #a8581b;
+  color: var(--brand-inst-label);
   font-weight: 700;
   margin-bottom: 16px;
 }
 .subhead {
   margin: 18px 0 18px;
-  color: #cb5425;
+  color: var(--brand-inst-subtitle);
   font-size: clamp(16px, 2.6vw, 22px);
 }
 .desc {
@@ -61,16 +56,16 @@
   flex-wrap: wrap;
 }
 .chip {
-  background: #f6b773;
-  color: brown;
+  background: var(--brand-inst-primary-orange);
+  color: var(--brand-int-label);
   font-weight: 700;
   border-radius: 10px;
   padding: 8px 14px;
 }
 .noLessons {
-  color: #f97129;
+  color: var(--brand-inst-label);
   font-weight: 700;
-  background: #ffb16d;
+  background: var(--brand-inst-list-card);
   padding: 8px 14px;
   border-radius: 10px;
 }
@@ -80,7 +75,6 @@
   margin-top: 18px;
 }
 
-/* Extra stuff here can delete if wanted */
 .lessonActions {
 display: flex;
 justify-content: flex-start;
@@ -90,7 +84,7 @@ margin-top: 12px;
 .addLessonBtn {
 padding: 8px 20px;
 border-radius: 10px;
-background: orange;
+background: var(--band-inst-primary-orange);
 color: white;
 font-weight: 600;
 border: none;
@@ -98,7 +92,7 @@ cursor: pointer;
 }
 
 .addLessonBtn:hover {
-background: darkorange;
+background: var(--brand-inst-primary-orange);
 }
 
 .row {
@@ -112,12 +106,7 @@ gap: 16px;
   margin: 0 auto;
   padding: 5px 24px;
   border-radius: 18px;
-  background: linear-gradient(
-  to bottom,
-  #f1cea8 0%,  
-  #f1cea8 70%, 
-  #71bfcd 100% 
-);
+  background: var(--brand-inst-pale-gradient);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
@@ -125,7 +114,7 @@ gap: 16px;
   filter: brightness(1.05);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: rgb(255, 208, 147);
+  background: var(--brand-inst-strong-gradient);
 }
 
 .row1 {
@@ -135,7 +124,7 @@ padding-top: 0px
 }
 
 .label {
-color: brown;
+color: var(--brand-inst-label);
 text-align: center;
 font-size: 20px;
 }
@@ -152,13 +141,14 @@ justify-content: center;
 gap: 10px;
 font-size: clamp(12px, 2.2vw, 18px);
 padding: 8px 12px;
+background-color: var(--brand-inst-btn);
 }
 
 .enrollBtn:hover{
   filter: brightness(1.05);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background-color: #9b3e08;
+  background-color: var(--brand-inst-btn-hover);
 }
 
 .lessonsCard {
@@ -167,12 +157,7 @@ width: 100%;
 aspect-ratio: auto;
 margin: 16px auto;
 border-radius: 18px;
-background: linear-gradient(
-  to bottom,
-  #f1cea8 0%,
-  #f1cea8 70%,
-  #71bfcd  100%
-);
+background: var(--brand-inst-pale-gradient);
 
 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 padding: 24px;
@@ -185,7 +170,7 @@ overflow: hidden;
 .lessonsLabel {
 font-size: 24px;
 font-weight: 700;
-color: brown;
+color: var(--brand-inst-label);
 }
 
 .card {
@@ -195,8 +180,8 @@ justify-content: flex-start;
 align-items: flex-start;
 padding: 20px;
 border-radius: 20px;
-background: linear-gradient(#f7ecd3);
-color: brown;
+background: var(--brand-inst-list-card);
+color: var(--brand-inst-label);
 box-sizing: border-box;
 cursor: pointer;
 transition: transform 0.2s ease-in-out;
@@ -205,7 +190,7 @@ transition: transform 0.2s ease-in-out;
 .card:hover {
 transform: translateY(-1px);
 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-background: linear-gradient( #ebc989);
+background: var(--brand-inst-btn-hover);
 }
 
 
@@ -253,7 +238,7 @@ width: 100%;
 margin: 16px auto;
 padding: 24px;
 border-radius: 18px;
-background: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
+background: var(--brand-inst-pale-gradient);
 display: flex;
 flex-direction: column;
 gap: 16px;
@@ -262,7 +247,7 @@ gap: 16px;
 .lessonsLabel {
 font-size: 24px;
 font-weight: 700;
-color: brown;
+color: var(--brand-inst-label);
 }
 
 .container {
@@ -274,11 +259,16 @@ padding: 20px 50px;
 box-sizing: border-box;
 }
 
+.createLessonBtn{
+  color: white;
+  background: var(--brand-inst-btn);
+}
+
 .createLessonBtn:hover{
-    filter: brightness(1.05);
+  filter: brightness(1.05);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background-color: #9b3e08;
+  background: var(--brand-inst-btn-hover-blue);
 }
 
 .tabActive {

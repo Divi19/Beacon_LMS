@@ -5,7 +5,7 @@
 
 .title {
   letter-spacing: 0.35rem;
-  color: #c45619;
+  color: var(--brand-inst-title);
   font-weight: 800;
   margin: 0 0 1.2rem;
 }
@@ -13,13 +13,13 @@
 .card {
   border-radius: 18px;
   padding: 1.5rem;
-  background: linear-gradient(90deg, #f6c799 0%, #a8d6d6 100%);
+  background: var(--brand-inst-form-gradient);
   max-width: 840px;
 }
 
 .section {
   margin: 0 0 1.2rem;
-  color: #6a3f1f;
+  color: var(--brand-inst-label);
 }
 
 .row {
@@ -39,7 +39,7 @@
 
 .readonly {
   font-weight: 600;
-  color: #000;
+  color: var(--brand-inst-label);
 }
 
 .actions {

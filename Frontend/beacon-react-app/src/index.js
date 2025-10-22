@@ -7,6 +7,12 @@ import { BrowserRouter } from "react-router-dom";
 import { EnrollmentProvider } from "./state/EnrollmentContext";
 import { ThemeProvider } from "./state/ThemeContext";
 
+
+const html = document.documentElement;
+const savedRole = localStorage.getItem("role") || "student";
+const savedTheme = localStorage.getItem("theme") || "light";
+html.setAttribute("data-role", savedRole);
+html.setAttribute("data-theme", savedTheme);
 /**
  * Ensure role + theme are set on <html> before the app renders.
  */

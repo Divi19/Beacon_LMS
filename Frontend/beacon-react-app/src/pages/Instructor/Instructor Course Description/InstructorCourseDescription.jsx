@@ -104,7 +104,6 @@ export default function InstructorCourseDescription() {
           <br />
           <br />
           <Button
-            variant="orange"
             className={s.enrollBtn}
             onClick={() => navigate("/instructor/course-list")}
           >
@@ -176,7 +175,6 @@ export default function InstructorCourseDescription() {
                     <span> {lesson.enrolled_count}</span>
                   </div>
                   <Button
-                    variant="orange"
                     className={s.createLessonBtn}
                     onClick={(e) => {
                       e.stopPropagation();

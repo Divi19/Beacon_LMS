@@ -112,14 +112,25 @@ html[data-role="instructor"][data-theme="light"] {
   --brand-inst-title:#d05100;
   --brand-inst-label: #431a01;
   --brand-inst-subtitle:#9c440c;
-  --brand-inst-pale-gradient: linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
+  --brand-inst-pale-gradient:linear-gradient(to bottom, #f1cea8 0%, #f1cea8 70%, #71bfcd 100%);
   --brand-inst-strong-gradient:linear-gradient(to bottom, #ffc07d 0%, #f0c89b 70%, #0dbad8);
   --brand-inst-background-orange: #f0c89b;
   --brand-inst-primary-orange: #ff8537;
   --brand-inst-norm-text: #210f04;
+  --brand-inst-link: #431a01;
+  --brand-inst-link-hover: #ffffff;;
+  --brand-inst-btn-hover: #a45a2b;
+  --brand-inst-list-card: #f8d7b7;
+  --brand-inst-btn: #ff8537;
+  --brand-inst-progressbar: #135965;
+  --brand-inst-form-gradient: linear-gradient(to right, #f1cea8 0%, #f1cea8 50%, #71bfcd 100%);
+  --brand-inst-btn-hover-blue: #5c9eae;
+  --brand-inst-link-btn: #ff8537;
+  --brand-inst-pale-orange:#ffeddb;
+  
 
   /* semantic aliases */
-  --bg: var(--brand-inst-background-orange);
+  --bg: #f7f8fb;
   --surface: #ffffff;
   --surface-2: #f6f7fb;
   --text: var(--brand-inst-norm-text);
@@ -138,14 +149,24 @@ html[data-role="instructor"][data-theme="dark"] {
   --brand-inst-title:#eed3b5;
   --brand-inst-label: #eed3b5;
   --brand-inst-subtitle:#ffeddb;
-  --brand-inst-pale-gradient: linear-gradient(to bottom, #4d2b04 0%,  #ad620f 0%, #004b84 100%);
-  --brand-inst-strong-gradient: linear-gradient(to bottom, #754e20 0%,  #b78042 0%, #1b5e91 100%);
+  --brand-inst-pale-gradient: linear-gradient(to bottom, #2d1a04 10%,  #563209 70%, #264c6e 100%);
+  --brand-inst-strong-gradient: linear-gradient(to bottom, #4d3214 0%,  #865d2f 0%, #1b5e91 100%);
   --brand-inst-background-orange: #f0c89b;
-  --brand-inst-primary-orange: #ff8537;
+  --brand-inst-primary-orange: #994d1e;
   --brand-inst-norm-text: #f3eeeb;
+  --brand-inst-link: #f0c89b;;
+  --brand-inst-link-hover: #ffffff;
+  --brand-inst-btn-hover: #d48859;
+  --brand-inst-list-card: #6a3f14;
+  --brand-inst-btn: #8a4215;
+  --brand-inst-progressbar: #135965;
+  --brand-inst-form-gradient: linear-gradient(to right, #5a3c1d 0%, #83490c 50%, #1b5e91 100%);
+  --brand-inst-btn-hover-blue: #135965;
+  --brand-inst-link-btn: #3d1700;
+  --brand-inst-pale-orange:#b1693c;
 
   /* semantic aliases */
-  --bg: #0b0f19;       
+  --bg:#5c5c5c;
   --surface: #121624;
   --surface-2: #161b2c;
   --text: var(--brand-inst-norm-text);

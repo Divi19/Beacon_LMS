@@ -1,12 +1,11 @@
 .page {
   padding: 32px;
-  background: #f3f3f3;
   min-height: 100vh;
   padding-top: 20vh;
 }
 
 .pageTitle {
-  color: #c64a00;
+  color: var(--brand-inst-title);
   font-size: 32px;
   font-weight: 800;
   letter-spacing: 0.15em;
@@ -23,11 +22,11 @@
 .subtitle {
   font-size: 20px;
   font-weight: 600;
-  color: #9b4a00;
+  color: var(--brand-inst-subtitle);
 }
 
 .card, .cardSmall {
-  background: linear-gradient(180deg, #f7b87f 0%, #b5e3e8 100%);
+  background:var(--brand-inst-pale-gradient);
   border-radius: 18px;
   padding: 16px 22px;
   margin-bottom: 18px;
@@ -37,7 +36,7 @@
 }
 
 .courseHeader {
-  background: linear-gradient(180deg, #f7b87f 0%, #b5e3e8 100%);
+  background: var(--brand-inst-pale-gradient);
   border-radius: 18px;
   padding: 22px;
   margin-bottom: 22px;
@@ -46,18 +45,18 @@
 
 .courseTitle {
   font-weight: 700;
-  color: #672600;
+  color: var(--brand-inst-subtitle);
   font-size: 25px;
 }
 
 .meta {
-  color: #622800;
+  color: var(--brand--inst-label);
   font-weight: 500;
 }
 
 
 .orangeBtn, .smallBtn {
-  background: #ff7b2a;
+  background: var(--brand-inst-primary-orange);
   color: white;
   border: none;
   border-radius: 14px;
@@ -69,26 +68,27 @@
 
 .orangeBtn:hover, .smallBtn:hover {
   transform: scale(1.05);
-  background-color: #71bfcd;
+  background-color: var(--brand-inst-btn-hover);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 .studentBlock {
   margin-top: 20px;
-  background: linear-gradient(180deg, #f7b87f 0%, #b5e3e8 100%);
+  background: var(--brand-inst-pale-gradient);
   border-radius: 18px;
   padding: 20px;
 }
 
 .studentCard {
-  background: #fdf5ef;
+  background: var(--brand-inst-list-card);
   border-radius: 12px;
   padding: 12px 18px;
   margin: 8px 0;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+  color: var(--brand-inst-normal-text);
 }
 
 .tabRow {
@@ -98,13 +98,13 @@
 }
 
 .tab {
-  background: linear-gradient(180deg, #f7b87f 0%, #b5e3e8 100%);
+  background: var(--brand-inst-pale-gradient);
   border: none;
   padding: 12px 24px;
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  color: #672600;
+  color: var(--brand-inst-label);
 }
 
 .tabActive {
@@ -116,12 +116,12 @@
 }
 .emptyText {
   font-style: italic;
-  color: #744d33;
+  color: var(--brand--inst-label);
 }
 
 .sectionHighlight {
-  background: #f7a45b;
+  background: var(--brand-inst-list-card);
   border-radius: 12px;
   padding: 12px 18px;
-  color: #592800;
+  color: var(--brand-inst-label);
 }
