@@ -194,6 +194,7 @@ class InstructorCoursesView(APIView):
                 "tot_lessons": course.tot_lessons
                 }
                    for course in courses]
+        print("Courses_output:", output)
         return Response(output, status=status.HTTP_200_OK)
     
     def post(self, request):
