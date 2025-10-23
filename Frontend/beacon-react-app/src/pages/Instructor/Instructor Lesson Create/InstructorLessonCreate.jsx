@@ -470,7 +470,8 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     }
 
     const body = {
-      classroom_id: selectedClassroom.classroom_id,
+      lesson: lesson_Id,
+      classroom: selectedClassroom.classroom_id,
       day_of_week,
       time_start: time_start || null,
       time_end: time_end || null,
