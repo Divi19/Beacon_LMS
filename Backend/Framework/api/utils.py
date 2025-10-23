@@ -9,6 +9,8 @@ from django.db.models import (
     OuterRef, Subquery, Case, When, ExpressionWrapper, Min, CharField
 )
 from django.db.models.functions import Coalesce, Trunc, Cast, NullIf
+from django.utils import timezone
+from datetime import timedelta
 
 from rest_framework import serializers
 from .models import * 
@@ -32,7 +34,6 @@ def _split_title_second(line: str):
             left, right = line.split(sep, 1)
             title, second = left.strip(), right.strip()
             break
-        print("title", title, "second", second)
     return title, second
 
 
@@ -40,7 +41,7 @@ def mark_enrollment_complete_if_ready(enrollment_id: int) -> None:
     with transaction.atomic():
         enrollment = (
             LessonEnrollment.objects
-            .select_for_update()  # avoid racing updates
+            .select_for_update()
             .select_related("lesson", "student")
             .get(pk=enrollment_id)
         )
@@ -54,11 +55,11 @@ def mark_enrollment_complete_if_ready(enrollment_id: int) -> None:
 
         # done by this student for that lesson
         done_asgns = StudentAssignmentProgress.objects.filter(
-            student=student, lesson=lesson, is_completed=True
+            student=student, assignment__lesson=lesson, is_completed=True
         ).count()
 
         done_reads = StudentReadingProgress.objects.filter(
-            student=student, lesson=lesson, is_completed=True
+            student=student, reading__lesson=lesson, is_completed=True
         ).count()
 
         all_work_done = (done_asgns == tot_asgns) and (done_reads == tot_reads)
@@ -78,19 +79,10 @@ def mark_enrollment_complete_if_ready(enrollment_id: int) -> None:
             enrollment.status = new_status
             enrollment.save(update_fields=["status"])
 
-"""
-For singular lesson to look at progress of students related to it 
-"""
-
-"""
-For singular lesson to look at progress of students related to it 
-"""
-
 
 def _safe_div(num_expr, den_expr, as_float=True):
     """Return num/den but 0 when denominator <= 0 (ORM expression)."""
     out = FloatField() if as_float else IntegerField()
-    # den_expr.name is available for F() expressions
     return Case(
         When(**{f"{den_expr.name}__gt": 0}, then=num_expr / den_expr),
         default=Value(0.0 if as_float else 0),
@@ -102,236 +94,153 @@ def compute_lesson_progress(
     lesson_id: str,
     *,
     include_students: bool = True,
-    session_source: str = "lesson",  # "lesson" = first LessonClassroom for lesson. If you later have a per-student session link, we can add "per_student".
+    session_source: str = "lesson",
 ) -> Dict[str, Any]:
     """
-    Build the 'Lesson Progress - Singular Object' payload.
-
-    Returns:
-      {
-        "lesson": { ... lesson-level fields ... },
-        "students": [ ... ]  # only if include_students=True
-      }
-
-    Assumptions (rename if yours differ):
-      - StudentProfile has fields: student_profile_id, title, first_name, last_name, user__email
-      - LessonEnrollment: (lesson, student, enrolled_at, status or is_completed)
-      - LessonAssignment(lesson), LessonReading(lesson)
-      - StudentAssignmentProgress(student, assignment, is_completed)
-      - StudentReadingProgress(student, reading, is_completed)
-      - LessonClassroom(lesson, classroom, day_of_week, time_start, time_end)
+    Build the 'Lesson Progress - Singular Object' payload with FIXED calculations.
     """
-    Lesson                     = apps.get_model('api', 'Lesson')
-    LessonEnrollment           = apps.get_model('api', 'LessonEnrollment')
-    LessonAssignment           = apps.get_model('api', 'LessonAssignment')
-    LessonReading              = apps.get_model('api', 'LessonReading')
-    StudentProfile             = apps.get_model('api', 'StudentProfile')
-    StudentAssignmentProgress  = apps.get_model('api', 'StudentAssignmentProgress')
-    StudentReadingProgress     = apps.get_model('api', 'StudentReadingProgress')
-    LessonClassroom            = apps.get_model('api', 'LessonClassroom')
-    InstructorProfile          = apps.get_model('api', 'InstructorProfile')
+    Lesson = apps.get_model('api', 'Lesson')
+    LessonEnrollment = apps.get_model('api', 'LessonEnrollment')
+    LessonAssignment = apps.get_model('api', 'LessonAssignment')
+    LessonReading = apps.get_model('api', 'LessonReading')
+    StudentProfile = apps.get_model('api', 'StudentProfile')
+    StudentAssignmentProgress = apps.get_model('api', 'StudentAssignmentProgress')
+    StudentReadingProgress = apps.get_model('api', 'StudentReadingProgress')
+    LessonClassroom = apps.get_model('api', 'LessonClassroom')
+    InstructorProfile = apps.get_model('api', 'InstructorProfile')
+    ClassroomEnrollment = apps.get_model('api', 'ClassroomEnrollment')
 
-    inst = get_object_or_404(InstructorProfile, user = user)
+    inst = get_object_or_404(InstructorProfile, user=user)
 
-    # ---------- LESSON-LEVEL SUBQUERIES ----------
-    asgn_count_sq = (
-        LessonAssignment.objects
-        .filter(lesson__lesson_id=OuterRef('lesson_id'))
-        .values('lesson__lesson_id')
-        .annotate(c=Count('assignment_id'))
-        .values('c')[:1]
-    )
-    read_count_sq = (
-        LessonReading.objects
-        .filter(lesson__lesson_id=OuterRef('lesson_id'))
-        .values('lesson__lesson_id')
-        .annotate(c=Count('reading_id'))
-        .values('c')[:1]
-    )
-    done_asgn_sq = (
-        StudentAssignmentProgress.objects
-        .filter(assignment__lesson__lesson_id=OuterRef('lesson_id'),
-                is_completed=True)
-        .values('assignment__lesson__lesson_id')
-        .annotate(c=Count('student_assignment_id'))
-        .values('c')[:1]
-    )
-    done_read_sq = (
-        StudentReadingProgress.objects
-        .filter(reading__lesson__lesson_id=OuterRef('lesson_id'))
-        .filter(Q(is_completed=True))
-        .values('reading__lesson__lesson_id')
-        .annotate(c=Count('student_reading_id'))
-        .values('c')[:1]
-    )
-    tot_lesson_stud_sq = (
-        LessonEnrollment.objects
-        .filter(lesson__lesson_id=OuterRef('lesson_id'))
-        .values('lesson__lesson_id')
-        .annotate(c=Count('student', distinct=True))
-        .values('c')[:1]
-    )
-
-    # ---------- LESSON-LEVEL OBJECT ----------
-    lesson_qs = (
-        Lesson.objects
-        .filter(lesson_id=lesson_id, designer = inst)
-        .annotate(
-            tot_lesson_stud     = Coalesce(Subquery(tot_lesson_stud_sq, output_field=IntegerField()), 0),
-            asgn_count          = Coalesce(Subquery(asgn_count_sq, output_field=IntegerField()), 0),
-            read_count          = Coalesce(Subquery(read_count_sq, output_field=IntegerField()), 0),
-            tot_asgns_readings  = F('asgn_count') + F('read_count'),
-            done_asgn           = Coalesce(Subquery(done_asgn_sq, output_field=IntegerField()), 0),
-            done_read           = Coalesce(Subquery(done_read_sq, output_field=IntegerField()), 0),
-            enrolled_count      = Count("lessonenrollment", distinct=True)
-        )
-        .annotate(
-            tot_done            = F('done_asgn') + F('done_read'),
-            avg_done            = _safe_div(F('tot_done'), F('tot_lesson_stud')),
-            lesson_progress     = _safe_div(F('avg_done'), F('tot_asgns_readings')),
-            lesson_progress_percentage = F('lesson_progress') * 100.0,
-        )
-        .values(
-            'lesson_id', 'title', 'credits',
-            'tot_lesson_stud', 'asgn_count', 'read_count', 'tot_asgns_readings',
-            'done_asgn', 'done_read', 'tot_done',
-            'avg_done', 'lesson_progress', 'lesson_progress_percentage',
-            "enrolled_count"
-        )
-    )
-
-    lesson = lesson_qs.first()
-    if not lesson:
+    # Get lesson with basic counts
+    lesson_obj = Lesson.objects.filter(
+        lesson_id=lesson_id,
+        designer=inst
+    ).first()
+    
+    if not lesson_obj:
         raise Lesson.DoesNotExist(f"Lesson {lesson_id} not found")
+
+    # Get accurate counts
+    tot_lesson_stud = LessonEnrollment.objects.filter(
+        lesson__lesson_id=lesson_id
+    ).values('student').distinct().count()
+    
+    asgn_count = LessonAssignment.objects.filter(lesson__lesson_id=lesson_id).count()
+    read_count = LessonReading.objects.filter(lesson__lesson_id=lesson_id).count()
+    tot_asgns_readings = asgn_count + read_count
+
+    # Count completions properly - total across all students
+    done_asgn = StudentAssignmentProgress.objects.filter(
+        assignment__lesson__lesson_id=lesson_id,
+        is_completed=True
+    ).count()
+    
+    done_read = StudentReadingProgress.objects.filter(
+        reading__lesson__lesson_id=lesson_id,
+        is_completed=True
+    ).count()
+
+    tot_done = done_asgn + done_read
+    avg_done = tot_done / tot_lesson_stud if tot_lesson_stud > 0 else 0
+    lesson_progress = avg_done / tot_asgns_readings if tot_asgns_readings > 0 else 0
+
+    lesson = {
+        'lesson_id': lesson_obj.lesson_id,
+        'title': lesson_obj.title,
+        'credits': lesson_obj.credits,
+        'tot_lesson_stud': tot_lesson_stud,
+        'asgn_count': asgn_count,
+        'read_count': read_count,
+        'tot_asgns_readings': tot_asgns_readings,
+        'done_asgn': done_asgn,
+        'done_read': done_read,
+        'tot_done': tot_done,
+        'avg_done': round(avg_done, 2),
+        'lesson_progress': round(lesson_progress, 4),
+        'lesson_progress_percentage': round(lesson_progress * 100, 2),
+        'enrolled_count': tot_lesson_stud
+    }
 
     payload: Dict[str, Any] = {"lesson": lesson}
 
-    # ---------- OPTIONAL: STUDENTS LIST ----------
     if not include_students:
         return payload
 
-    # Common subqueries used for student annotations
-    enrolled_at_sq = (
-        LessonEnrollment.objects
-        .filter(lesson__lesson_id=lesson_id, student=OuterRef('pk'))
-        .values('enrolled_at')[:1]
-    )
+    # Get students enrolled in this lesson
+    students_qs = StudentProfile.objects.filter(
+        lessonenrollment__lesson__lesson_id=lesson_id
+    ).distinct()
 
-    # Session fields (lesson-level fallback)
-    session_location_sq = (
-        LessonClassroom.objects
-        .filter(lesson__lesson_id=lesson_id)
-        .values('classroom__location')[:1]
-    )
-    session_day_sq = (
-        LessonClassroom.objects
-        .filter(lesson__lesson_id=lesson_id)
-        .values('day_of_week')[:1]
-    )
-    session_start_sq = (
-        LessonClassroom.objects
-        .filter(lesson__lesson_id=lesson_id)
-        .values('time_start')[:1]
-    )
-    session_end_sq = (
-        LessonClassroom.objects
-        .filter(lesson__lesson_id=lesson_id)
-        .values('time_end')[:1]
-    )
+    students: List[Dict[str, Any]] = []
 
-    asgn_completed_sq = (
-        StudentAssignmentProgress.objects
-        .filter(student=OuterRef('pk'),
-                assignment__lesson__lesson_id=lesson_id,
-                is_completed=True)
-        .values('student')
-        .annotate(c=Count('student_assignment_id'))
-        .values('c')[:1]
-    )
-    reading_completed_sq = (
-        StudentReadingProgress.objects
-        .filter(student=OuterRef('pk'),
-                reading__lesson__lesson_id=lesson_id)
-        .filter(Q(is_completed=True))
-        .values('student')
-        .annotate(c=Count('student_reading_id'))
-        .values('c')[:1]
-    )
+    for student in students_qs:
+        # Get enrollment date
+        enrollment = LessonEnrollment.objects.filter(
+            lesson__lesson_id=lesson_id,
+            student=student
+        ).first()
 
-    tot_asgns_readings_val = lesson['tot_asgns_readings'] or 0
+        enrolled_at = None
+        if enrollment and enrollment.enrolled_at:
+            enrolled_at = enrollment.enrolled_at.strftime('%d/%m/%Y %H:%M')
 
-    students_qs = (
-        StudentProfile.objects
-        .filter(lessonenrollment__lesson__lesson_id=lesson_id)
-        .distinct()
-        .annotate(
-            email = F('user__email'),
-            min_enrolled_at = Min(
-                                Subquery(enrolled_at_sq, output_field=DateTimeField())# <--- Filter belongs to Min()
-                                ),
-            enrolled_at = Cast(
-                            # Truncate to the minute level to remove seconds/microseconds
-                            Trunc('min_enrolled_at', 'minute', output_field=DateTimeField()),
-                            output_field=CharField()
-                            ), 
-            session_location = Subquery(session_location_sq),
-            session_day_of_week = Subquery(session_day_sq),
+        # Get classroom session info
+        classroom_enrollment = ClassroomEnrollment.objects.filter(
+            student=student,
+            lesson_classroom__lesson__lesson_id=lesson_id
+        ).select_related('lesson_classroom__classroom').first()
 
-            temp_time_start =  Subquery(session_start_sq),
-            temp_time_end = Subquery(session_end_sq),
-            session_time_start = Cast(
-                            # Truncate to the minute level to remove seconds/microseconds
-                            Trunc('temp_time_start', 'minute', output_field=TimeField()),
-                            output_field=CharField()
-                            ),
-            session_time_end = Cast(
-                            # Truncate to the minute level to remove seconds/microseconds
-                            Trunc('temp_time_end', 'minute', output_field=TimeField()),
-                            output_field=CharField()
-                            ),
-
-
-            asgn_completed = Coalesce(Subquery(asgn_completed_sq, output_field=IntegerField()), 0),
-            reading_completed = Coalesce(Subquery(reading_completed_sq, output_field=IntegerField()), 0),
-        )
-        .annotate(
-            tot_completed = F('asgn_completed') + F('reading_completed'),
-        )
-
-        .values(
-            'student_profile_id', 'student_no', 'title', 'first_name', 'last_name', 'email', 'enrolled_at',
-            'session_location', 'session_day_of_week', 'session_time_start', 'session_time_end',
-            'asgn_completed', 'reading_completed', 'tot_completed',
-        )
-    )
-
-    students: List[Dict[str, Any]] = list(students_qs)
-
-    # Add per-student lesson_progress and shape session object
-    if tot_asgns_readings_val > 0:
-        denom = float(tot_asgns_readings_val)
-        for s in students:
-            s['lesson_progress'] = float(s['tot_completed']) / denom
-    else:
-        for s in students:
-            s['lesson_progress'] = 0.0
-
-    for s in students:
-        s['session'] = {
-            "location":   s.pop('session_location'),
-            "day_of_week": s.pop('session_day_of_week'),
-            "time_start":  s.pop('session_time_start'),
-            "time_end":    s.pop('session_time_end'),
+        session = {
+            "location": None,
+            "day_of_week": None,
+            "time_start": None,
+            "time_end": None,
         }
+
+        if classroom_enrollment:
+            lc = classroom_enrollment.lesson_classroom
+            session = {
+                "location": lc.classroom.location if lc.classroom else None,
+                "day_of_week": lc.day_of_week,
+                "time_start": lc.time_start.strftime("%H:%M") if lc.time_start else None,
+                "time_end": lc.time_end.strftime("%H:%M") if lc.time_end else None,
+            }
+
+        # Count this student's completions
+        asgn_completed = StudentAssignmentProgress.objects.filter(
+            student=student,
+            assignment__lesson__lesson_id=lesson_id,
+            is_completed=True
+        ).count()
+
+        reading_completed = StudentReadingProgress.objects.filter(
+            student=student,
+            reading__lesson__lesson_id=lesson_id,
+            is_completed=True
+        ).count()
+
+        tot_completed = asgn_completed + reading_completed
+        student_progress = tot_completed / tot_asgns_readings if tot_asgns_readings > 0 else 0
+
+        students.append({
+            'student_profile_id': student.student_profile_id,
+            'student_no': student.student_no,
+            'title': student.title,
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'email': student.user.email,
+            'enrolled_at': enrolled_at,
+            'session': session,
+            'asgn_completed': asgn_completed,
+            'reading_completed': reading_completed,
+            'tot_completed': tot_completed,
+            'lesson_progress': round(student_progress, 4)
+        })
 
     payload["students"] = students
     return payload
 
-"""
-For singular course to look at progress of lessons and students related to it
-"""
-
-# ---- helpers --------------------------------------------------------------
 
 def _ratio(numer, denom, default=0.0):
     """Build a safe float division ExpressionWrapper(numer/denom)."""
@@ -341,11 +250,10 @@ def _ratio(numer, denom, default=0.0):
         output_field=FloatField(),
     )
 
-# ---- main ---------------------------------------------------------------
 
 def get_course_progress(user, course_id):
     """
-    Returns a dict:
+    Returns a dict with FIXED progress calculations:
       {
         'course': {... top-level annotations ...},
         'lessons': [ ... per-lesson objects ... ],
@@ -353,7 +261,6 @@ def get_course_progress(user, course_id):
       }
     """
 
-    # ---- 1) Course-level aggregates -------------------------------------
     Course = apps.get_model('api', 'Course')
     Lesson = apps.get_model('api', 'Lesson')
     LessonEnrollment = apps.get_model('api', 'LessonEnrollment')
@@ -362,26 +269,18 @@ def get_course_progress(user, course_id):
     LessonReading = apps.get_model('api', 'LessonReading')
     StudentAssignmentProgress = apps.get_model('api', 'StudentAssignmentProgress')
     StudentReadingProgress = apps.get_model('api', 'StudentReadingProgress')
+    Enrollment = apps.get_model('api', 'Enrollment')
+    InstructorProfile = apps.get_model('api', 'InstructorProfile')
 
-    inst = get_object_or_404(InstructorProfile, user = user)
+    inst = get_object_or_404(InstructorProfile, user=user)
 
-    # Count lessons in the course
+    # ---- 1) Course-level aggregates with FIXED completion logic ----
     course_qs = (
         Course.objects
         .filter(course_id=course_id)
         .annotate(
             tot_lessons=Count('lesson', distinct=True),
-            # distinct student count via lesson enrollments
-            enrolled_count=Count('lesson__lessonenrollment__student', distinct=True),
-
-            # total completed lesson enrollments across the course
-            sum_completed=Count(
-                'lesson__lessonenrollment',
-                filter=(
-                    Q(lesson__lessonenrollment__status='Completed') 
-                ),
-                distinct=False,  # counting completions, not distinct students
-            ),
+            enrolled_count=Count('enrollment__student', distinct=True, filter=Q(enrollment__course__course_id=course_id)),
         )
     )
 
@@ -389,132 +288,138 @@ def get_course_progress(user, course_id):
     if not course_obj:
         raise Course.DoesNotExist(f"Course {course_id} not found")
 
-    # ratios: avg_completed = sum_completed / enrolled_count
-    course_obj.avg_completed = _ratio(F('sum_completed'), F('enrolled_count')).resolve_expression(course_qs.query, allow_joins=True)
-    # avg_progress = avg_completed / tot_lessons
-    course_obj.avg_progress = _ratio(course_obj.avg_completed, F('tot_lessons')).resolve_expression(course_qs.query, allow_joins=True)
-    # compute with ORM-friendly evaluation:
-    course_dict = (
-        course_qs
-        .annotate(
-            avg_completed = _ratio(F('sum_completed'), F('enrolled_count')),
-            avg_progress  = _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')),
-            avg_percentages = ExpressionWrapper(
-                _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')) * 100.0,
-                output_field=FloatField()
-            ),
-        )
-        .values(
-            'course_id', 'title', 'credits',  # add other course fields you need
-            'tot_lessons', 'enrolled_count', 'sum_completed',
-            'avg_completed', 'avg_progress', 'avg_percentages'
-        )
-        .get()
-    )
+    # Calculate sum_completed using a separate query to avoid duplicates
+    sum_completed = LessonEnrollment.objects.filter(
+        lesson__course__course_id=course_id,
+        status='Completed'
+    ).count()
 
-    tot_lessons = course_dict['tot_lessons'] or 0  # used later for students’ avg
+    tot_lessons = course_obj.tot_lessons or 1
+    enrolled_count = course_obj.enrolled_count or 1
 
-    # ---- 2) Lessons list (role-aware) -----------------------------------
+    avg_completed = sum_completed / enrolled_count if enrolled_count > 0 else 0
+    avg_progress = avg_completed / tot_lessons if tot_lessons > 0 else 0
+    avg_percentages = avg_progress * 100.0
+
+    course_dict = {
+        'course_id': course_obj.course_id,
+        'title': course_obj.title,
+        'credits': course_obj.credits,
+        'tot_lessons': tot_lessons,
+        'enrolled_count': enrolled_count,
+        'sum_completed': sum_completed,
+        'avg_completed': round(avg_completed, 2),
+        'avg_progress': round(avg_progress, 4),
+        'avg_percentages': round(avg_percentages, 2)
+    }
+
+    # ---- 2) Lessons list (role-aware) with FIXED progress calculation ----
     lessons_base = Lesson.objects.filter(course__course_id=course_id)
-    # role check, see if course instructor 
-    is_director = course_obj.director == inst
+    is_director = course_obj.owner_instructor == inst
     if not is_director:
-        # assumes Lesson has a 'designer' FK to user --> get only related lesson
         lessons_base = lessons_base.filter(designer=inst)
 
     lessons_qs = (
         lessons_base
         .annotate(
-            enrolled_count =Count('lessonenrollment__student', distinct=True),
-            # total distinct students in this lesson
+            enrolled_count=Count('lessonenrollment__student', distinct=True),
             tot_lesson_stud=Count('lessonenrollment__student', distinct=True),
-
-            # totals of content items
             asgn_count=Count('lessonassignment', distinct=True),
             read_count=Count('lessonreading', distinct=True),
-            tot_asgns_readings=F('asgn_count') + F('read_count'),
-
-            # completed progress items (assignment + reading)
-            done_asgn=Count(
-                'lessonassignment__studentassignmentprogress',
-                filter=Q(lessonassignment__studentassignmentprogress__is_completed=True),
-                distinct=True,   # per assignment-progress record; switch off if you want raw rows
-            ),
-            done_read=Count(
-                'lessonreading__studentreadingprogress',
-                filter=Q(lessonassignment__studentassignmentprogress__is_completed=True),
-                distinct=True,
-            ),
-        )
-        .annotate(
-            tot_done=F('done_asgn') + F('done_read'),
-            # avg_done = tot_done / tot_lesson_stud
-            avg_done=_ratio(F('tot_done'), F('tot_lesson_stud')),
-            # lesson_progress = avg_done / tot_asgns_readings
-            lesson_progress=_ratio(F('avg_done'), F('tot_asgns_readings')),
-            lesson_progress_percentage=ExpressionWrapper(F('lesson_progress') * 100.0, output_field=FloatField()),
-        )
-        .values(
-            'lesson_id', 'title', 'credits',  # include what you need
-            'tot_lesson_stud', 'asgn_count', 'read_count', 'tot_asgns_readings',
-            'done_asgn', 'done_read', 'tot_done',
-            'avg_done', 'lesson_progress', 'lesson_progress_percentage',
-            'enrolled_count', 'duration_weeks'
         )
     )
-    lessons = list(lessons_qs)
 
-    # ---- 3) Students list ------------------------------------------------
-    #Get all students 
+    lessons = []
+    for lesson in lessons_qs:
+        tot_asgns_readings = lesson.asgn_count + lesson.read_count
+        
+        if tot_asgns_readings > 0 and lesson.tot_lesson_stud > 0:
+            done_asgn = StudentAssignmentProgress.objects.filter(
+                assignment__lesson=lesson,
+                is_completed=True
+            ).count()
+            
+            done_read = StudentReadingProgress.objects.filter(
+                reading__lesson=lesson,
+                is_completed=True
+            ).count()
+            
+            tot_done = done_asgn + done_read
+            avg_done = tot_done / lesson.tot_lesson_stud if lesson.tot_lesson_stud > 0 else 0
+            lesson_progress = avg_done / tot_asgns_readings if tot_asgns_readings > 0 else 0
+        else:
+            done_asgn = 0
+            done_read = 0
+            tot_done = 0
+            avg_done = 0
+            lesson_progress = 0
+
+        lessons.append({
+            'lesson_id': lesson.lesson_id,
+            'title': lesson.title,
+            'credits': lesson.credits,
+            'tot_lesson_stud': lesson.tot_lesson_stud,
+            'asgn_count': lesson.asgn_count,
+            'read_count': lesson.read_count,
+            'tot_asgns_readings': tot_asgns_readings,
+            'done_asgn': done_asgn,
+            'done_read': done_read,
+            'tot_done': tot_done,
+            'avg_done': round(avg_done, 2),
+            'lesson_progress': round(lesson_progress, 4),
+            'lesson_progress_percentage': round(lesson_progress * 100, 2),
+            'enrolled_count': lesson.enrolled_count,
+            'duration_weeks': lesson.duration_weeks
+        })
+
+    # ---- 3) Students list with FIXED completion counting ----
     students_qs = (
         StudentProfile.objects
-        .filter(lessonenrollment__lesson__course__course_id=course_id)
+        .filter(enrollment__course__course_id=course_id)
         .distinct()
         .annotate(
-            email = F('user__email'),
-            min_enrolled_at = Min(
-                    'enrollment__enrolled_at',
-                    filter=Q(enrollment__course__course_id=course_id)  # <--- Filter belongs to Min()
-                ),
-            enrolled_at = Cast(
-                        # Truncate to the minute level to remove seconds/microseconds
-                        Trunc('min_enrolled_at', 'minute', output_field=DateTimeField()),
-                        output_field=CharField()
-                    ), 
-
-            lessons_completed= Coalesce(Count(
-                'lessonenrollment',
-                filter=Q(lessonenrollment__lesson__course__course_id=course_id) & (
-                    Q(lessonenrollment__status='Completed') 
-                ),
-                distinct=True,
-                output_field=IntegerField()
-            ), 0),
-            credits_earned=Coalesce(
-                Sum(
-                    'lessonenrollment__lesson__credits',
-                    filter=Q(lessonenrollment__lesson__course__course_id=course_id) & (
-                        Q(lessonenrollment__status='Completed') 
-                    ),
-                    output_field=IntegerField()
-                ),
-                0
+            email=F('user__email'),
+            min_enrolled_at=Min(
+                'enrollment__enrolled_at',
+                filter=Q(enrollment__course__course_id=course_id)
             ),
-            
+            enrolled_at=Cast(
+                Trunc('min_enrolled_at', 'minute', output_field=DateTimeField()),
+                output_field=CharField()
+            ),
         )
-        .values('student_profile_id', 'student_no'
-                ,'last_name', "first_name", "title", 'email'
-                , 'lessons_completed', 'credits_earned', "enrolled_at")
     )
-    students = list(students_qs)
 
-    # add avg_course_progress per student (needs tot_lessons from course)
-    if tot_lessons > 0:
-        for s in students:
-            s['avg_course_progress'] = float(s['lessons_completed']) / float(tot_lessons)
-    else:
-        for s in students:
-            s['avg_course_progress'] = 0.0
+    students = []
+    for student in students_qs:
+        lessons_completed = LessonEnrollment.objects.filter(
+            student=student,
+            lesson__course__course_id=course_id,
+            status='Completed'
+        ).count()
+        
+        credits_earned = LessonEnrollment.objects.filter(
+            student=student,
+            lesson__course__course_id=course_id,
+            status='Completed'
+        ).aggregate(
+            total=Coalesce(Sum('lesson__credits'), 0)
+        )['total']
+
+        avg_course_progress = lessons_completed / tot_lessons if tot_lessons > 0 else 0
+
+        students.append({
+            'student_profile_id': student.student_profile_id,
+            'student_no': student.student_no,
+            'last_name': student.last_name,
+            'first_name': student.first_name,
+            'title': student.title,
+            'email': student.email,
+            'lessons_completed': lessons_completed,
+            'credits_earned': credits_earned,
+            'enrolled_at': student.enrolled_at,
+            'avg_course_progress': round(avg_course_progress, 4)
+        })
 
     return {
         "course": course_dict,
@@ -523,66 +428,26 @@ def get_course_progress(user, course_id):
     }
 
 
-"""
-For student progress
-"""
-
-
-def _safe_div(num_expr, den_expr, as_float=True):
-    """
-    Returns num / den as a DB expression, safe for zero or NULL denominators.
-    Works for any ORM expression (F, Coalesce, Subquery, etc.)
-    """
-    out = FloatField() if as_float else IntegerField()
-    return Coalesce(
-        Cast(num_expr, out) / NullIf(Cast(den_expr, out), 0.0),
-        Value(0.0 if as_float else 0),
-        output_field=out
-    )
 def compute_student_singular(
     student_profile_id: int | str,
     *,
     course_id: Optional[str] = None,
-    session_source: str = "per_student",  # "per_student" uses ClassroomEnrollment if available; "lesson" falls back to first LessonClassroom of lesson
+    session_source: str = "per_student",
 ) -> Dict[str, Any]:
     """
     Student Singular Object (related courses only).
-
-    Returns:
-      {
-        "student": {... student fields ...},
-        # if course_id is None:
-        "courses": [ { per-course aggregates for this student } ],
-        # else:
-        "course": { id/title/enrolled_count },
-        "lessons": [ { per-lesson aggregates for this student in that course } ],
-      }
-
-    Assumed models / fields (rename if yours differ):
-      - StudentProfile(student_profile_id PK, user FK -> auth user for email, title, first_name, last_name, student_no, locked_at)
-      - Course(course_id, title, credits)
-      - Enrollment (student, course, enrolled_at) 
-      - Lesson(lesson_id, course FK)
-      - LessonEnrollment(lesson, student, enrolled_at, status or is_completed)
-      - LessonAssignment(lesson), LessonReading(lesson)
-      - StudentAssignmentProgress(student, assignment, is_completed)
-      - StudentReadingProgress(student, reading, is_completed or completed)
-      - LessonClassroom(lesson, classroom, day_of_week, time_start, time_end)
-      - ClassroomEnrollment(student, lessonclassroom)  # only if you truly track session per student
     """
-    # --- models ---
-    StudentProfile            = apps.get_model('api', 'StudentProfile')
-    Course                    = apps.get_model('api', 'Course')
-    Enrollment          = apps.get_model('api', 'Enrollment')  # adjust if yours is Enrollment
-    Lesson                    = apps.get_model('api', 'Lesson')
-    LessonEnrollment          = apps.get_model('api', 'LessonEnrollment')
-    LessonAssignment          = apps.get_model('api', 'LessonAssignment')
-    LessonReading             = apps.get_model('api', 'LessonReading')
+    StudentProfile = apps.get_model('api', 'StudentProfile')
+    Course = apps.get_model('api', 'Course')
+    Enrollment = apps.get_model('api', 'Enrollment')
+    Lesson = apps.get_model('api', 'Lesson')
+    LessonEnrollment = apps.get_model('api', 'LessonEnrollment')
+    LessonAssignment = apps.get_model('api', 'LessonAssignment')
+    LessonReading = apps.get_model('api', 'LessonReading')
     StudentAssignmentProgress = apps.get_model('api', 'StudentAssignmentProgress')
-    StudentReadingProgress    = apps.get_model('api', 'StudentReadingProgress')
-    LessonClassroom           = apps.get_model('api', 'LessonClassroom')
+    StudentReadingProgress = apps.get_model('api', 'StudentReadingProgress')
+    LessonClassroom = apps.get_model('api', 'LessonClassroom')
 
-    # classroom enrollment is optional in many schemas
     try:
         ClassroomEnrollment = apps.get_model('api', 'ClassroomEnrollment')
     except LookupError:
@@ -593,13 +458,11 @@ def compute_student_singular(
         StudentProfile.objects
         .filter(pk=student_profile_id)
         .annotate(email=F('user__email'))
-        #Back
         .annotate(
-            registered_at = Cast(
-                            # Truncate to the minute level to remove seconds/microseconds
-                            Trunc('locked_at', 'minute', output_field=DateTimeField()),
-                            output_field=CharField()
-                            ),
+            registered_at=Cast(
+                Trunc('locked_at', 'minute', output_field=DateTimeField()),
+                output_field=CharField()
+            ),
         )
         .values('student_profile_id', 'student_no', 'title', 'first_name', 'last_name', 'email', 'registered_at')
         .first()
@@ -617,11 +480,8 @@ def compute_student_singular(
         "registered_at": stu["registered_at"],
     }}
 
-    # =========================================================================================
-    # A) NO course_id → list the student’s courses with per-course progress
-    # =========================================================================================
     if not course_id:
-        # total lessons per course
+        # List all courses for this student
         tot_lessons_sq = (
             Lesson.objects
             .filter(course__course_id=OuterRef('course__course_id'))
@@ -630,7 +490,6 @@ def compute_student_singular(
             .values('c')[:1]
         )
 
-        # enrolled_count per course (distinct students)
         enrolled_count_sq = (
             Course.objects
             .filter(course_id=OuterRef('course__course_id'))
@@ -639,7 +498,6 @@ def compute_student_singular(
             .values('c')[:1]
         )
 
-        # lessons_done for THIS student in that course
         lessons_done_sq = (
             LessonEnrollment.objects
             .filter(
@@ -663,44 +521,36 @@ def compute_student_singular(
                 enrolled_count=Coalesce(Subquery(enrolled_count_sq, output_field=IntegerField()), 0),
                 tot_lessons=Coalesce(Subquery(tot_lessons_sq, output_field=IntegerField()), 0),
                 lessons_done=Coalesce(Subquery(lessons_done_sq, output_field=IntegerField()), 0),
-                new_enrolled_at = Cast(
-                            # Truncate to the minute level to remove seconds/microseconds
-                            Trunc('enrolled_at', 'minute', output_field=DateTimeField()),
-                            output_field=CharField()
-                            ),
-            )
-            .annotate(
-                progress=_safe_div(F('lessons_done'), F('tot_lessons')),
-                progress_percentages=F('progress') * 100.0,
-            )
-            .values(
-                'course_id_val', 'title', 'credits', 'new_enrolled_at',
-                'enrolled_count', 'lessons_done', 'tot_lessons', 'progress', 'progress_percentages',
+                new_enrolled_at=Cast(
+                    Trunc('enrolled_at', 'minute', output_field=DateTimeField()),
+                    output_field=CharField()
+                ),
             )
         )
 
         courses = []
         for row in courses_qs:
+            tot_lessons = row.tot_lessons if row.tot_lessons > 0 else 1
+            progress = row.lessons_done / tot_lessons
+            progress_percentages = progress * 100.0
+
             courses.append({
-                "course_id": row["course_id_val"],
-                "title": row["title"],
-                "credits": row["credits"],
-                "enrolled_at": row["new_enrolled_at"],
-                "enrolled_count": row["enrolled_count"],
-                "lessons_done": row["lessons_done"],
-                "tot_lessons": row["tot_lessons"],
-                "progress": row["progress"],
-                "progress_percentages": row["progress_percentages"],
+                "course_id": row.course_id_val,
+                "title": row.title,
+                "credits": row.credits,
+                "enrolled_at": row.new_enrolled_at,
+                "enrolled_count": row.enrolled_count,
+                "lessons_done": row.lessons_done,
+                "tot_lessons": row.tot_lessons,
+                "progress": round(progress, 4),
+                "progress_percentages": round(progress_percentages, 2),
             })
 
         result["courses"] = courses
         return result
 
-    # =========================================================================================
-    # B) course_id provided → course header + per-lesson list (for this student)
-    # =========================================================================================
-    else: 
-        # course header
+    else:
+        # Course-specific view
         course_row = (
             Course.objects
             .filter(course_id=course_id)
@@ -710,7 +560,6 @@ def compute_student_singular(
         if not course_row:
             raise Course.DoesNotExist(f"Course {course_id} not found")
 
-        # enrolled_count for that course
         enrolled_count_course = (
             Enrollment.objects
             .filter(course__course_id=course_id)
@@ -726,7 +575,6 @@ def compute_student_singular(
             "enrolled_count": enrolled_count_val,
         }
 
-        # ---------- lesson-level counts for this course ----------
         tot_asgns_sq = (
             LessonAssignment.objects
             .filter(lesson__lesson_id=OuterRef('lesson_id'))
@@ -742,7 +590,6 @@ def compute_student_singular(
             .values('c')[:1]
         )
 
-        # per-student completion in each lesson
         asgn_completed_sq = (
             StudentAssignmentProgress.objects
             .filter(student__student_profile_id=student_profile_id,
@@ -762,16 +609,13 @@ def compute_student_singular(
             .values('c')[:1]
         )
 
-        # enrolled_at for this student per-lesson
         enrolled_at_sq = (
             LessonEnrollment.objects
             .filter(lesson__lesson_id=OuterRef('lesson_id'), student__student_profile_id=student_profile_id)
             .values('enrolled_at')[:1]
         )
 
-        # session fields
         if session_source == "per_student" and ClassroomEnrollment is not None:
-            # session via ClassroomEnrollment(student->lessonclassroom)
             sess_lc_sq = (
                 ClassroomEnrollment.objects
                 .filter(student__student_profile_id=student_profile_id, lesson_classroom__lesson__lesson_id=OuterRef('lesson_id'))
@@ -798,7 +642,6 @@ def compute_student_singular(
                 .values('time_end')[:1]
             )
         else:
-            # fallback: first LessonClassroom for the lesson
             session_location_sq = (
                 LessonClassroom.objects
                 .filter(lesson__lesson_id=OuterRef('lesson_id'))
@@ -822,7 +665,7 @@ def compute_student_singular(
 
         lessons_qs = (
             Lesson.objects
-            .filter(course__course_id=course_id, lessonenrollment__student__student_profile_id = student_profile_id)
+            .filter(course__course_id=course_id, lessonenrollment__student__student_profile_id=student_profile_id)
             .annotate(
                 enrolled_at=Coalesce(Subquery(enrolled_at_sq, output_field=DateTimeField()),
                                     Value(None, output_field=DateTimeField())),
@@ -830,47 +673,44 @@ def compute_student_singular(
                 tot_readings=Coalesce(Subquery(tot_readings_sq, output_field=IntegerField()), 0),
                 asgn_completed=Coalesce(Subquery(asgn_completed_sq, output_field=IntegerField()), 0),
                 reading_completed=Coalesce(Subquery(reading_completed_sq, output_field=IntegerField()), 0),
-                joined_at = Cast(
-                                # Truncate to the minute level to remove seconds/microseconds
-                                Trunc('enrolled_at', 'minute', output_field=DateTimeField()),
-                                output_field=CharField()
-                            ), 
+                joined_at=Cast(
+                    Trunc('enrolled_at', 'minute', output_field=DateTimeField()),
+                    output_field=CharField()
+                ), 
                 session_day_of_week=Subquery(session_day_sq),
                 session_time_start=Subquery(session_start_sq),
                 session_time_end=Subquery(session_end_sq),
                 session_location=Subquery(session_location_sq),
             )
-            .annotate(
-                completed_sum=F('asgn_completed') + F('reading_completed'),
-                denom_sum=F('tot_asgns') + F('tot_readings'),
-                progress=_safe_div(F('completed_sum'), F('denom_sum')),
-                progress_percentages=F('progress') * 100.0,
-            )
             .values(
-                'lesson_id', 'enrolled_at',
-                'title', 'joined_at',
+                'lesson_id', 'enrolled_at', 'title', 'joined_at',
                 'tot_asgns', 'tot_readings',
                 'asgn_completed', 'reading_completed',
                 'session_day_of_week', 'session_time_start', 'session_time_end', 'session_location',
-                'progress', 'progress_percentages',
             )
         )
 
         lessons: List[Dict[str, Any]] = []
         for row in lessons_qs:
+            completed_sum = row['asgn_completed'] + row['reading_completed']
+            denom_sum = row['tot_asgns'] + row['tot_readings']
+            progress = completed_sum / denom_sum if denom_sum > 0 else 0
+            progress_percentages = progress * 100.0
+
             lessons.append({
                 "lesson_id": row["lesson_id"],
+                "title": row["title"],
                 "enrolled_at": row["enrolled_at"],
                 "tot_readings": row["tot_readings"],
                 "tot_asgns": row["tot_asgns"],
                 "asgn_completed": row["asgn_completed"],
                 "reading_completed": row["reading_completed"],
                 "day_of_week": row["session_day_of_week"],
-                "time_start": row["session_time_start"],
-                "time_end": row["session_time_end"],
+                "time_start": row["session_time_start"].strftime("%H:%M") if row["session_time_start"] else None,
+                "time_end": row["session_time_end"].strftime("%H:%M") if row["session_time_end"] else None,
                 "location": row["session_location"],
-                "progress": row["progress"],
-                "progress_percentages": row["progress_percentages"],
+                "progress": round(progress, 4),
+                "progress_percentages": round(progress_percentages, 2),
                 "joined_at": row["joined_at"]
             })
 
