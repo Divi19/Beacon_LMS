@@ -41,7 +41,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
     time_start: "",
     time_end: "",
     zoom_link: "",
-    supervisor: "",
+    supervisor_input: "",
     duration_weeks: "",
   });
   const [onlineClassrooms, setOnlineClassrooms] = useState([]);
