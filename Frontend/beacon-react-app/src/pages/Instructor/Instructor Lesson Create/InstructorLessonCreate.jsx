@@ -534,7 +534,7 @@ export default function InstructorLessonCreation({ onCourseCreated }) {
       day_of_week,
       time_start: time_start || null,
       time_end: time_end || null,
-      duration_weeks: duration_weeks || null,
+      duration_weeks: duration_weeks ? Number(duration_weeks) : null,
       duration_minutes,
       supervisor_input: supervisor_input || null,
       capacity: 100,
