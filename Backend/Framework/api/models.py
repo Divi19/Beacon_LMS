@@ -211,7 +211,7 @@ class LessonClassroom(models.Model):
     lesson = models.ForeignKey(Lesson, models.DO_NOTHING)
     classroom = models.ForeignKey(Classroom, models.DO_NOTHING)
     #session_times_json = models.JSONField(blank=True, null=True)
-    day_of_week = models.CharField(blank=True, null=True, choices=Day.choices, default=Day.MONDAY)
+    day_of_week = models.CharField(blank=True, null=True, choices=Day.choices, default=Day.MONDAY, max_length=10)
     time_start = models.TimeField(default=dtime(0, 0))
     time_end   = models.TimeField(default=dtime(0, 0))
     duration_minutes = models.IntegerField(blank=True, null=True)
