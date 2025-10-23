@@ -594,7 +594,7 @@ class LessonClassroomSerializer(serializers.ModelSerializer):
         t_start = validated_data["time_start"]
         t_end   = validated_data["time_end"]
         validated_data["duration_minutes"] = self._compute_duration(t_start, t_end)
-        owner_email = validated_data.pop('supervisor', None)
+        owner_email = validated_data.pop('supervisor_input', None)
         if owner_email:
             #resolve by using instructor email
             try:
