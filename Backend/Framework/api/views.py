@@ -54,14 +54,25 @@ from .auth import CustomJWTAuthentication
 Helper functions
 """
 def update_lesson_progress(student, lesson):
+    """
+    Recalculate and update the progress percentage for a student in a lesson.
+    Also checks and updates lesson enrollment completion status.
+    """
+    from django.utils import timezone
+    from datetime import timedelta
+    
     total_assignments = LessonAssignment.objects.filter(lesson=lesson).count()
     completed_assignments = StudentAssignmentProgress.objects.filter(
-    student=student, assignment__lesson=lesson, is_completed=True
+        student=student, 
+        assignment__lesson=lesson, 
+        is_completed=True
     ).count()
 
     total_readings = LessonReading.objects.filter(lesson=lesson).count()
     completed_readings = StudentReadingProgress.objects.filter(
-    student=student, reading__lesson=lesson, is_completed=True
+        student=student, 
+        reading__lesson=lesson, 
+        is_completed=True
     ).count()
 
     total_items = total_assignments + total_readings
@@ -70,11 +81,45 @@ def update_lesson_progress(student, lesson):
     progress_percent = (completed_items / total_items * 100) if total_items > 0 else 0.0
     progress_percent = round(progress_percent, 2)
 
+    # Update or create the progress record
     StudentLessonProgress.objects.update_or_create(
         student=student,
         lesson=lesson,
         defaults={"progress_percent": progress_percent}
     )
+    
+    # Also check if lesson enrollment should be marked complete
+    try:
+        lesson_enrollment = LessonEnrollment.objects.get(
+            student=student,
+            lesson=lesson
+        )
+        
+        # Check if all items are completed
+        all_done = (total_items > 0 and completed_items == total_items)
+        
+        # Check duration (if applicable)
+        duration_weeks = lesson.duration_weeks or 0
+        if lesson_enrollment.enrolled_at and duration_weeks > 0:
+            end_date = lesson_enrollment.enrolled_at + timedelta(weeks=duration_weeks)
+            duration_reached = timezone.now() >= end_date
+        else:
+            duration_reached = True  # If no duration set, don't block completion
+        
+        # Update status if needed
+        if all_done and duration_reached:
+            if lesson_enrollment.status != LessonEnrollment.EnrollmentStatus.COMPLETED:
+                lesson_enrollment.status = LessonEnrollment.EnrollmentStatus.COMPLETED
+                lesson_enrollment.save(update_fields=['status'])
+        elif lesson_enrollment.status == LessonEnrollment.EnrollmentStatus.COMPLETED and not all_done:
+            # If previously completed but now not all done, mark as incomplete
+            lesson_enrollment.status = LessonEnrollment.EnrollmentStatus.INCOMPLETE
+            lesson_enrollment.save(update_fields=['status'])
+            
+    except LessonEnrollment.DoesNotExist:
+        pass  # Student not enrolled, skip
+    
+    return progress_percent
 
 """
 Shared Part
@@ -1192,21 +1237,31 @@ class ProgressView:
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
 
-        def get(self,request, course_id):
+        def get(self, request, course_id):
             """
             GET method to get:
+                - Course-level progress summary
                 - List of lessons with data summaries
                 - List of students with data summaries  
             """
             try:
                 data = get_course_progress(self.request.user, course_id)
-                print("course", data)
                 return Response(data, status=status.HTTP_200_OK)
-            except Exception as e:
-                print(str(e))
+            except Course.DoesNotExist as e:
                 return Response(
-                    {"detail": str(e)},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"detail": "Course not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except PermissionDenied as e:
+                return Response(
+                    {"detail": "You don't have permission to view this course."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            except Exception as e:
+                log.error("Course progress error: %s\n%s", e, traceback.format_exc())
+                return Response(
+                    {"detail": "Server error while computing progress."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
     class InstructorLessonProgress(APIView):
@@ -1214,22 +1269,40 @@ class ProgressView:
         authentication_classes = [CustomJWTAuthentication]
         
         def get(self, request, lesson_id):
+            """
+            GET method to get:
+                - Lesson-level progress summary
+                - List of students enrolled with their progress
+            """
             try:
                 data = compute_lesson_progress(request.user, lesson_id, include_students=True)
-                print("lesson_data", data)
-                return Response(data, status=200)
-            except Http404 as e:
-                return Response({"detail": str(e)}, status=404)
+                return Response(data, status=status.HTTP_200_OK)
+            except Lesson.DoesNotExist as e:
+                return Response(
+                    {"detail": "Lesson not found or you don't have permission to view it."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             except PermissionDenied as e:
-                return Response({"detail": str(e)}, status=403)
+                return Response(
+                    {"detail": "You don't have permission to view this lesson."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             except Exception as e:
                 log.error("Lesson progress error: %s\n%s", e, traceback.format_exc())
-                return Response({"detail": "Server error while computing progress."}, status=500)
+                return Response(
+                    {"detail": "Server error while computing progress."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
     class InstructorStudentProgress(APIView):
         permission_classes = [IsAuthenticated]
         authentication_classes = [CustomJWTAuthentication]
+        
         def get(self, request, student_profile_id):
+            """
+            GET method to get a specific student's progress
+            Optionally filter by course_id if provided as query param
+            """
             course_id = request.query_params.get("course_id")  # may be None
             try:
                 data = compute_student_singular(
@@ -1237,23 +1310,34 @@ class ProgressView:
                     course_id=course_id,
                     session_source="per_student"
                 )
-                print("student", data)
-                return Response(data, status=200)
+                return Response(data, status=status.HTTP_200_OK)
 
-            except Http404 as e:
-                return Response({"detail": str(e)}, status=404)
-
+            except StudentProfile.DoesNotExist as e:
+                return Response(
+                    {"detail": "Student not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except Course.DoesNotExist as e:
+                return Response(
+                    {"detail": "Course not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             except PermissionDenied as e:
-                return Response({"detail": str(e)}, status=403)
-
+                return Response(
+                    {"detail": "You don't have permission to view this student's progress."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             except ValidationError as e:
-                # DRF ValidationError should be a 400 with a clear payload
-                return Response({"detail": str(e.detail)}, status=400)
-
+                return Response(
+                    {"detail": str(e.detail)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             except Exception as e:
-                # Don’t hide real bugs as 400s
                 log.error("Student progress error: %s\n%s", e, traceback.format_exc())
-                return Response({"detail": "Server error while computing student progress."}, status=500)
+                return Response(
+                    {"detail": "Server error while computing student progress."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
 
 class EnrolledStudentList(APIView):
@@ -2021,14 +2105,21 @@ class StudentAssignmentChecklistView(APIView):
     authentication_classes = [CustomJWTAuthentication]
 
     def get(self, request, lesson_id):
+        """
+        Get all assignments for a lesson with completion status for current student
+        """
         student = get_object_or_404(StudentProfile, user=request.user)
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
-        assignments=LessonAssignment.objects.filter(lesson=lesson)
+        assignments = LessonAssignment.objects.filter(lesson=lesson)
 
         progress_map = {
             p.assignment.assignment_id: p.is_completed
-            for p in StudentAssignmentProgress.objects.filter(student=student, assignment__lesson=lesson)
+            for p in StudentAssignmentProgress.objects.filter(
+                student=student, 
+                assignment__lesson=lesson
+            )
         }
+        
         data = [
             {
                 "assignment_id": a.assignment_id,
@@ -2038,35 +2129,79 @@ class StudentAssignmentChecklistView(APIView):
             }
             for a in assignments
         ]
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, lesson_id):
+        """
+        Toggle assignment completion status for current student
+        """
         student = get_object_or_404(StudentProfile, user=request.user)
         assignment_id = request.data.get("assignment_id")
         completed = request.data.get("completed", False)
 
-        assignment = get_object_or_404(LessonAssignment, assignment_id=assignment_id, lesson__lesson_id=lesson_id)
-        progress, _ = StudentAssignmentProgress.objects.get_or_create(student=student, assignment=assignment)
-        progress.is_completed = completed
-        progress.save()
-        
-        update_lesson_progress(student, assignment.lesson)
+        if not assignment_id:
+            return Response(
+                {"error": "assignment_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+        assignment = get_object_or_404(
+            LessonAssignment, 
+            assignment_id=assignment_id, 
+            lesson__lesson_id=lesson_id
+        )
+        
+        # Update or create progress record
+        progress, created = StudentAssignmentProgress.objects.update_or_create(
+            student=student, 
+            assignment=assignment,
+            defaults={"is_completed": completed}
+        )
+        
+        # Update overall lesson progress
+        try:
+            new_progress = update_lesson_progress(student, assignment.lesson)
+            return Response(
+                {
+                    "message": "Assignment progress updated successfully",
+                    "assignment_id": assignment_id,
+                    "completed": completed,
+                    "lesson_progress_percent": new_progress
+                }, 
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            log.error("Error updating lesson progress: %s", e)
+            return Response(
+                {
+                    "message": "Assignment updated but error calculating lesson progress",
+                    "assignment_id": assignment_id,
+                    "completed": completed
+                }, 
+                status=status.HTTP_200_OK
+            )
+
 
 class StudentReadingChecklistView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
     def get(self, request, lesson_id):
+        """
+        Get all readings for a lesson with completion status for current student
+        """
         student = get_object_or_404(StudentProfile, user=request.user)
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
-        readings=LessonReading.objects.filter(lesson=lesson)
+        readings = LessonReading.objects.filter(lesson=lesson)
 
         progress_map = {
             p.reading.reading_id: p.is_completed
-            for p in StudentReadingProgress.objects.filter(student=student, reading__lesson=lesson)
+            for p in StudentReadingProgress.objects.filter(
+                student=student, 
+                reading__lesson=lesson
+            )
         }
+        
         data = [
             {
                 "reading_id": r.reading_id,
@@ -2076,23 +2211,63 @@ class StudentReadingChecklistView(APIView):
             }
             for r in readings
         ]
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, lesson_id):
+        """
+        Toggle reading completion status for current student
+        """
         student = get_object_or_404(StudentProfile, user=request.user)
         reading_id = request.data.get("reading_id")
         completed = request.data.get("completed", False)
 
-        reading = get_object_or_404(LessonReading, reading_id=reading_id, lesson__lesson_id=lesson_id)
-        progress, _ = StudentReadingProgress.objects.get_or_create(student=student, reading=reading)
-        progress.is_completed = completed
-        progress.save()
+        if not reading_id:
+            return Response(
+                {"error": "reading_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        update_lesson_progress(student, reading.lesson)
+        reading = get_object_or_404(
+            LessonReading, 
+            reading_id=reading_id, 
+            lesson__lesson_id=lesson_id
+        )
+        
+        # Update or create progress record
+        progress, created = StudentReadingProgress.objects.update_or_create(
+            student=student, 
+            reading=reading,
+            defaults={"is_completed": completed}
+        )
 
-        return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
+        # Update overall lesson progress
+        try:
+            new_progress = update_lesson_progress(student, reading.lesson)
+            return Response(
+                {
+                    "message": "Reading progress updated successfully",
+                    "reading_id": reading_id,
+                    "completed": completed,
+                    "lesson_progress_percent": new_progress
+                }, 
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            log.error("Error updating lesson progress: %s", e)
+            return Response(
+                {
+                    "message": "Reading updated but error calculating lesson progress",
+                    "reading_id": reading_id,
+                    "completed": completed
+                }, 
+                status=status.HTTP_200_OK
+            )
+
 
 class StudentLessonProgressView(APIView):
+    """
+    Get the overall progress percentage for a student in a specific lesson
+    """
     permission_classes = [IsAuthenticated]
     authentication_classes = [CustomJWTAuthentication]
 
@@ -2100,8 +2275,19 @@ class StudentLessonProgressView(APIView):
         student = get_object_or_404(StudentProfile, user=request.user)
         lesson = get_object_or_404(Lesson, lesson_id=lesson_id)
 
-        progress, _ = StudentLessonProgress.objects.get_or_create(student=student, lesson=lesson)
+        # Get or calculate progress
+        progress_obj = StudentLessonProgress.objects.filter(
+            student=student, 
+            lesson=lesson
+        ).first()
+
+        if not progress_obj:
+            # Calculate it if it doesn't exist
+            progress_percent = update_lesson_progress(student, lesson)
+        else:
+            progress_percent = progress_obj.progress_percent
+
         return Response({
             "lesson_id": lesson.lesson_id,
-            "progress_percent": progress.progress_percent
+            "progress_percent": progress_percent
         }, status=status.HTTP_200_OK)
