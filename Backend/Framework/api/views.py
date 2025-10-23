@@ -150,50 +150,38 @@ class InstructorCoursesView(APIView):
     Instructor viewing own created courses
     """
     permission_classes = [IsAuthenticated]
-    authentication_classes = [CustomJWTAuthentication]
+    authentication_classes = [CustomJWTAuthentication] 
 
     def get(self, request):
         """
-        GET method: Fetch courses and return customized JSON response with progress
+        GET method. Fetching course and returning a customised json response
         """
         user = self.request.user
         instr = InstructorProfile.objects.filter(user=user).first()
         if not instr:
             return Response({"detail": "Not an instructor."}, status=403)
-
-        # Subquery for completed lesson enrollments per course
-        from yourapp.models import LessonEnrollment  # adjust import path
-        completed_counts = LessonEnrollment.objects.filter(
-            lesson__course=OuterRef('pk'),
-            status='Completed'
-        ).values('lesson__course').annotate(cnt=Count('id')).values('cnt')
-
-        courses = (
-            Course.objects.filter(Q(owner_instructor=instr) | Q(lesson__designer=instr))
-            .select_related("owner_instructor")
-            .annotate(
-                enrolled_count=Count('enrollment__student', distinct=True),
-                tot_lessons=Count('lesson', distinct=True),
-                sum_completed=Coalesce(Subquery(completed_counts, output_field=FloatField()), 0.0),
-            )
-            .annotate(
-                avg_completed=ExpressionWrapper(
-                    F('sum_completed') / F('enrolled_count'),
-                    output_field=FloatField()
-                ),
-                avg_progress=ExpressionWrapper(
-                    F('avg_completed') / F('tot_lessons'),
-                    output_field=FloatField()
-                ),
-                avg_percentages=ExpressionWrapper(
-                    F('avg_progress') * 100.0,
-                    output_field=FloatField()
-                )
-            )
-        )
-
-        output = [
-            {
+        courses =( Course.objects.filter(Q(owner_instructor=instr) | Q(lesson__designer=instr)).select_related("owner_instructor")
+                          .annotate(enrolled_count=Count('enrollment__student', distinct=True))
+                          .annotate(
+                            tot_lessons=Count('lesson', distinct=True),
+                            # distinct student count via lesson enrollments
+                            sum_completed=Count(
+                                'lesson__lessonenrollment',
+                                filter=(
+                                    Q(lesson__lessonenrollment__status='Completed')
+                                ),
+                                distinct=False,  # counting completions, not distinct students
+                            ),
+                             avg_completed = _ratio(F('sum_completed'), F('enrolled_count')),
+                             avg_progress  = _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')),
+                             avg_percentages = ExpressionWrapper(
+                                    _ratio(_ratio(F('sum_completed'), F('enrolled_count')), F('tot_lessons')) * 100.0,
+                                    output_field=FloatField()
+                                ),
+                            )
+                      )
+        
+        output = [{
                 "course_id": course.course_id,
                 "course_title": course.title,
                 "course_credits": course.credits,
@@ -201,16 +189,13 @@ class InstructorCoursesView(APIView):
                 "course_description": course.description,
                 "status": course.status,
                 "enrolled_count": course.enrolled_count,
-                "tot_lessons": course.tot_lessons,
-                "sum_completed": course.sum_completed,
+                "avg_percentages": course.avg_percentages, 
                 "avg_completed": course.avg_completed,
-                "avg_progress": course.avg_progress,
-                "avg_percentages": course.avg_percentages
-            }
-            for course in courses
-        ]
-
+                "tot_lessons": course.tot_lessons
+                }
+                   for course in courses]
         return Response(output, status=status.HTTP_200_OK)
+    
     def post(self, request):
         """
         POST method. Creating a new course
