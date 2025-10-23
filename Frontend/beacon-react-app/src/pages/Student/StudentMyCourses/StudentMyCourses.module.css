@@ -30,7 +30,7 @@
   background: #f7f8fb;
   border-radius: 18px;
   border: 2px solid transparent;
-  background-image: linear-gradient(#f7f8fb, #f7f8fb),
+  background-image: linear-gradient(var(--bg),
     var(--brand-stud-pale-gradient);
   background-origin: border-box;
   background-clip: padding-box, border-box;
