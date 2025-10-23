@@ -26,7 +26,7 @@ export default function InstructorCourseProgressDetail() {
         const fetchCourse = async () => {
             setLoading(true);
             try {
-                const res = await api.get(`instructor/course/progress/${courseId}`);
+                const res = await api.get(`instructor/course/progress/${courseId}/`);
                       setLessons(res.data.lessons);
                       setStudents(res.data.students)
                       setCourse(res.data.course);
