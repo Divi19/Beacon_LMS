@@ -243,9 +243,13 @@ class LessonEnrollmentSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         lesson  = attrs.get("lesson")  or getattr(self.instance, "lesson",  None)
-        student = attrs.get("student") or getattr(self.instance, "student", None)
-        if not (lesson and student):
-            return attrs  
+        student = self.context.get("student")  # ← Get from context, not from attrs
+        
+        if not lesson:
+            raise serializers.ValidationError({"lesson": "Lesson is required."})
+        if not student:
+            raise serializers.ValidationError({"student": "Student context is required."})
+            
         REQUIRE_COMPLETED = True  # Must complete prereqs first 
         completed_filter = {}
         if REQUIRE_COMPLETED:
@@ -276,15 +280,23 @@ class LessonEnrollmentSerializer(serializers.ModelSerializer):
                 "lesson": (
                     "Prerequisites not satisfied: "
                     + "; ".join(pretty)
-                    + (" must be COMPLETED.)" if REQUIRE_COMPLETED else ". (Prereqs must be ENROLLED.)")
+                    + (" must be COMPLETED." if REQUIRE_COMPLETED else " (Prereqs must be ENROLLED.)")
                 )
             })
 
         return attrs
 
     def create(self, validated_data):
+        # Get student from context
+        student = self.context.get("student")
+        if not student:
+            raise serializers.ValidationError({"student": "Student context is required."})
+        
+        # Add student to validated_data
+        validated_data["student"] = student
+        
         return super().create(validated_data)
-
+        
 class ClassroomEnrollmentSerializer(serializers.ModelSerializer):
     """
     TODO: Needs changing 
