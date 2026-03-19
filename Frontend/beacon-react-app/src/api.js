@@ -1,8 +1,7 @@
 import axios from "axios";
 
-// Change baseURL to your deployed backend URL
-export const api = axios.create({ 
-  baseURL: "https://ma-thursday2pm-team1-2-1.onrender.com" 
+export const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:8000",
 });
 
 // For logout (optional)
