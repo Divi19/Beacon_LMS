@@ -19,7 +19,8 @@ print(dj_database_url.config(default=os.environ.get("DATABASE_URL")))
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "fallback-secret-key")
+# A missing SECRET_KEY will raise ImproperlyConfigured at startup — this is intentional.
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False") == "True"

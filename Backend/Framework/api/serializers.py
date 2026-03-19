@@ -141,12 +141,11 @@ class InstructorListSerializer(serializers.ModelSerializer):
     Serializer for listing instructors (admin view)
     """
     email = serializers.EmailField(source='user.email', read_only=True)
-    password = serializers.CharField(source='user.password_hash', read_only=True)
     is_active = serializers.BooleanField(source='user.is_active', read_only=True)
     
     class Meta:
         model = InstructorProfile
-        fields = ['instructor_profile_id', 'title', 'full_name', 'staff_no', 'email', 'password', 'is_active']
+        fields = ['instructor_profile_id', 'title', 'full_name', 'staff_no', 'email', 'is_active']
 
 """
 Student-related serializers
