@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.db import IntegrityError
 from django.db import models
+from django.contrib.auth.hashers import make_password
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
@@ -14,19 +15,19 @@ Testing models
 
 class UserModelTests(TestCase):
     def test_create_user(self):
-        user = User.objects.create(email="test@example.com", password_hash="password123", role="student")
+        user = User.objects.create(email="test@example.com", password_hash=make_password("password123"), role="student")
         self.assertEqual(user.email, "test@example.com")
         self.assertTrue(user.is_authenticated)
 
     def test_duplicate_email_fails(self):
-        User.objects.create(email="dup@example.com", password_hash="pw", role="student")
+        User.objects.create(email="dup@example.com", password_hash=make_password("pw"), role="student")
         with self.assertRaises(IntegrityError):
-            User.objects.create(email="dup@example.com", password_hash="pw", role="student")
+            User.objects.create(email="dup@example.com", password_hash=make_password("pw"), role="student")
 
 
 class ProfileTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create(email="student@example.com", password_hash="pw", role="student")
+        self.user = User.objects.create(email="student@example.com", password_hash=make_password("pw"), role="student")
 
     def test_student_profile_creation(self):
         profile = StudentProfile.objects.create(user=self.user, first_name="John", last_name = "Doe", title="Mr.")
@@ -35,7 +36,7 @@ class ProfileTests(TestCase):
 
 class CourseTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create(email="inst@example.com", password_hash="pw", role="instructor")
+        self.user = User.objects.create(email="inst@example.com", password_hash=make_password("pw"), role="instructor")
         self.instructor = InstructorProfile.objects.create(user=self.user, full_name="Inst One", staff_no="T123")
 
     def test_course_creation(self):
@@ -46,10 +47,10 @@ class CourseTests(TestCase):
 
 class EnrollmentTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create(email="stud@example.com", password_hash="pw", role="student")
+        self.user = User.objects.create(email="stud@example.com", password_hash=make_password("pw"), role="student")
         self.student = StudentProfile.objects.create(user=self.user, first_name="Stud", last_name="One")
         self.inst = InstructorProfile.objects.create(
-            user=User.objects.create(email="inst@example.com", password_hash="pw", role="instructor"),
+            user=User.objects.create(email="inst@example.com", password_hash=make_password("pw"), role="instructor"),
             full_name="Inst",
             staff_no="T111"
         )
@@ -68,7 +69,7 @@ class EnrollmentTests(TestCase):
 
 class LessonTests(TestCase):
     def setUp(self):
-        inst_user = User.objects.create(email="inst2@example.com", password_hash="pw", role="instructor")
+        inst_user = User.objects.create(email="inst2@example.com", password_hash=make_password("pw"), role="instructor")
         self.inst = InstructorProfile.objects.create(user=inst_user, full_name="Teach", staff_no="T999")
         self.course = Course.objects.create(title="Biology", owner_instructor=self.inst)
 
@@ -82,7 +83,7 @@ class LessonTests(TestCase):
 
 class LoginSerializerTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create(email="login@example.com", password_hash="pw123", role="student")
+        self.user = User.objects.create(email="login@example.com", password_hash=make_password("pw123"), role="student")
 
     def test_valid_login(self):
         data = {"email": "login@example.com", "password": "pw123"}
@@ -494,9 +495,9 @@ def test_overlapping_classroom():
     lessonA = Lesson.objects.create(course=course, designer=inst2, created_by=inst1, title="Cells")
     lessonB = Lesson.objects.create(course=course, designer=inst2, created_by=inst1, title="Nob")
     lessonC = Lesson.objects.create(course=course, designer=inst1, created_by=inst1, title="Nob")
-    user1 = User.objects.create(email="inst@example.com", password_hash="pw", role="instructor")
+    user1 = User.objects.create(email="inst@example.com", password_hash=make_password("pw"), role="instructor")
     inst1 = InstructorProfile.objects.create(user=user1, full_name="Inst One", staff_no="T123")
-    user2 = User.objects.create(email="insta@example.com", password_hash="pw", role="instructor")
+    user2 = User.objects.create(email="insta@example.com", password_hash=make_password("pw"), role="instructor")
     inst2 = InstructorProfile.objects.create(user=user2, full_name="Inst Two", staff_no="T111")
     
     inst2 = InstructorProfile()
