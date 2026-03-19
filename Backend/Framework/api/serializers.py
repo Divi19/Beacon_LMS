@@ -5,9 +5,10 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.validators import UniqueTogetherValidator
 
-#djando
+#django
 from django.db.models import Sum, Q, F, OuterRef, Exists
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.hashers import make_password, check_password
 
 #local 
 from .models import *
@@ -34,7 +35,7 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active: 
             #check is user is deactivated 
             raise generic_error
-        if not (password == user.password_hash):
+        if not check_password(password, user.password_hash):
             raise generic_error
 
         attrs['user'] = user
@@ -122,7 +123,7 @@ class InstructorCreateSerializer(serializers.ModelSerializer):
         
         user = User.objects.create(
             email=email,
-            password_hash=password,
+            password_hash=make_password(password),
             role='instructor',
             is_active=True
         )
@@ -186,9 +187,9 @@ class StudentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This email already exists. Are you registered?")
         
         user = User.objects.create(
-            email = email,
-            password_hash=password, #plain password 
-            role=role #Set the role or default to student 
+            email=email,
+            password_hash=make_password(password),  # stored as a secure hash
+            role=role  # set the role or default to student 
         )
         
         student = StudentProfile.objects.create(
